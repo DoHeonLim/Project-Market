@@ -7,10 +7,11 @@ History
 Date        Author   Status    Description
 2024.10.04  임도헌   Created
 2024.10.04  임도헌   Modified  폼 제출 및 검증 기능 추가
+2024.10.11  임도헌   Modified  인증 번호 검증 때 전화번호까지 검증
 */
 "use server";
 
-import twilio from "twilio";
+// import twilio from "twilio";
 import crypto from "crypto";
 import { z } from "zod";
 import validator from "validator";
@@ -20,6 +21,7 @@ import getSession from "@/lib/session";
 
 interface IActionState {
   token: boolean;
+  phone?: string;
 }
 
 const handleGetToken = async () => {
@@ -60,11 +62,27 @@ const handleTokenExists = async (token: number) => {
   return Boolean(exists);
 };
 
+const handlePhoneNumberValid = async (token: number) => {
+  const exists = await db.sMSToken.findUnique({
+    where: {
+      token: token.toString(),
+    },
+    select: {
+      phone: true,
+    },
+  });
+  return exists?.phone;
+};
+
 const tokenSchema = z.coerce
   .number()
   .min(100000, "인증번호는 6자리 입니다.")
   .max(999999, "인증번호는 6자리 입니다.")
-  .refine(handleTokenExists, "인증번호를 다시 입력해주세요.");
+  .refine(handleTokenExists, "인증번호를 다시 입력해주세요.")
+  .refine(
+    handlePhoneNumberValid,
+    "인증번호와 휴대폰 번호가 매치되지 않습니다."
+  );
 
 export const smsLogin = async (prevState: IActionState, formData: FormData) => {
   const phone = formData.get("phone");
@@ -89,6 +107,7 @@ export const smsLogin = async (prevState: IActionState, formData: FormData) => {
       await db.sMSToken.create({
         data: {
           token,
+          phone: result.data,
           user: {
             connectOrCreate: {
               where: {
@@ -102,36 +121,50 @@ export const smsLogin = async (prevState: IActionState, formData: FormData) => {
           },
         },
       });
-      const client = twilio(
-        process.env.TWILIO_ACCOUNT_SID,
-        process.env.TWILIO_AUTH_TOKEN
-      );
-      await client.messages.create({
-        body: `당신의 Bubble-Market 인증 번호는 ${token}입니다.`,
-        from: process.env.TWILIO_PHONE_NUMBER!,
-        to: process.env.MY_PHONE_NUMBER!,
-      });
+      // const client = twilio(
+      //   process.env.TWILIO_ACCOUNT_SID,
+      //   process.env.TWILIO_AUTH_TOKEN
+      // );
+      // await client.messages.create({
+      //   body: `당신의 Bubble-Market 인증 번호는 ${token}입니다.`,
+      //   from: process.env.TWILIO_PHONE_NUMBER!,
+      //   to: process.env.MY_PHONE_NUMBER!,
+      // });
       return {
         token: true,
+        phone: result.data,
       };
     }
   } else {
-    const result = await tokenSchema.safeParseAsync(token);
-    if (!result.success) {
+    const tokenResult = await tokenSchema.safeParseAsync(token);
+    const phoneResult = await phoneSchema.spa(prevState.phone);
+    if (!tokenResult.success) {
       return {
         token: true,
-        error: result.error.flatten(),
+        error: tokenResult.error.flatten(),
       };
     } else {
       const token = await db.sMSToken.findUnique({
         where: {
-          token: result.data.toString(),
+          token: tokenResult.data.toString(),
+          user: {
+            phone: phoneResult.data,
+          },
         },
         select: {
           id: true,
           userId: true,
         },
       });
+
+      if (!token) {
+        return {
+          ...prevState,
+          error: {
+            formErrors: ["전화번호와 인증번호가 일치하지 않습니다."],
+          },
+        };
+      }
 
       const session = await getSession();
       session.id = token!.userId;

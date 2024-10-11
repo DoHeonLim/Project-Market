@@ -8,6 +8,7 @@ Date        Author   Status    Description
 2024.10.01  임도헌   Created
 2024.10.01  임도헌   Modified  SMS로그인 페이지 추가
 2024.10.04  임도헌   Modified  폼 제출 유효성 검증 추가
+2024.10.11  임도헌   Modified  초기 state 전화번호 추가
 */
 "use client";
 
@@ -18,6 +19,7 @@ import { smsLogin } from "./actions";
 
 const initialState = {
   token: false,
+  phone: "",
   error: undefined,
 };
 

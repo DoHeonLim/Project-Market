@@ -1,5 +1,5 @@
 /**
-File Name : app/sms/actions
+File Name : app/(auth)/sms/actions
 Description : SMS 페이지 Form 제출 시 
 Author : 임도헌
 

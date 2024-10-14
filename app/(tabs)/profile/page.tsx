@@ -1,5 +1,5 @@
 /**
-File Name : app/profile/page
+File Name : app/(tabs)/profile/page
 Description : 프로필 페이지
 Author : 임도헌
 

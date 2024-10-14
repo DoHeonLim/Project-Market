@@ -1,5 +1,5 @@
 /**
-File Name : app/page
+File Name : app/(auth)/page
 Description : 메인 페이지
 Author : 임도헌
 

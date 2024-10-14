@@ -1,5 +1,5 @@
 /**
-File Name : app/sms/page
+File Name : app/(auth)/sms/page
 Description : SMS 로그인 페이지
 Author : 임도헌
 

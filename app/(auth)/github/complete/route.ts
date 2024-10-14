@@ -1,5 +1,5 @@
 /**
-File Name : app/github/complete/route
+File Name : app/(auth)/github/complete/route
 Description : 깃허브 소셜 로그인 기능
 Author : 임도헌
 

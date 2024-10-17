@@ -7,6 +7,8 @@ History
 Date        Author   Status    Description
 2024.10.14  임도헌   Created
 2024.10.14  임도헌   Modified  제품 상세 페이지 추가
+2024.10.17  임도헌   Modified  이미지 object-cover로 변경
+2024.10.17  임도헌   Modified  제품 삭제 기능 추가
 */
 
 import db from "@/lib/db";
@@ -15,7 +17,7 @@ import { formatToWon } from "@/lib/utils";
 import { UserIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 /**
  * 제품 소유자 체크 함수
@@ -35,7 +37,6 @@ const getIsOwner = async (userId: number) => {
  * @param {number} id 제품 아이디
  * @returns 디비에 저장된 제품 상세 정보
  */
-
 const getProduct = async (id: number) => {
   const product = await db.product.findUnique({
     where: {
@@ -67,17 +68,33 @@ export default async function ProductDetail({
     return notFound();
   }
   const isOwner = await getIsOwner(product.userId);
-  console.log(isOwner);
+
+  const handleDeleteProduct = async () => {
+    "use server";
+    await db.product.delete({
+      where: {
+        id,
+      },
+    });
+    redirect("/products");
+  };
+
   return (
     <div className="mb-24">
       <div className="relative aspect-square">
-        <Image fill src={product.photo} alt={product.title} />
+        <Image
+          fill
+          className="object-cover"
+          src={product.photo}
+          alt={product.title}
+        />
       </div>
       <div className="flex items-center gap-3 p-5 border-b border-neutral-700">
-        <div className="relative overflow-hidden rounded-full size-10">
+        <div className="overflow-hidden rounded-full size-10">
           {product.user.avatar !== null ? (
             <Image
-              fill
+              width={40}
+              height={40}
               src={product.user.avatar!}
               alt={product.user.username}
             />
@@ -99,9 +116,11 @@ export default async function ProductDetail({
         </span>
         <div className="flex gap-5">
           {isOwner ? (
-            <button className="bg-red-500 px-5 py-2.5 rounded-md text-white font-semibold">
-              삭제하기
-            </button>
+            <form action={handleDeleteProduct}>
+              <button className="bg-red-500 px-5 py-2.5 rounded-md text-white font-semibold">
+                삭제하기
+              </button>
+            </form>
           ) : null}
           <Link
             className="px-5 py-2.5 font-semibold text-white bg-indigo-300 rounded-md hover:bg-indigo-400 transition-colors"

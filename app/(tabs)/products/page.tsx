@@ -7,12 +7,14 @@ History
 Date        Author   Status    Description
 2024.10.14  임도헌   Created
 2024.10.14  임도헌   Modified  제품 페이지 추가
+2024.10.17  임도헌   Modified  무한 스크롤 기능 추가
 */
 
-import ListProduct from "@/components/list-product";
+import ProductList from "@/components/product-list";
 import db from "@/lib/db";
+import { Prisma } from "@prisma/client";
 
-const getProducts = async () => {
+const getInitialProducts = async () => {
   const products = await db.product.findMany({
     select: {
       title: true,
@@ -21,17 +23,23 @@ const getProducts = async () => {
       photo: true,
       id: true,
     },
+    take: 1,
+    orderBy: {
+      created_at: "desc",
+    },
   });
   return products;
 };
 
+export type InitialProducts = Prisma.PromiseReturnType<
+  typeof getInitialProducts
+>;
+
 export default async function Products() {
-  const products = await getProducts();
+  const initialProducts = await getInitialProducts();
   return (
-    <div className="flex flex-col gap-5 p-5">
-      {products.map((product) => (
-        <ListProduct key={product.id} {...product} />
-      ))}
+    <div>
+      <ProductList initialProducts={initialProducts} />
     </div>
   );
 }

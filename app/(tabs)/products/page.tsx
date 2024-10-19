@@ -12,7 +12,9 @@ Date        Author   Status    Description
 
 import ProductList from "@/components/product-list";
 import db from "@/lib/db";
+import { PlusIcon } from "@heroicons/react/24/solid";
 import { Prisma } from "@prisma/client";
+import Link from "next/link";
 
 const getInitialProducts = async () => {
   const products = await db.product.findMany({
@@ -40,6 +42,12 @@ export default async function Products() {
   return (
     <div>
       <ProductList initialProducts={initialProducts} />
+      <Link
+        href="/products/add"
+        className="fixed flex items-center justify-center text-white transition-colors bg-indigo-400 rounded-full size-16 bottom-24 right-8 hover:bg-indigo-500"
+      >
+        <PlusIcon className="size-10" />
+      </Link>
     </div>
   );
 }

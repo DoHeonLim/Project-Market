@@ -24,7 +24,7 @@ import { notFound, redirect } from "next/navigation";
  * @param {number} userId 유저 아이디
  * @returns 소유자가 맞으면 참, 아니라면 거짓
  */
-const getIsOwner = async (userId: number) => {
+export const getIsOwner = async (userId: number) => {
   const session = await getSession();
   if (session.id) {
     return session.id === userId;
@@ -37,7 +37,7 @@ const getIsOwner = async (userId: number) => {
  * @param {number} id 제품 아이디
  * @returns 디비에 저장된 제품 상세 정보
  */
-const getProduct = async (id: number) => {
+export const getProduct = async (id: number) => {
   const product = await db.product.findUnique({
     where: {
       id,

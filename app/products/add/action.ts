@@ -8,6 +8,7 @@
  2024.10.17  임도헌   Created
  2024.10.17  임도헌   Modified  제품 업로드 코드 추가
  2024.10.19  임도헌   Modified  DB에 저장하는 코드 추가
+ 2024.11.05  임도헌   Modified  캐싱 추가
  */
 "use server";
 
@@ -16,6 +17,7 @@ import fs from "fs/promises";
 import db from "@/lib/db";
 import getSession from "@/lib/session";
 import { redirect } from "next/navigation";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 const productSchema = z.object({
   photo: z.string({
@@ -66,6 +68,8 @@ export const uploadProduct = async (_: any, FormData: FormData) => {
           id: true,
         },
       });
+      revalidatePath("/products");
+      revalidateTag("product-detail");
       redirect(`/products/${product.id}`);
     }
   }

@@ -7,8 +7,11 @@ History
 Date        Author   Status    Description
 2024.10.14  임도헌   Created
 2024.10.14  임도헌   Modified  동네생활 게시글 페이지 추가
+2024.11.05  임도헌   Modified  댓글 기능 추가
+2024.11.06  임도헌   Modified  댓글 기능 수정
 */
 
+import Comment from "@/components/comment";
 import LikeButton from "@/components/like-button";
 import db from "@/lib/db";
 import getSession from "@/lib/session";
@@ -18,6 +21,22 @@ import { unstable_cache as nextCache } from "next/cache";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 
+const getUser = async () => {
+  const session = await getSession();
+  if (session.id) {
+    const user = await db.user.findUnique({
+      where: {
+        id: session.id,
+      },
+    });
+    if (user) {
+      return user;
+    }
+  }
+  notFound();
+};
+
+// 해당 게시글의 정보 및 댓글 전체 조회
 const getPost = async (id: number) => {
   try {
     const post = await db.post.update({
@@ -43,6 +62,7 @@ const getPost = async (id: number) => {
         },
       },
     });
+    console.log(post);
     return post;
   } catch (e) {
     console.log(e);
@@ -53,6 +73,42 @@ const getPost = async (id: number) => {
 const getCachedPost = nextCache(getPost, ["post-detail"], {
   tags: ["post-detail"],
 });
+
+//게시글 댓글 조회
+const getComments = async (postId: number) => {
+  try {
+    const comments = await db.comment.findMany({
+      where: {
+        postId,
+      },
+      select: {
+        payload: true, // 댓글
+        created_at: true,
+        id: true,
+        userId: true, // 댓글 쓴 유저
+        user: {
+          select: {
+            avatar: true, //댓글 쓴 유저의 아바타
+            username: true, // 댓글 쓴 유저의 이름
+          },
+        },
+      },
+      orderBy: {
+        created_at: "desc", //내림차순으로 정렬
+      },
+    });
+    return comments;
+  } catch (e) {
+    console.log(e);
+  }
+};
+
+const getCachedComments = (postId: number) => {
+  const cachedOperation = nextCache(getComments, [`post-comments-${postId}`], {
+    tags: [`comments-${postId}`],
+  });
+  return cachedOperation(postId);
+};
 
 // 좋아요 상태 함수
 const getLikeStatus = async (postId: number, userId: number) => {
@@ -90,13 +146,20 @@ export default async function PostDetail({
   params: { id: string };
 }) {
   const id = Number(params.id);
+  // id가 숫자가 아니라면
   if (isNaN(id)) {
     return notFound();
   }
+  // post가 존재하지 않다면
   const post = await getCachedPost(id);
   if (!post) {
     return notFound();
   }
+  // 로그인 한 유저 정보
+  const user = await getUser();
+
+  // 댓글 불러오기
+  const comments = await getCachedComments(id);
 
   const { likeCount, isLiked } = await getCachedLikeStatus(id);
   return (
@@ -125,6 +188,7 @@ export default async function PostDetail({
         </div>
         <LikeButton isLiked={isLiked} likeCount={likeCount} postId={id} />
       </div>
+      <Comment postId={id} comments={comments} user={user} />
     </div>
   );
 }

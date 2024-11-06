@@ -7,6 +7,7 @@ History
 Date        Author   Status    Description
 2024.11.01  임도헌   Created
 2024.11.01  임도헌   Modified  좋아요 버튼 추가
+2024.11.06  임도헌   Modified  useOptimistic에 payload 사용하지 않아서 삭제
 */
 "use client";
 
@@ -28,7 +29,7 @@ export default function LikeButton({
 }: ILikeButtonProps) {
   const [state, reducerFn] = useOptimistic(
     { isLiked, likeCount },
-    (previousState, payload) => ({
+    (previousState) => ({
       isLiked: !previousState.isLiked,
       likeCount: previousState.isLiked
         ? previousState.likeCount - 1

@@ -1,5 +1,5 @@
 /**
-File Name : app/create-account/page
+File Name : app/(auth)/create-account/page
 Description : 회원가입 페이지
 Author : 임도헌
 

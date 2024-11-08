@@ -1,5 +1,5 @@
 /**
-File Name : app/login/page
+File Name : app/(auth)/login/page
 Description : 로그인 페이지
 Author : 임도헌
 

@@ -1,5 +1,5 @@
 /**
-File Name : app/create-account/actions
+File Name : app/(auth)/create-account/actions
 Description : 회원가입 페이지 Form 제출 시 
 Author : 임도헌
 

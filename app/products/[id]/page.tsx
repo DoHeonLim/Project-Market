@@ -10,6 +10,7 @@ Date        Author   Status    Description
 2024.10.17  임도헌   Modified  이미지 object-cover로 변경
 2024.10.17  임도헌   Modified  제품 삭제 기능 추가
 2024.10.26  임도헌   Modified  메타데이터 추가
+2024.11.02  임도헌   Modified  제품 삭제 버튼 편집 페이지로 옮김
 */
 
 import db from "@/lib/db";
@@ -18,7 +19,7 @@ import { formatToWon } from "@/lib/utils";
 import { UserIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { unstable_cache as nextCache } from "next/cache";
 
 /**
@@ -104,16 +105,6 @@ export default async function ProductDetail({
   }
   const isOwner = await getIsOwner(product.userId);
 
-  const handleDeleteProduct = async () => {
-    "use server";
-    await db.product.delete({
-      where: {
-        id,
-      },
-    });
-    redirect("/products");
-  };
-
   return (
     <div className="mb-24">
       <div className="relative aspect-square">
@@ -151,11 +142,12 @@ export default async function ProductDetail({
         </span>
         <div className="flex gap-5">
           {isOwner ? (
-            <form action={handleDeleteProduct}>
-              <button className="bg-red-500 px-5 py-2.5 rounded-md text-white font-semibold">
-                삭제하기
-              </button>
-            </form>
+            <Link
+              href={`/products/${id}/edit`}
+              className="px-5 py-2.5 rounded-md text-white font-semibold  bg-rose-700 hover:bg-rose-500 transition-colors"
+            >
+              수정하기
+            </Link>
           ) : null}
           <Link
             className="px-5 py-2.5 font-semibold text-white bg-indigo-300 rounded-md hover:bg-indigo-400 transition-colors"

@@ -1,15 +1,13 @@
 /**
- File Name : app/products/add/action
- Description : 제품 업로드 폼 액션
- Author : 임도헌
- 
- History
- Date        Author   Status    Description
- 2024.10.17  임도헌   Created
- 2024.10.17  임도헌   Modified  제품 업로드 코드 추가
- 2024.10.19  임도헌   Modified  DB에 저장하는 코드 추가
- 2024.11.05  임도헌   Modified  캐싱 추가
- */
+File Name : app/products/[id]/edit/actions
+Description : 제품 편집 폼 액션
+Author : 임도헌
+
+History
+Date        Author   Status    Description
+2024.11.02  임도헌   Created
+2024.11.02  임도헌   Modified  제품 편집 폼 액션
+*/
 "use server";
 
 import { z } from "zod";
@@ -20,6 +18,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath, revalidateTag } from "next/cache";
 
 const productSchema = z.object({
+  id: z.coerce.number().optional(),
   photo: z.string({
     required_error: "사진을 넣어주세요.",
   }),
@@ -34,8 +33,9 @@ const productSchema = z.object({
   }),
 });
 
-export const uploadProduct = async (_: any, FormData: FormData) => {
+export const editProduct = async (prevState: any, FormData: FormData) => {
   const data = {
+    id: FormData.get("id"),
     photo: FormData.get("photo"),
     title: FormData.get("title"),
     price: FormData.get("price"),
@@ -47,22 +47,21 @@ export const uploadProduct = async (_: any, FormData: FormData) => {
     data.photo = `/${data.photo.name}`;
   }
   const results = productSchema.safeParse(data);
+  console.log(results);
   if (!results.success) {
     return results.error.flatten();
   } else {
     const session = await getSession();
     if (session.id) {
-      const product = await db.product.create({
+      const updateProduct = await db.product.update({
+        where: {
+          id: results.data.id,
+        },
         data: {
           title: results.data.title,
           description: results.data.description,
           price: results.data.price,
           photo: results.data.photo,
-          user: {
-            connect: {
-              id: session.id,
-            },
-          },
         },
         select: {
           id: true,
@@ -70,8 +69,7 @@ export const uploadProduct = async (_: any, FormData: FormData) => {
       });
       revalidatePath("/products");
       revalidateTag("product-detail");
-      redirect(`/products/${product.id}`);
+      redirect(`/products/${updateProduct.id}`);
     }
   }
-  console.log(results);
 };

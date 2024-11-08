@@ -9,6 +9,8 @@ Date        Author   Status    Description
 2024.10.14  임도헌   Modified  제품 상세 페이지 추가
 2024.10.17  임도헌   Modified  이미지 object-cover로 변경
 2024.10.17  임도헌   Modified  제품 삭제 기능 추가
+2024.10.26  임도헌   Modified  메타데이터 추가
+2024.11.02  임도헌   Modified  제품 삭제 버튼 편집 페이지로 옮김
 */
 
 import db from "@/lib/db";
@@ -17,7 +19,8 @@ import { formatToWon } from "@/lib/utils";
 import { UserIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
+import { unstable_cache as nextCache } from "next/cache";
 
 /**
  * 제품 소유자 체크 함수
@@ -25,6 +28,7 @@ import { notFound, redirect } from "next/navigation";
  * @returns 소유자가 맞으면 참, 아니라면 거짓
  */
 export const getIsOwner = async (userId: number) => {
+  // 13.10 - cookie를 사용한다면 dynamic하다는 소리이기 때문에 주석처리하고 다른 코드를 사용해본다.
   const session = await getSession();
   if (session.id) {
     return session.id === userId;
@@ -54,6 +58,38 @@ export const getProduct = async (id: number) => {
   return product;
 };
 
+const getCachedProduct = nextCache(getProduct, ["product-detail"], {
+  tags: ["product-detail"],
+});
+
+/**
+ * 제품 id에 따른 제품 타이틀 명
+ * @param {number} id 제품 아이디
+ * @returns 디비에 저장된 제품 타이틀 명
+ */
+export const getProductTitle = async (id: number) => {
+  const product = await db.product.findUnique({
+    where: {
+      id,
+    },
+    select: {
+      title: true,
+    },
+  });
+  return product;
+};
+
+const getCachedProductTitle = nextCache(getProductTitle, ["product-title"], {
+  tags: ["product-title"],
+});
+
+export async function generateMetadata({ params }: { params: { id: string } }) {
+  const product = await getCachedProductTitle(Number(params.id));
+  return {
+    title: product?.title,
+  };
+}
+
 export default async function ProductDetail({
   params,
 }: {
@@ -63,21 +99,11 @@ export default async function ProductDetail({
   if (isNaN(id)) {
     return notFound();
   }
-  const product = await getProduct(id);
+  const product = await getCachedProduct(id);
   if (!product) {
     return notFound();
   }
   const isOwner = await getIsOwner(product.userId);
-
-  const handleDeleteProduct = async () => {
-    "use server";
-    await db.product.delete({
-      where: {
-        id,
-      },
-    });
-    redirect("/products");
-  };
 
   return (
     <div className="mb-24">
@@ -116,11 +142,12 @@ export default async function ProductDetail({
         </span>
         <div className="flex gap-5">
           {isOwner ? (
-            <form action={handleDeleteProduct}>
-              <button className="bg-red-500 px-5 py-2.5 rounded-md text-white font-semibold">
-                삭제하기
-              </button>
-            </form>
+            <Link
+              href={`/products/${id}/edit`}
+              className="px-5 py-2.5 rounded-md text-white font-semibold  bg-rose-700 hover:bg-rose-500 transition-colors"
+            >
+              수정하기
+            </Link>
           ) : null}
           <Link
             className="px-5 py-2.5 font-semibold text-white bg-indigo-300 rounded-md hover:bg-indigo-400 transition-colors"
@@ -132,4 +159,13 @@ export default async function ProductDetail({
       </div>
     </div>
   );
+}
+
+export async function generateStaticParams() {
+  const products = await db.product.findMany({
+    select: {
+      id: true,
+    },
+  });
+  return products.map((product) => ({ id: product.id + "" }));
 }

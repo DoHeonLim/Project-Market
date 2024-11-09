@@ -47,7 +47,6 @@ export const editProduct = async (prevState: any, FormData: FormData) => {
     data.photo = `/${data.photo.name}`;
   }
   const results = productSchema.safeParse(data);
-  console.log(results);
   if (!results.success) {
     return results.error.flatten();
   } else {

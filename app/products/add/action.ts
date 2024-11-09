@@ -73,5 +73,4 @@ export const uploadProduct = async (_: any, FormData: FormData) => {
       redirect(`/products/${product.id}`);
     }
   }
-  console.log(results);
 };

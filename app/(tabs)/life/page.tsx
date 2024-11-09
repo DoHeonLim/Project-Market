@@ -42,7 +42,6 @@ export const metadata = {
 
 export default async function Life() {
   const posts = await getPosts();
-  console.log(posts);
   return (
     <div className="flex flex-col p-5">
       {posts.map((post) => (

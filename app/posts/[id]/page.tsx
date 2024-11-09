@@ -62,7 +62,6 @@ const getPost = async (id: number) => {
         },
       },
     });
-    console.log(post);
     return post;
   } catch (e) {
     console.log(e);

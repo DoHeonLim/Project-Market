@@ -7,6 +7,7 @@
  Date        Author   Status    Description
  2024.10.22  임도헌   Created
  2024.10.22  임도헌   Modified  모달 페이지 추가(페러렐 라우트)
+ 2024.11.11  임도헌   Modified  클라우드 플레어 이미지 variants 추가
  */
 
 import { getIsOwner, getProduct } from "@/app/products/[id]/page";
@@ -55,7 +56,7 @@ export default async function Modal({
           <Image
             fill
             className="object-cover"
-            src={product.photo}
+            src={`${product.photo}/width=300,height=300`}
             alt={product.title}
           />
         </div>

@@ -9,6 +9,7 @@ Date        Author   Status    Description
 2024.10.14  임도헌   Modified  제품 상세 페이지 추가
 2024.10.17  임도헌   Modified  이미지 object-cover로 변경
 2024.10.17  임도헌   Modified  제품 삭제 기능 추가
+2024.11.11  임도헌   Modified  클라우드 플레어 이미지 variants 추가
 */
 
 import db from "@/lib/db";
@@ -85,7 +86,7 @@ export default async function ProductDetail({
         <Image
           fill
           className="object-cover"
-          src={product.photo}
+          src={`${product.photo}/width=500,height=500`}
           alt={product.title}
         />
       </div>

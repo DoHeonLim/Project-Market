@@ -60,7 +60,6 @@ export const uploadProduct = async (FormData: FormData) => {
       redirect(`/products/${product.id}`);
     }
   }
-  console.log(results);
 };
 
 // 클라우드 플레어 이미지에 업로드 할 수 있는 주소를 제공하는 함수

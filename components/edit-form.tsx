@@ -7,7 +7,7 @@ History
 Date        Author   Status    Description
 2024.11.02  임도헌   Created
 2024.11.02  임도헌   Modified  편집 폼 컴포넌트 추가
-
+2024.11.12  임도헌   Modified  제품 수정 클라우드 플레어로 리팩토링
 */
 "use client";
 
@@ -17,8 +17,13 @@ import { MAX_PHOTO_SIZE } from "@/lib/constants";
 import { PhotoIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useFormState } from "react-dom";
-import { editProduct } from "@/app/products/[id]/edit/actions";
+import { editProduct, getUploadUrl } from "@/app/products/[id]/edit/actions";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import {
+  productEditSchema,
+  ProductEditType,
+} from "@/app/products/[id]/edit/schema";
 
 interface IEditFormProps {
   product: {
@@ -31,43 +36,78 @@ interface IEditFormProps {
 }
 
 export default function EditForm({ product }: IEditFormProps) {
+  // 이미지 미리보기
   const [preview, setPreview] = useState("");
-  const [photo, setPhoto] = useState<File | null>(null);
+  // 클라우드 플레어 이미지 업로드 URL
+  const [uploadUrl, setUploadUrl] = useState("");
+  // 선택한 이미지
+  const [file, setFile] = useState<File | null>(null);
+  // 기존 이미지 경로 관리
+  const [currentPhoto, setCurrentPhoto] = useState(product.photo);
 
-  // 컴포넌트 마운트 시 product.photo로 초기화
+  //react hook form 사용 및 초기값 세팅
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+  } = useForm<ProductEditType>({
+    resolver: zodResolver(productEditSchema),
+    defaultValues: {
+      title: product.title,
+      price: product.price,
+      description: product.description,
+      photo: product.photo,
+    },
+  });
+
   useEffect(() => {
     if (product.photo) {
-      setPreview(product.photo);
+      setPreview(product.photo + "/public");
+      setCurrentPhoto(product.photo);
+      setValue("photo", product.photo);
     }
-  }, [product.photo]);
+  }, [product.photo, setValue]);
 
-  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const {
       target: { files },
     } = event;
     if (!files) {
       return;
     }
-
     const file = files[0];
 
-    // 이미지 크기 체크
+    // 이미지 크기 제한 검사
     if (file.size > MAX_PHOTO_SIZE) {
       alert("이미지는 3MB 이하로 올려주세요.");
       event.target.value = "";
       return;
     }
 
-    setPhoto(file);
     const url = URL.createObjectURL(file);
+    // 미리보기 세팅
     setPreview(url);
+    // 이미지 파일 세팅
+    setFile(file);
+    // 클라우드 플레어 업로드 이미지 링크 가져오기
+    const { success, result } = await getUploadUrl();
+    if (success) {
+      const { id, uploadURL } = result;
+      setUploadUrl(uploadURL);
+      setValue(
+        "photo",
+        `https://imagedelivery.net/3o3hwIVwLhMgAkoMCda2JQ/${id}`
+      );
+    }
   };
-
-  // 폼 리셋 시 원래 상품 이미지로 돌아가기
+  // 폼 리셋
   const reset = () => {
-    setPreview(product.photo);
-    setPhoto(null);
-    // file input 초기화
+    setPreview("");
+    setFile(null);
+    setValue("photo", "");
     const fileInput = document.querySelector(
       'input[type="file"]'
     ) as HTMLInputElement;
@@ -76,23 +116,43 @@ export default function EditForm({ product }: IEditFormProps) {
     }
   };
 
-  // form submit 전에 photo 상태 확인 및 처리
-  const handleSubmit = async (formData: FormData) => {
-    if (photo) {
-      // 새로운 사진이 선택된 경우
-      formData.set("photo", photo);
+  const onSubmit = handleSubmit(async (data: ProductEditType) => {
+    // 새 이미지가 있는 경우에만 업로드
+    if (file) {
+      //클라우드 플레어에 이미지 업로드
+      const cloudflareForm = new FormData();
+      cloudflareForm.append("file", file);
+      const response = await fetch(uploadUrl, {
+        method: "POST",
+        body: cloudflareForm,
+      });
+      if (response.status !== 200) {
+        alert("이미지 업로드에 실패했습니다.");
+        return;
+      }
     } else {
-      // 사진이 변경되지 않은 경우 기존 사진 경로 사용
-      formData.set("photo", product.photo);
+      // 이미지가 변경되지 않았다면 기존 이미지 경로 사용
+      data.photo = currentPhoto;
     }
-    return action(formData);
-  };
+    // 이미지가 업로드 되면 formData의 photo를 교체
+    const formData = new FormData();
+    formData.append("id", product.id + "");
+    formData.append("photo", data.photo);
+    formData.append("title", data.title);
+    formData.append("description", data.description);
+    formData.append("price", data.price + "");
 
-  const [state, action] = useFormState(editProduct, null);
+    // editProduct를 리턴한다.
+    return editProduct(formData);
+  });
+
+  const onValid = async () => {
+    await onSubmit();
+  };
 
   return (
     <div>
-      <form action={handleSubmit} className="flex flex-col gap-5 p-5">
+      <form action={onValid} className="flex flex-col gap-5 p-5">
         <input type="hidden" name="id" defaultValue={product.id} />
         <label
           htmlFor="photo"
@@ -104,7 +164,9 @@ export default function EditForm({ product }: IEditFormProps) {
               <PhotoIcon className="w-20" />
               <div className="text-sm text-neutral-400">
                 사진을 추가해주세요.
-                {state?.fieldErrors.photo}
+              </div>
+              <div className="text-sm text-rose-700">
+                {errors.photo?.message}
               </div>
             </>
           ) : null}
@@ -118,28 +180,25 @@ export default function EditForm({ product }: IEditFormProps) {
           className="hidden"
         />
         <Input
-          name="title"
           type="text"
           required
           placeholder="제목"
-          defaultValue={product.title}
-          errors={state?.fieldErrors.title}
+          {...register("title")}
+          errors={[errors.title?.message ?? ""]}
         />
         <Input
-          name="price"
           type="number"
           required
           placeholder="가격"
-          defaultValue={product.price}
-          errors={state?.fieldErrors.price}
+          {...register("price")}
+          errors={[errors.price?.message ?? ""]}
         />
         <Input
-          name="description"
           type="text"
           required
           placeholder="설명"
-          defaultValue={product.description}
-          errors={state?.fieldErrors.description}
+          {...register("description")}
+          errors={[errors.description?.message ?? ""]}
         />
         <Button text="수정 완료" />
         <div className="flex gap-2">

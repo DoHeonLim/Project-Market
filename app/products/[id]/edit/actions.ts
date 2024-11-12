@@ -7,33 +7,18 @@ History
 Date        Author   Status    Description
 2024.11.02  임도헌   Created
 2024.11.02  임도헌   Modified  제품 편집 폼 액션
+2024.11.12  임도헌   Modified  제품 수정 클라우드 플레어로 리팩토링
 */
 "use server";
 
-import { z } from "zod";
-import fs from "fs/promises";
+// import fs from "fs/promises";
 import db from "@/lib/db";
 import getSession from "@/lib/session";
 import { redirect } from "next/navigation";
 import { revalidatePath, revalidateTag } from "next/cache";
+import { productEditSchema } from "./schema";
 
-const productSchema = z.object({
-  id: z.coerce.number().optional(),
-  photo: z.string({
-    required_error: "사진을 넣어주세요.",
-  }),
-  title: z.string({
-    required_error: "제목을 입력해주세요.",
-  }),
-  description: z.string({
-    required_error: "설명을 입력해주세요.",
-  }),
-  price: z.coerce.number({
-    required_error: "가격을 입력해주세요.",
-  }),
-});
-
-export const editProduct = async (prevState: any, FormData: FormData) => {
+export const editProduct = async (FormData: FormData) => {
   const data = {
     id: FormData.get("id"),
     photo: FormData.get("photo"),
@@ -41,13 +26,12 @@ export const editProduct = async (prevState: any, FormData: FormData) => {
     price: FormData.get("price"),
     description: FormData.get("description"),
   };
-  if (data.photo instanceof File) {
-    const photoData = await data.photo.arrayBuffer();
-    await fs.appendFile(`./public/${data.photo.name}`, Buffer.from(photoData));
-    data.photo = `/${data.photo.name}`;
-  }
-  const results = productSchema.safeParse(data);
-  console.log(results);
+  // if (data.photo instanceof File) {
+  //   const photoData = await data.photo.arrayBuffer();
+  //   await fs.appendFile(`./public/${data.photo.name}`, Buffer.from(photoData));
+  //   data.photo = `/${data.photo.name}`;
+  // }
+  const results = productEditSchema.safeParse(data);
   if (!results.success) {
     return results.error.flatten();
   } else {
@@ -72,4 +56,19 @@ export const editProduct = async (prevState: any, FormData: FormData) => {
       redirect(`/products/${updateProduct.id}`);
     }
   }
+};
+
+// 클라우드 플레어 이미지에 업로드 할 수 있는 주소를 제공하는 함수
+export const getUploadUrl = async () => {
+  const response = await fetch(
+    `https://api.cloudflare.com/client/v4/accounts/${process.env.NEXT_PUBLIC_CLOUDFLARE_ACCOUNT_ID}/images/v2/direct_upload`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.NEXT_PUBLIC_CLOUDFLARE_IMAGE_TOKEN}`,
+      },
+    }
+  );
+  const data = await response.json();
+  return data;
 };

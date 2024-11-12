@@ -42,7 +42,6 @@ export default function AddProduct() {
     resolver: zodResolver(productSchema),
   });
 
-  // 이미지 크기 제한
   const handleImageChange = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {

@@ -11,6 +11,7 @@ Date        Author   Status    Description
 2024.10.17  임도헌   Modified  제품 삭제 기능 추가
 2024.10.26  임도헌   Modified  메타데이터 추가
 2024.11.02  임도헌   Modified  제품 삭제 버튼 편집 페이지로 옮김
+2024.11.09  임도헌   Modified  제품 채팅방 생성 함수 추가
 2024.11.11  임도헌   Modified  클라우드 플레어 이미지 variants 추가
 */
 
@@ -20,7 +21,7 @@ import { formatToWon } from "@/lib/utils";
 import { UserIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { unstable_cache as nextCache } from "next/cache";
 
 /**
@@ -106,6 +107,28 @@ export default async function ProductDetail({
   }
   const isOwner = await getIsOwner(product.userId);
 
+  const createChatRoom = async () => {
+    "use server";
+    const session = await getSession();
+    const room = await db.chatRoom.create({
+      data: {
+        users: {
+          connect: [
+            {
+              id: product.userId, // 판매자
+            },
+            {
+              id: session.id,
+            },
+          ],
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+    redirect(`/chats/${room.id}`);
+  };
   return (
     <div className="mb-24">
       <div className="relative aspect-square">
@@ -150,12 +173,11 @@ export default async function ProductDetail({
               수정하기
             </Link>
           ) : null}
-          <Link
-            className="px-5 py-2.5 font-semibold text-white bg-indigo-300 rounded-md hover:bg-indigo-400 transition-colors"
-            href={``}
-          >
-            채팅하기
-          </Link>
+          <form action={createChatRoom}>
+            <button className="px-5 py-2.5 font-semibold text-white bg-indigo-300 rounded-md hover:bg-indigo-400 transition-colors">
+              채팅하기
+            </button>
+          </form>
         </div>
       </div>
     </div>

@@ -8,6 +8,7 @@
  2024.10.17  임도헌   Created
  2024.10.17  임도헌   Modified  제품 업로드 코드 추가
  2024.10.19  임도헌   Modified  DB에 저장하는 코드 추가
+ 2024.11.05  임도헌   Modified  캐싱 추가
  2024.11.11  임도헌   Modified  클라우드 플레어 이미지 업로드 주소 얻는 함수 추가
  */
 "use server";
@@ -17,6 +18,7 @@ import db from "@/lib/db";
 import getSession from "@/lib/session";
 import { redirect } from "next/navigation";
 import { productSchema } from "./schema";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 export const uploadProduct = async (FormData: FormData) => {
   const data = {
@@ -53,6 +55,8 @@ export const uploadProduct = async (FormData: FormData) => {
           id: true,
         },
       });
+      revalidatePath("/products");
+      revalidateTag("product-detail");
       redirect(`/products/${product.id}`);
     }
   }

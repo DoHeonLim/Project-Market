@@ -13,6 +13,7 @@
 // 2024.11.01  임도헌   Modified   댓글 모델 추가
 // 2024.11.08  임도헌   Modified   채팅방 모델 추가
 // 2024.11.08  임도헌   Modified   채팅 메세지 모델 추가
+// 2024.11.12  임도헌   Modified   라이브 스트리밍 모델 추가
 
 generator client {
   provider = "prisma-client-js"
@@ -24,15 +25,15 @@ datasource db {
 }
 
 model User {
-  id         Int        @id @default(autoincrement())
-  username   String     @unique
-  email      String?    @unique
+  id         Int          @id @default(autoincrement())
+  username   String       @unique
+  email      String?      @unique
   password   String?
-  phone      String?    @unique
-  github_id  String?    @unique
+  phone      String?      @unique
+  github_id  String?      @unique
   avatar     String?
-  created_at DateTime   @default(now())
-  updated_at DateTime   @updatedAt
+  created_at DateTime     @default(now())
+  updated_at DateTime     @updatedAt
   tokens     SMSToken[]
   products   Product[]
   posts      Post[]
@@ -40,6 +41,7 @@ model User {
   likes      Like[]
   chat_rooms ChatRoom[]
   messages   Message[]
+  LiveStream LiveStream[]
 }
 
 model SMSToken {
@@ -120,4 +122,17 @@ model Message {
   user       User     @relation(fields: [userId], references: [id])
   chatRoomId String
   userId     Int
+}
+
+model LiveStream {
+  id         Int    @id @default(autoincrement())
+  title      String
+  stream_key String
+  stream_id  String
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
 }

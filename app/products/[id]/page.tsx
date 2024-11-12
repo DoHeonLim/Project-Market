@@ -12,6 +12,7 @@ Date        Author   Status    Description
 2024.10.26  임도헌   Modified  메타데이터 추가
 2024.11.02  임도헌   Modified  제품 삭제 버튼 편집 페이지로 옮김
 2024.11.09  임도헌   Modified  제품 채팅방 생성 함수 추가
+2024.11.11  임도헌   Modified  클라우드 플레어 이미지 variants 추가
 */
 
 import db from "@/lib/db";
@@ -134,7 +135,7 @@ export default async function ProductDetail({
         <Image
           fill
           className="object-cover"
-          src={product.photo}
+          src={`${product.photo}/width=500,height=500`}
           alt={product.title}
         />
       </div>

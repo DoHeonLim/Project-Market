@@ -8,7 +8,7 @@ Date        Author   Status    Description
 2024.11.06  임도헌   Created
 2024.11.06  임도헌   Modified  댓글 목록 컴포넌트 추가
 2024.11.06  임도헌   Modified  useOptimistic기능으로 댓글 삭제 구현
-
+2024.11.12  임도헌   Modified  프로필 이미지 없을 경우의 코드 추가
 */
 "use client";
 
@@ -16,6 +16,7 @@ import { deleteComment } from "@/app/posts/[id]/actions";
 import { formatToTimeAgo } from "@/lib/utils";
 import Image from "next/image";
 import DeleteButton from "./comment-delete-button";
+import { UserIcon } from "@heroicons/react/24/solid";
 
 interface ICommentsProps {
   id: number;
@@ -49,13 +50,17 @@ export default function CommentsList({
           className="flex gap-4 pb-5 border-b border-neutral-500 last:pb-0 last:border-b-0"
         >
           <div className="flex justify-center items-center">
-            <Image
-              width={28}
-              height={28}
-              className="rounded-full size-7"
-              src={comment.user.avatar!}
-              alt={comment.user.username}
-            />
+            {comment.user.avatar !== null ? (
+              <Image
+                width={28}
+                height={28}
+                className="rounded-md size-7"
+                src={comment.user.avatar!}
+                alt={comment.user.username}
+              />
+            ) : (
+              <UserIcon className="size-7 rounded-md" />
+            )}
           </div>
           <div className="flex flex-col gap-1 flex-1">
             <div className="flex flex-row gap-4 items-center">

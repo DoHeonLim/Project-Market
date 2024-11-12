@@ -9,6 +9,7 @@ Date        Author   Status    Description
 2024.10.14  임도헌   Modified  동네생활 게시글 페이지 추가
 2024.11.05  임도헌   Modified  댓글 기능 추가
 2024.11.06  임도헌   Modified  댓글 기능 수정
+2024.11.12  임도헌   Modified  프로필 이미지 없을 경우의 코드 추가
 */
 
 import Comment from "@/components/comment";
@@ -16,7 +17,7 @@ import LikeButton from "@/components/like-button";
 import db from "@/lib/db";
 import getSession from "@/lib/session";
 import { formatToTimeAgo } from "@/lib/utils";
-import { EyeIcon } from "@heroicons/react/24/solid";
+import { EyeIcon, UserIcon } from "@heroicons/react/24/solid";
 import { unstable_cache as nextCache } from "next/cache";
 import Image from "next/image";
 import { notFound } from "next/navigation";
@@ -164,13 +165,17 @@ export default async function PostDetail({
   return (
     <div className="p-5 text-white">
       <div className="flex items-center gap-2 mb-2">
-        <Image
-          width={28}
-          height={28}
-          className="rounded-full size-7"
-          src={post.user.avatar!}
-          alt={post.user.username}
-        />
+        {post.user.avatar !== null ? (
+          <Image
+            width={28}
+            height={28}
+            className="rounded-md size-7"
+            src={post.user.avatar!}
+            alt={post.user.username}
+          />
+        ) : (
+          <UserIcon className="size-7 rounded-md" />
+        )}
         <div>
           <span className="text-sm font-semibold">{post.user.username}</span>
           <div className="text-xs">

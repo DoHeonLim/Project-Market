@@ -11,6 +11,9 @@ const nextConfig = {
       {
         hostname: "imagedelivery.net",
       },
+      {
+        hostname: "w7.pngwing.com",
+      },
     ],
   },
 };

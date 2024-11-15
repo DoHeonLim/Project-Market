@@ -5,14 +5,14 @@
  
  History
  Date        Author   Status    Description
- 2024.11.08  임도헌   Created
+ 2024.11.01  임도헌   Created
  2024.11.08  임도헌   Modified  채팅 메시지 컴포넌트 추가
  2024.11.09  임도헌   Modified  supabase 채널 연결 및 실시간 채팅 기능 추가
+ 2024.11.15  임도헌   Modified  채팅 읽음 안읽음 추가 
  */
 "use client";
 
-import { InitialChatMessages } from "@/app/chats/[id]/page";
-import { saveMessage } from "@/app/chats/actions";
+import { InitialChatMessages, saveMessage } from "@/app/chats/[id]/actions";
 import { formatToTimeAgo } from "@/lib/utils";
 import { PaperAirplaneIcon, UserIcon } from "@heroicons/react/24/solid";
 import { createClient, RealtimeChannel } from "@supabase/supabase-js";
@@ -56,6 +56,7 @@ export default function ChatMessagesList({
         payload: message,
         created_at: new Date(),
         userId,
+        isRead: false,
         user: {
           username: "string",
           avatar: "",
@@ -70,6 +71,7 @@ export default function ChatMessagesList({
         payload: message,
         created_at: new Date(),
         userId,
+        isRead: false,
         user: {
           username,
           avatar,
@@ -93,7 +95,7 @@ export default function ChatMessagesList({
     };
   }, [chatRoomId]);
   return (
-    <div className="p-5 flex flex-col gap-5 min-h-screen justify-end">
+    <div className="flex flex-col justify-end min-h-screen gap-5 p-5">
       {messages.map((message) => (
         <div
           key={message.id}
@@ -107,7 +109,7 @@ export default function ChatMessagesList({
               alt={message.user.username}
               width={50}
               height={50}
-              className="size-8 rounded-full"
+              className="rounded-full size-8"
             />
           ) : (
             <div className="size-8">
@@ -126,24 +128,39 @@ export default function ChatMessagesList({
             >
               {message.payload}
             </span>
-            <span className="text-xs">
-              {formatToTimeAgo(message.created_at.toString())}
-            </span>
+            <div
+              className={`flex ${
+                message.userId === userId
+                  ? "items-center justify-end gap-2 "
+                  : ""
+              }`}
+            >
+              <span className="text-xs">
+                {message.userId !== userId
+                  ? null
+                  : message.isRead === false
+                  ? "안 읽음"
+                  : "읽음"}
+              </span>
+              <span className="text-xs">
+                {formatToTimeAgo(message.created_at.toString())}
+              </span>
+            </div>
           </div>
         </div>
       ))}
-      <form className="flex relative items-center" onSubmit={onSubmit}>
+      <form className="relative flex items-center" onSubmit={onSubmit}>
         <input
           required
           onChange={onChange}
           value={message}
-          className="mb-2 bg-transparent rounded-full w-full h-10 focus:outline-none px-5 ring-2 focus:ring-4 transition ring-neutral-200 focus:ring-neutral-50 border-none placeholder:text-neutral-400"
+          className="w-full h-10 px-5 mb-2 transition bg-transparent border-none rounded-full focus:outline-none ring-2 focus:ring-4 ring-neutral-200 focus:ring-neutral-50 placeholder:text-neutral-400"
           type="text"
           name="message"
-          placeholder="Write a message..."
+          placeholder="메세지 쓰기"
         />
         <button className="absolute right-0 top-1">
-          <PaperAirplaneIcon className="size-8 text-indigo-500 transition-colors hover:text-indigo-300" />
+          <PaperAirplaneIcon className="text-indigo-500 transition-colors size-8 hover:text-indigo-300" />
         </button>
       </form>
     </div>

@@ -7,89 +7,41 @@ History
 Date        Author   Status    Description
 2024.11.08  임도헌   Created
 2024.11.08  임도헌   Modified  제품 채팅 페이지 추가
+2024.11.15  임도헌   Modified  prisma 코드 actions으로 옮김
 */
 
 // 해야될 것 만약 이미 해당 유저 두명이 존재하는 채팅방이 있다면 새로 방을 생성하지 않고
 // 기존 방으로 연결되게 변경해야 됨
 
 import ChatMessagesList from "@/components/chat-messages-list";
-import db from "@/lib/db";
 import getSession from "@/lib/session";
-import { Prisma } from "@prisma/client";
 import { notFound } from "next/navigation";
-
-// 채팅방 찾고 해당 유저들인지 체크
-const getRoom = async (id: string) => {
-  const room = await db.chatRoom.findUnique({
-    where: {
-      id,
-    },
-    include: {
-      users: {
-        select: { id: true },
-      },
-    },
-  });
-  if (room) {
-    const session = await getSession();
-    const canSee = Boolean(room.users.find((user) => user.id === session.id!));
-    if (!canSee) {
-      return null;
-    }
-  }
-  return room;
-};
-
-// 채팅방의 모든 메시지를 가져오는 함수
-const getMessages = async (chatRoomId: string) => {
-  const messages = await db.message.findMany({
-    where: {
-      chatRoomId,
-    },
-    select: {
-      id: true,
-      payload: true,
-      created_at: true,
-      userId: true,
-      user: {
-        select: {
-          avatar: true,
-          username: true,
-        },
-      },
-    },
-  });
-  return messages;
-};
-
-const getUserProfile = async () => {
-  const session = await getSession();
-  const user = await db.user.findUnique({
-    where: {
-      id: session.id!,
-    },
-    select: {
-      username: true,
-      avatar: true,
-    },
-  });
-  return user;
-};
-
-export type InitialChatMessages = Prisma.PromiseReturnType<typeof getMessages>;
+import {
+  getMessages,
+  getRoom,
+  getUserProfile,
+  readMessageUpdate,
+} from "./actions";
 
 export default async function ChatRoom({ params }: { params: { id: string } }) {
   const chatRoomId = params.id;
+  // 현재 채팅방 정보
   const room = await getRoom(chatRoomId);
   if (!room) {
     return notFound();
   }
+  // 메세지 초깃값
   const initialMessages = await getMessages(chatRoomId);
   const session = await getSession();
+  // 상대 유저 정보
   const user = await getUserProfile();
   if (!user) {
     return notFound();
   }
+
+  // 채팅 방에 들어가면 메시지 읽음 표시로 업데이트
+  await readMessageUpdate(chatRoomId);
+
   return (
     <ChatMessagesList
       chatRoomId={chatRoomId}

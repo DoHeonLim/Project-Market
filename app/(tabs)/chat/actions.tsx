@@ -8,6 +8,7 @@ Date        Author   Status    Description
 2024.11.15  임도헌   Created
 2024.11.15  임도헌   Modified  활성화된 채팅방 불러오는 함수 추가
 2024.11.15  임도헌   Modified  읽지 않은 메시지 갯수 함수 추가
+2024.11.18  임도헌   Modified  getChatRooms 최신 메시지 기준으로 정렬
 */
 
 import UnreadMessageCountBadge from "@/components/unread-message-count-badge";
@@ -61,6 +62,12 @@ export const getChatRooms = async (id: number) => {
       },
     },
   });
+  // 메시지의 created_at을 기준으로 채팅방을 정렬
+  chatRooms.sort((a, b) => {
+    const aCreatedAt = a.messages[0]?.created_at || new Date(0);
+    const bCreatedAt = b.messages[0]?.created_at || new Date(0);
+    return new Date(bCreatedAt).getTime() - new Date(aCreatedAt).getTime();
+  });
   return chatRooms;
 };
 
@@ -76,6 +83,7 @@ export const unreadMessageCountDB = async (id: number, chatRoomId: string) => {
       isRead: false,
     },
   });
+  console.log(count);
   return count;
 };
 
@@ -90,8 +98,6 @@ export const UnreadMessageCount = async ({
 }: UnreadMessageCountProps) => {
   const count = await unreadMessageCountDB(id, chatRoomId);
   return (
-    <div>
-      {count == 0 ? null : <UnreadMessageCountBadge unreadCount={count} />}
-    </div>
+    <>{count == 0 ? null : <UnreadMessageCountBadge unreadCount={count} />}</>
   );
 };

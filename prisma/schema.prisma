@@ -14,6 +14,8 @@
 // 2024.11.08  임도헌   Modified   채팅방 모델 추가
 // 2024.11.08  임도헌   Modified   채팅 메세지 모델 추가
 // 2024.11.12  임도헌   Modified   라이브 스트리밍 모델 추가
+// 2024.11.15  임도헌   Modified   채팅 메시지 읽음 여부 추가
+// 2024.11.15  임도헌   Modified   채팅방에 제품Id도 추가(어떤 제품의 채팅방인가? 체크)
 
 generator client {
   provider = "prisma-client-js"
@@ -55,15 +57,16 @@ model SMSToken {
 }
 
 model Product {
-  id          Int      @id @default(autoincrement())
+  id          Int        @id @default(autoincrement())
   title       String
   price       Float
   description String
   photo       String
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  created_at  DateTime   @default(now())
+  updated_at  DateTime   @updatedAt
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId      Int
+  chat_rooms  ChatRoom[]
 }
 
 model Post {
@@ -99,16 +102,23 @@ model Like {
   userId     Int
   postId     Int
 
+  //composite ID를 사용해서 고유한 ID 생성
+  //like는 Post에 한개만 가능
+  //A라는 아이디로 B라는 포스트에 Like를 했을 경우
+  //A와 B를 합치게되면 고유한 ID를 만들 수 있게 된다.
   @@id(name: "id", [userId, postId])
 }
 
 model ChatRoom {
-  id    String @id @default(cuid())
-  users User[]
+  id       String    @id @default(cuid())
+  users    User[]
+  messages Message[]
 
-  created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt
-  messages   Message[]
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int
 }
 
 model Message {
@@ -118,10 +128,11 @@ model Message {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  room       ChatRoom @relation(fields: [chatRoomId], references: [id])
+  room       ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
   user       User     @relation(fields: [userId], references: [id])
   chatRoomId String
   userId     Int
+  isRead     Boolean  @default(false)
 }
 
 model LiveStream {

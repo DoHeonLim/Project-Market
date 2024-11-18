@@ -10,6 +10,7 @@
  2024.11.02  임도헌   Modified  제품 삭제 버튼 편집 페이지로 옮김
  2024.11.08  임도헌   Modified  채팅방 생성 함수 추가
  2024.11.11  임도헌   Modified  클라우드 플레어 이미지 variants 추가
+ 2024.11.15  임도헌   Modified  본인이라면 채팅하기 버튼 필요 없으므로 코드 수정
  */
 
 import { getIsOwner, getProduct } from "@/app/products/[id]/page";
@@ -19,6 +20,7 @@ import getSession from "@/lib/session";
 
 import { formatToWon } from "@/lib/utils";
 import { UserIcon } from "@heroicons/react/24/solid";
+import { revalidateTag } from "next/cache";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -45,6 +47,29 @@ export default async function Modal({
   const createChatRoom = async () => {
     "use server";
     const session = await getSession();
+    // 기존에 존재하는 방인지 확인
+    const existingRoom = await db.chatRoom.findFirst({
+      where: {
+        productId: product.id,
+        users: {
+          every: {
+            id: {
+              in: [product.userId, session.id!],
+            },
+          },
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (existingRoom) {
+      // 이미 존재하는 채팅방으로 이동
+      revalidateTag("chatroom-list");
+      return redirect(`/chats/${existingRoom.id}`);
+    }
+    // 아니라면 채팅방 생성
     const room = await db.chatRoom.create({
       data: {
         users: {
@@ -57,11 +82,17 @@ export default async function Modal({
             },
           ],
         },
+        product: {
+          connect: {
+            id: product.id,
+          },
+        },
       },
       select: {
         id: true,
       },
     });
+    revalidateTag("chatroom-list");
     redirect(`/chats/${room.id}`);
   };
 
@@ -110,12 +141,13 @@ export default async function Modal({
               >
                 수정하기
               </Link>
-            ) : null}
-            <form action={createChatRoom}>
-              <button className="px-2 py-1.5 font-semibold text-[10px] text-white bg-indigo-300 rounded-md hover:bg-indigo-400 transition-colors sm:text-sm md:text-md">
-                채팅하기
-              </button>
-            </form>
+            ) : (
+              <form action={createChatRoom}>
+                <button className="px-2 py-1.5 font-semibold text-[10px] text-white bg-indigo-300 rounded-md hover:bg-indigo-400 transition-colors sm:text-sm md:text-md">
+                  채팅하기
+                </button>
+              </form>
+            )}
           </div>
         </div>
       </div>

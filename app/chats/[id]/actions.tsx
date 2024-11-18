@@ -64,7 +64,7 @@ export const getMessages = async (chatRoomId: string) => {
   return messages;
 };
 
-// 채팅방의 상대 유저 정보
+// 채팅방의 유저 정보
 export const getUserProfile = async () => {
   const session = await getSession();
   const user = await db.user.findUnique({
@@ -92,11 +92,15 @@ export const saveMessage = async (payload: string, chatRoomId: string) => {
   revalidateTag("chatroom-list");
 };
 
-export const readMessageUpdate = async (chatRoomId: string) => {
+export const readMessageUpdate = async (chatRoomId: string, userId: number) => {
   const updateMessage = await db.message.updateMany({
     where: {
       chatRoomId,
       isRead: false,
+      // 내가 보낸 메시지는 업데이트 하지 않는다. 내가 아닌 유저가 보낸 메시지 일 경우에만 업데이트한다.
+      NOT: {
+        userId,
+      },
     },
     data: {
       isRead: true,

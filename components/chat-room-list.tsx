@@ -79,7 +79,7 @@ export default function ChatRoomList({ userId, room }: IListChatProps) {
                 </div>
               </div>
             </div>
-            <div className="flex items-center justify-end gap-3">
+            <div className="flex items-center justify-center gap-3">
               <UnreadMessageCount id={userId} chatRoomId={room.id} />
               <span className="text-white">
                 {formatToTimeAgo(room.messages[0]?.created_at.toString())}

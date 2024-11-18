@@ -33,14 +33,14 @@ export default async function ChatRoom({ params }: { params: { id: string } }) {
   // 메세지 초깃값
   const initialMessages = await getMessages(chatRoomId);
   const session = await getSession();
-  // 상대 유저 정보
+  // 유저 정보
   const user = await getUserProfile();
   if (!user) {
     return notFound();
   }
 
   // 채팅 방에 들어가면 메시지 읽음 표시로 업데이트
-  await readMessageUpdate(chatRoomId);
+  await readMessageUpdate(chatRoomId, session.id!);
 
   return (
     <ChatMessagesList

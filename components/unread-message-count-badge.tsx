@@ -15,8 +15,8 @@ export default function UnreadMessageCountBadge({
   unreadCount,
 }: UnreadMessageCountBadgeProps) {
   return (
-    <div className="flex items-center justify-center w-5 h-5 bg-red-500 rounded-full">
-      <span className="text-white text-md">{unreadCount}</span>
+    <div className="flex items-center justify-center size-5 bg-red-500 rounded-full">
+      <span className="text-white text-sm">{unreadCount}</span>
     </div>
   );
 }

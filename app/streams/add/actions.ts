@@ -1,12 +1,12 @@
 /**
- File Name : app/streams/add/action
- Description : 라이브 스트리밍 server 코드
+ File Name : app/streams/add/actions
+ Description : 라이브 스트리밍 시작 server 코드
  Author : 임도헌
  
  History
  Date        Author   Status    Description
  2024.11.12  임도헌   Created
- 2024.11.12  임도헌   Modified  라이브 스트리밍 server 코드 추가
+ 2024.11.12  임도헌   Modified  라이브 스트리밍 시작 server 코드 추가
  */
 "use server";
 

@@ -14,6 +14,7 @@ import { getStream, recodingStream } from "../actions";
 import { unstable_cache as nextCache } from "next/cache";
 import Image from "next/image";
 import { UserIcon } from "@heroicons/react/24/solid";
+import { formatToTimeAgo } from "@/lib/utils";
 
 interface IRecodingProps {
   meta: { name: string };
@@ -60,14 +61,6 @@ export default async function RecordingPage({
             allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
             allowFullScreen={true}
           ></iframe>
-          {/* <div>
-              <Image
-                src={record.thumbnail}
-                width={300}
-                height={300}
-                alt={record.uid}
-              />
-            </div> */}
           <div className="flex items-center gap-3">
             <div className="overflow-hidden rounded-full size-10">
               {stream.user.avatar !== null ? (
@@ -86,6 +79,7 @@ export default async function RecordingPage({
             </div>
           </div>
           <div>{record.meta.name}</div>
+          <div>{formatToTimeAgo(record.created.toString())}</div>
         </div>
       ))}
     </div>

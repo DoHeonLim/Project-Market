@@ -14,6 +14,9 @@ const nextConfig = {
       {
         hostname: "w7.pngwing.com",
       },
+      {
+        hostname: "customer-fllme7un34f7981k.cloudflarestream.com",
+      },
     ],
   },
 };

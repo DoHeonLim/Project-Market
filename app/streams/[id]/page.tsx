@@ -7,36 +7,29 @@
  Date        Author   Status    Description
  2024.11.12  임도헌   Created
  2024.11.12  임도헌   Modified  라이브 스트리밍 개별 페이지 추가
+ 2024.11.19  임도헌   Modified  캐싱 기능 추가
  */
 
-import db from "@/lib/db";
 import getSession from "@/lib/session";
-import { UserIcon } from "@heroicons/react/24/solid";
-import Image from "next/image";
 import { notFound } from "next/navigation";
+import { getStream, recodingStream } from "./actions";
+import { streamStatus } from "@/app/(tabs)/live/actions";
+import StreamDetail from "@/components/stream-detail";
+import Link from "next/link";
+import { unstable_cache as nextCache } from "next/cache";
 
-const getStream = async (id: number) => {
-  const stream = await db.liveStream.findUnique({
-    where: {
-      id,
-    },
-    select: {
-      title: true,
-      stream_key: true,
-      stream_id: true,
-      userId: true,
-      user: {
-        select: {
-          avatar: true,
-          username: true,
-        },
-      },
-    },
-  });
-  return stream;
-};
+// 스트리밍 캐싱
+const getCachedStream = nextCache(getStream, ["stream-detail"], {
+  tags: ["stream-detail"],
+});
 
-export default async function StreamDetail({
+// 스트리밍 상태 캐싱
+const getCachedStatus = nextCache(streamStatus, ["stream-detail-status"], {
+  tags: ["stream-detail-status"],
+  revalidate: 60, // 1분
+});
+
+export default async function StreamDetailPage({
   params,
 }: {
   params: { id: string };
@@ -45,54 +38,34 @@ export default async function StreamDetail({
   if (isNaN(id)) {
     return notFound();
   }
-  const stream = await getStream(id);
+  const stream = await getCachedStream(id);
   if (!stream) {
     return notFound();
   }
+
   const session = await getSession();
-  console.log(stream);
+
+  // 현재 방송 상태
+  const status = await getCachedStatus(stream.stream_id);
+  // 방송 상태 가져오기 실패 시 스트리밍이 존재하지 않음
+  if (!status.success) {
+    return notFound();
+  }
+
   return (
     <div className="p-10">
-      <div className="relative aspect-video">
-        <iframe
-          src={`${process.env.NEXT_PUBLIC_CLOUDFLARE_STREAM_DOMAIN}/${stream.stream_id}/iframe`}
-          className="w-full h-full rounded-md"
-          allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
-          allowFullScreen={true}
-        ></iframe>
-      </div>
-      <div className="flex items-center gap-3 p-5 border-b border-neutral-700">
-        <div className="overflow-hidden rounded-full size-10">
-          {stream.user.avatar !== null ? (
-            <Image
-              src={stream.user.avatar!}
-              width={40}
-              height={40}
-              alt={stream.user.username}
-            />
-          ) : (
-            <UserIcon />
-          )}
-        </div>
-        <div>
-          <h3>{stream.user.username}</h3>
-        </div>
-      </div>
-      <div className="p-5">
-        <h1 className="text-2xl font-semibold">{stream.title}</h1>
-      </div>
-      <div className="p-5 text-black bg-yellow-200 rounded-md scroll-auto">
-        <div className="flex gap-2">
-          <span className="font-semibold">스트리밍 URL:</span>
-          <span>rtmps://live.cloudflare.com:443/live/</span>
-        </div>
-        {stream.userId === session.id! ? (
-          <div className="flex flex-wrap">
-            <span className="font-semibold">Secret Key:</span>
-            <span>{stream.stream_key}</span>
-          </div>
-        ) : null}
-      </div>
+      <StreamDetail
+        stream={stream}
+        me={session.id!}
+        status={status}
+        streamId={id}
+      />
+      <Link
+        href={`/streams/${id}/recoding`}
+        className="flex items-center justify-center flex-1 mt-4 font-semibold text-white transition-colors bg-indigo-400 rounded-md h-7 px-auto hover:bg-indigo-500 sm:text-lg md:text-xl"
+      >
+        녹화본 보기
+      </Link>
     </div>
   );
 }

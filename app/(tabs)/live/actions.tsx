@@ -7,6 +7,7 @@
  Date        Author   Status    Description
  2024.11.12  임도헌   Created
  2024.11.12  임도헌   Modified  라이브 서버 코드 분리
+ 2024.11.21  임도헌   Modified  console.log 제거
  */
 
 import db from "@/lib/db";
@@ -23,12 +24,6 @@ export const listStream = async () => {
     }
   );
   const list = await response.json();
-  console.log("------------------------------------------");
-  console.log("방송 리스트");
-  console.log(list);
-  console.log("------------------------------------------");
-  console.log("방송 리스트의 방송 이름");
-  console.log(list.result[0].meta.name);
   return list;
 };
 
@@ -47,13 +42,11 @@ export const getLiveStreams = async () => {
       },
     },
   });
-  // console.log(liveStreams);
   return liveStreams;
 };
 
 // 라이브 스트리밍의 현재 상태
 export const streamStatus = async (streamId: string) => {
-  console.log(streamId);
   const response = await fetch(
     `https://api.cloudflare.com/client/v4/accounts/${process.env.NEXT_PUBLIC_CLOUDFLARE_ACCOUNT_ID}/stream/live_inputs/${streamId}`,
     {
@@ -63,14 +56,6 @@ export const streamStatus = async (streamId: string) => {
       },
     }
   );
-  //   console.log("------------------------------------------");
-  //   console.log("방송 상태");
   const status = await response.json();
-  //   console.log("------------------------------------------");
-  //   console.log("방송 연결 상태");
-  //   console.log(status.result.status.current.state);
-  //   console.log("------------------------------------------");
-  //   console.log("방송 연결 역사");
-  //   console.log(status.result.status.current);
   return status;
 };

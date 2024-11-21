@@ -12,7 +12,7 @@
 
 import getSession from "@/lib/session";
 import { notFound } from "next/navigation";
-import { getStream, recodingStream } from "./actions";
+import { getStream } from "./actions";
 import { streamStatus } from "@/app/(tabs)/live/actions";
 import StreamDetail from "@/components/stream-detail";
 import Link from "next/link";

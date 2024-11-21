@@ -7,6 +7,7 @@
  Date        Author   Status    Description
  2024.11.19  임도헌   Created
  2024.11.19  임도헌   Modified  라이브 스트리밍 녹화본 페이지 추가
+ 2024.11.21  임도헌   Modified  console.log 삭제
  */
 
 import { notFound } from "next/navigation";
@@ -46,7 +47,6 @@ export default async function RecordingPage({
   }
 
   const recodingVideo = await recodingStream(stream.stream_id);
-  console.log(recodingVideo);
   return (
     <div className="flex flex-col items-center justify-center gap-6 mt-4">
       <div className="text-4xl font-semibold">녹화본</div>

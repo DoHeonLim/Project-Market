@@ -9,6 +9,7 @@
  2024.11.12  임도헌   Modified  현재 스트리밍 얻어오는 코드 추가
  2024.11.18  임도헌   Modified  스트리밍이 끝났다면 삭제하는 코드 추가
  2024.11.19  임도헌   Modified  캐싱 기능 추가
+ 2024.11.21  임도헌   Modified  console.log 삭제
  */
 "use server";
 
@@ -81,6 +82,5 @@ export const recodingStream = async (streamId: string) => {
   const result = await response.json();
 
   const recoding = result.result;
-  console.log(recoding);
   return recoding;
 };

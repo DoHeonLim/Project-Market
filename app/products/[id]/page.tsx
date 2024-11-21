@@ -14,6 +14,7 @@ Date        Author   Status    Description
 2024.11.09  임도헌   Modified  제품 채팅방 생성 함수 추가
 2024.11.11  임도헌   Modified  클라우드 플레어 이미지 variants 추가
 2024.11.15  임도헌   Modified  본인이라면 채팅하기 버튼 필요 없으므로 코드 수정, 캐싱 기능 추가
+2024.11.21  임도헌   Modified  Chatroom을 productChatRoom으로 변경
 */
 
 import db from "@/lib/db";
@@ -112,7 +113,7 @@ export default async function ProductDetail({
     "use server";
     const session = await getSession();
     // 기존에 존재하는 방인지 확인
-    const existingRoom = await db.chatRoom.findFirst({
+    const existingRoom = await db.productChatRoom.findFirst({
       where: {
         productId: product.id,
         users: {
@@ -134,7 +135,7 @@ export default async function ProductDetail({
       return redirect(`/chats/${existingRoom.id}`);
     }
     // 아니라면 채팅방 생성
-    const room = await db.chatRoom.create({
+    const room = await db.productChatRoom.create({
       data: {
         users: {
           connect: [

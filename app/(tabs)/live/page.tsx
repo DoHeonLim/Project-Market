@@ -8,6 +8,7 @@
  2024.11.12  임도헌   Created
  2024.11.12  임도헌   Modified  라이브 페이지 추가
  2024.11.19  임도헌   Modified  캐싱 기능 추가
+ 2024.11.21  임도헌   Modified  리스트 결과 값 스타일 수정
  */
 
 import { PlusIcon } from "@heroicons/react/24/solid";
@@ -26,7 +27,7 @@ export default async function Live() {
 
   return (
     <div>
-      <div className="mt-4">
+      <div className="flex flex-col mt-4 gap-4">
         {liveStreams.length === 0 && (
           <div className="flex items-center justify-center w-full h-screen text-lg font-semibold">
             생성된 스트리밍이 없습니다.

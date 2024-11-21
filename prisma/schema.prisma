@@ -16,6 +16,7 @@
 // 2024.11.12  임도헌   Modified   라이브 스트리밍 모델 추가
 // 2024.11.15  임도헌   Modified   채팅 메시지 읽음 여부 추가
 // 2024.11.15  임도헌   Modified   채팅방에 제품Id도 추가(어떤 제품의 채팅방인가? 체크)
+// 2024.11.21  임도헌   Modified   chatroom을 ProductChatRoom 으로 이름 변경
 
 generator client {
   provider = "prisma-client-js"
@@ -27,21 +28,21 @@ datasource db {
 }
 
 model User {
-  id         Int          @id @default(autoincrement())
-  username   String       @unique
-  email      String?      @unique
+  id         Int               @id @default(autoincrement())
+  username   String            @unique
+  email      String?           @unique
   password   String?
-  phone      String?      @unique
-  github_id  String?      @unique
+  phone      String?           @unique
+  github_id  String?           @unique
   avatar     String?
-  created_at DateTime     @default(now())
-  updated_at DateTime     @updatedAt
+  created_at DateTime          @default(now())
+  updated_at DateTime          @updatedAt
   tokens     SMSToken[]
   products   Product[]
   posts      Post[]
   comments   Comment[]
   likes      Like[]
-  chat_rooms ChatRoom[]
+  chat_rooms ProductChatRoom[]
   messages   Message[]
   LiveStream LiveStream[]
 }
@@ -57,16 +58,16 @@ model SMSToken {
 }
 
 model Product {
-  id          Int        @id @default(autoincrement())
+  id          Int               @id @default(autoincrement())
   title       String
   price       Float
   description String
   photo       String
-  created_at  DateTime   @default(now())
-  updated_at  DateTime   @updatedAt
-  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  created_at  DateTime          @default(now())
+  updated_at  DateTime          @updatedAt
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId      Int
-  chat_rooms  ChatRoom[]
+  chat_rooms  ProductChatRoom[]
 }
 
 model Post {
@@ -109,7 +110,7 @@ model Like {
   @@id(name: "id", [userId, postId])
 }
 
-model ChatRoom {
+model ProductChatRoom {
   id       String    @id @default(cuid())
   users    User[]
   messages Message[]
@@ -122,17 +123,17 @@ model ChatRoom {
 }
 
 model Message {
-  id      Int    @id @default(autoincrement())
+  id      Int     @id @default(autoincrement())
   payload String
+  isRead  Boolean @default(false) //읽음 여부
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  room       ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
-  user       User     @relation(fields: [userId], references: [id])
-  chatRoomId String
-  userId     Int
-  isRead     Boolean  @default(false)
+  room              ProductChatRoom? @relation(fields: [productChatRoomId], references: [id], onDelete: Cascade)
+  user              User             @relation(fields: [userId], references: [id])
+  userId            Int
+  productChatRoomId String?
 }
 
 model LiveStream {

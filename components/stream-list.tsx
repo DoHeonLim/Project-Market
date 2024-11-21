@@ -33,6 +33,7 @@ export default function StreamList({
   title,
   stream_id,
 }: IStreamList) {
+  // 라이브 여부
   const [isLived, setIsLived] = useState("");
   useEffect(() => {
     const liveStateus = async () => {

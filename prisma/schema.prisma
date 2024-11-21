@@ -17,6 +17,7 @@
 // 2024.11.15  임도헌   Modified   채팅 메시지 읽음 여부 추가
 // 2024.11.15  임도헌   Modified   채팅방에 제품Id도 추가(어떤 제품의 채팅방인가? 체크)
 // 2024.11.21  임도헌   Modified   chatroom을 ProductChatRoom 으로 이름 변경
+// 2024.11.21  임도헌   Modified   StreamChatRoom 및 StreamMessage 모델 추가
 
 generator client {
   provider = "prisma-client-js"
@@ -28,23 +29,24 @@ datasource db {
 }
 
 model User {
-  id         Int               @id @default(autoincrement())
-  username   String            @unique
-  email      String?           @unique
-  password   String?
-  phone      String?           @unique
-  github_id  String?           @unique
-  avatar     String?
-  created_at DateTime          @default(now())
-  updated_at DateTime          @updatedAt
-  tokens     SMSToken[]
-  products   Product[]
-  posts      Post[]
-  comments   Comment[]
-  likes      Like[]
-  chat_rooms ProductChatRoom[]
-  messages   Message[]
-  LiveStream LiveStream[]
+  id                 Int               @id @default(autoincrement())
+  username           String            @unique
+  email              String?           @unique
+  password           String?
+  phone              String?           @unique
+  github_id          String?           @unique
+  avatar             String?
+  created_at         DateTime          @default(now())
+  updated_at         DateTime          @updatedAt
+  tokens             SMSToken[]
+  products           Product[]
+  posts              Post[]
+  comments           Comment[]
+  likes              Like[]
+  product_chat_rooms ProductChatRoom[]
+  product_messages   Message[]
+  livestreams        LiveStream[]
+  streamMessages     StreamMessage[]
 }
 
 model SMSToken {
@@ -122,10 +124,34 @@ model ProductChatRoom {
   productId Int
 }
 
-model Message {
-  id      Int     @id @default(autoincrement())
+model StreamChatRoom {
+  id Int @id @default(autoincrement())
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  live_stream  LiveStream @relation(fields: [liveStreamId], references: [id])
+  liveStreamId Int        @unique
+
+  StreamMessage StreamMessage[]
+}
+
+model StreamMessage {
+  id      Int    @id @default(autoincrement())
   payload String
-  isRead  Boolean @default(false) //읽음 여부
+
+  created_at DateTime @default(now())
+
+  stream_chat_room StreamChatRoom @relation(fields: [streamChatRoomId], references: [id])
+  streamChatRoomId Int
+  user             User           @relation(fields: [userId], references: [id])
+  userId           Int
+}
+
+model Message {
+  id      Int      @id @default(autoincrement())
+  payload String
+  isRead  Boolean? @default(false) //읽음 여부
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -145,6 +171,7 @@ model LiveStream {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  user   User @relation(fields: [userId], references: [id])
-  userId Int
+  user           User            @relation(fields: [userId], references: [id])
+  userId         Int
+  StreamChatRoom StreamChatRoom?
 }

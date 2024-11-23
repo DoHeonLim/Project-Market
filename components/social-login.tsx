@@ -18,6 +18,7 @@ export default function SocialLogin() {
       <div className="w-full h-px bg-neutral-500" />
       <div className="flex flex-col gap-3 ">
         <Link
+          aria-label="github_continue"
           className="flex items-center justify-center h-10 gap-2 primary-btn"
           href="/github/start"
         >
@@ -41,7 +42,10 @@ export default function SocialLogin() {
           href="/sms"
         >
           <span>
-            <ChatBubbleOvalLeftEllipsisIcon className="size-6" />
+            <ChatBubbleOvalLeftEllipsisIcon
+              aria-label="sms_continue"
+              className="size-6"
+            />
           </span>
           <span>SMS로 계속하기</span>
         </Link>

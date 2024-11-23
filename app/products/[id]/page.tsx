@@ -181,7 +181,7 @@ export default async function ProductDetail({
               alt={product.user.username}
             />
           ) : (
-            <UserIcon />
+            <UserIcon aria-label="user_icon" />
           )}
         </div>
         <div>

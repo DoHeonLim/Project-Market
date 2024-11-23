@@ -61,7 +61,7 @@ export default function StreamList({
                 alt={user.username}
               />
             ) : (
-              <UserIcon />
+              <UserIcon aria-label="user_icon" />
             )}
           </div>
           <span>{user.username}</span>

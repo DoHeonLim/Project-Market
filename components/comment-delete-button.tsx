@@ -7,6 +7,7 @@ History
 Date        Author   Status    Description
 2024.11.01  임도헌   Created
 2024.11.06  임도헌   Modified  댓글 삭제 기능 추가
+2024.11.23  임도헌   Modified  삭제 버튼 접근성 추가
 */
 "use client";
 
@@ -44,7 +45,7 @@ export default function DeleteButton({
   };
 
   return (
-    <button onClick={handleDeleteClick}>
+    <button aria-label="Delete" onClick={handleDeleteClick}>
       <TrashIcon className="size-8 text-rose-700 hover:text-rose-500 transition-colors" />
     </button>
   );

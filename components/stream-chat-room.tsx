@@ -146,12 +146,15 @@ export default function StreamChatRoom({
               )
             ) : message.userId === streamChatRoomhost ? (
               <div className="relative size-8">
-                <VideoCameraIcon className="absolute size-5 text-yellow-400 top-1.5 -left-5" />
-                <UserIcon />
+                <VideoCameraIcon
+                  aria-label="host-icon"
+                  className="absolute size-5 text-yellow-400 top-1.5 -left-5"
+                />
+                <UserIcon aria-label="user_icon" />
               </div>
             ) : (
               <div className="size-8">
-                <UserIcon />
+                <UserIcon aria-label="user_icon" />
               </div>
             )}
             <span className="flex justify-center items-center">
@@ -185,7 +188,10 @@ export default function StreamChatRoom({
           placeholder="메세지 쓰기"
         />
         <button className="absolute right-0 top-1">
-          <PaperAirplaneIcon className="text-indigo-500 transition-colors size-8 hover:text-indigo-300" />
+          <PaperAirplaneIcon
+            aria-label="send_message"
+            className="text-indigo-500 transition-colors size-8 hover:text-indigo-300"
+          />
         </button>
       </form>
     </div>

@@ -69,7 +69,7 @@ export default function ChatRoomList({ userId, room }: IListChatProps) {
                       alt={room.users[0].username}
                     />
                   ) : (
-                    <UserIcon className="rounded-md size-7" />
+                    <UserIcon aria-label="user_icon" className="rounded-md size-7" />
                   )}
                   <span className="text-xl">{room.users[0].username}</span>
                 </div>

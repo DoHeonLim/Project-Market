@@ -47,7 +47,7 @@ export default async function Live() {
         href="/streams/add"
         className="fixed flex items-center justify-center text-white transition-colors bg-indigo-400 rounded-full size-16 bottom-24 right-8 hover:bg-indigo-500"
       >
-        <PlusIcon className="size-10" />
+        <PlusIcon aria-label="add_stream" className="size-10" />
       </Link>
     </div>
   );

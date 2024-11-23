@@ -71,7 +71,7 @@ export default async function RecordingPage({
                   alt={stream.user.username}
                 />
               ) : (
-                <UserIcon />
+                <UserIcon aria-label="user_icon" />
               )}
             </div>
             <div>

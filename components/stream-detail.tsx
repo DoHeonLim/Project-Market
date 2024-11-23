@@ -62,7 +62,7 @@ export default function StreamDetail({
               alt={stream.user.username}
             />
           ) : (
-            <UserIcon />
+            <UserIcon aria-label="user_icon" />
           )}
         </div>
         <div>

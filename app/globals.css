@@ -28,6 +28,6 @@
 
 @layer components {
   .primary-btn {
-    @apply w-full font-medium text-white bg-indigo-300 rounded-md text-center hover:bg-indigo-400 transition-colors;
+    @apply w-full font-medium text-white bg-indigo-600 rounded-md text-center hover:bg-indigo-400 transition-colors;
   }
 }

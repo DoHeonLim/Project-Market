@@ -7,7 +7,7 @@ History
 Date        Author   Status    Description
 2024.11.19  임도헌   Created
 2024.11.19  임도헌   Modified  스트리밍 리스트 컴포넌트 추가
-
+2024.11.21  임도헌   Modified  현재 라이브 상태 isLived 추가
 */
 "use client";
 
@@ -40,7 +40,8 @@ export default function StreamList({
       // 현재 방송 상태
       const status = await streamStatus(stream_id);
       // 현재 라이브 상태
-      setIsLived(status.result.status.current.state);
+      const currentState = status?.result?.status?.current?.state ?? ""; // current가 없을 경우 빈 값
+      setIsLived(currentState);
     };
     liveStateus();
   }, [stream_id]);

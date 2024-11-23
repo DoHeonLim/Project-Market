@@ -8,15 +8,18 @@
  2024.11.12  임도헌   Created
  2024.11.12  임도헌   Modified  라이브 스트리밍 개별 페이지 추가
  2024.11.19  임도헌   Modified  캐싱 기능 추가
+ 2024.11.21  임도헌   Modified  Link를 StreamDetail로 옮김
+ 2024.11.23  임도헌   Modified  스트리밍 채팅방 컴포넌트 추가
  */
 
 import getSession from "@/lib/session";
 import { notFound } from "next/navigation";
-import { getStream } from "./actions";
+import { getStream, getStreamChatRoom, getStreamMessages } from "./actions";
 import { streamStatus } from "@/app/(tabs)/live/actions";
 import StreamDetail from "@/components/stream-detail";
-import Link from "next/link";
 import { unstable_cache as nextCache } from "next/cache";
+import StreamChatRoom from "@/components/stream-chat-room";
+import { getUserProfile } from "@/app/chats/[id]/actions";
 
 // 스트리밍 캐싱
 const getCachedStream = nextCache(getStream, ["stream-detail"], {
@@ -38,12 +41,17 @@ export default async function StreamDetailPage({
   if (isNaN(id)) {
     return notFound();
   }
-  const stream = await getCachedStream(id);
-  if (!stream) {
+
+  const [stream, session, streamChatRoom, user] = await Promise.all([
+    getCachedStream(id),
+    getSession(),
+    getStreamChatRoom(id),
+    getUserProfile(),
+  ]);
+
+  if (!stream || !streamChatRoom || !user) {
     return notFound();
   }
-
-  const session = await getSession();
 
   // 현재 방송 상태
   const status = await getCachedStatus(stream.stream_id);
@@ -51,6 +59,10 @@ export default async function StreamDetailPage({
   if (!status.success) {
     return notFound();
   }
+
+  // 방송 메시지 초기화
+  const initialStreamMessage = await getStreamMessages(streamChatRoom.id);
+  console.log(initialStreamMessage);
 
   return (
     <div className="p-10">
@@ -60,12 +72,14 @@ export default async function StreamDetailPage({
         status={status}
         streamId={id}
       />
-      <Link
-        href={`/streams/${id}/recoding`}
-        className="flex items-center justify-center flex-1 mt-4 font-semibold text-white transition-colors bg-indigo-400 rounded-md h-7 px-auto hover:bg-indigo-500 sm:text-lg md:text-xl"
-      >
-        녹화본 보기
-      </Link>
+      <StreamChatRoom
+        initialStreamMessage={initialStreamMessage}
+        streamChatRoomId={streamChatRoom.id}
+        streamChatRoomhost={streamChatRoom.live_stream.userId}
+        userId={session.id!}
+        username={user.username}
+        avatar={user.avatar!}
+      />
     </div>
   );
 }

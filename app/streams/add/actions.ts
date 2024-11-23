@@ -8,6 +8,7 @@
  2024.11.12  임도헌   Created
  2024.11.12  임도헌   Modified  라이브 스트리밍 시작 server 코드 추가
  2024.11.19  임도헌   Modified  캐싱 기능 추가
+ 2024.11.21  임도헌   Modified  라이브 스트리밍 채팅방 생성 코드 추가
  */
 "use server";
 
@@ -18,6 +19,22 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 const title = z.string().min(5, "5자 이상 적어주세요.");
+
+// 스트리밍 채팅방 생성
+const createStreamChatRoom = async (streamId: number) => {
+  await db.streamChatRoom.create({
+    data: {
+      live_stream: {
+        connect: {
+          id: streamId,
+        },
+      },
+    },
+    select: {
+      id: true,
+    },
+  });
+};
 
 export const startStream = async (_: any, formData: FormData) => {
   const results = title.safeParse(formData.get("title"));
@@ -54,6 +71,9 @@ export const startStream = async (_: any, formData: FormData) => {
       id: true,
     },
   });
+  // 라이브 스트리밍 채팅방 생성
+  createStreamChatRoom(stream.id);
+
   revalidateTag("stream-list");
   redirect(`/streams/${stream.id}`);
 };

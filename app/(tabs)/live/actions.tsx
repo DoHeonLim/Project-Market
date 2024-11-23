@@ -8,6 +8,7 @@
  2024.11.12  임도헌   Created
  2024.11.12  임도헌   Modified  라이브 서버 코드 분리
  2024.11.21  임도헌   Modified  console.log 제거
+ 2024.11.23  임도헌   Modified  listStream 최신순으로 정렬
  */
 
 import db from "@/lib/db";
@@ -40,6 +41,9 @@ export const getLiveStreams = async () => {
           avatar: true,
         },
       },
+    },
+    orderBy: {
+      created_at: "desc",
     },
   });
   return liveStreams;

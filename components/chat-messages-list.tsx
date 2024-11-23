@@ -9,6 +9,7 @@
  2024.11.08  임도헌   Modified  채팅 메시지 컴포넌트 추가
  2024.11.09  임도헌   Modified  supabase 채널 연결 및 실시간 채팅 기능 추가
  2024.11.15  임도헌   Modified  채팅 읽음 안읽음 추가 
+ 2024.11.21  임도헌   Modified  ChatroomId를 productChatRoomId으로 변경
  */
 "use client";
 
@@ -25,7 +26,7 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 interface IChatMessageListProps {
   initialMessages: InitialChatMessages;
   userId: number;
-  chatRoomId: string;
+  productChatRoomId: string;
   username: string;
   avatar: string;
 }
@@ -33,7 +34,7 @@ interface IChatMessageListProps {
 export default function ChatMessagesList({
   initialMessages,
   userId,
-  chatRoomId,
+  productChatRoomId,
   username,
   avatar,
 }: IChatMessageListProps) {
@@ -78,12 +79,12 @@ export default function ChatMessagesList({
         },
       },
     });
-    await saveMessage(message, chatRoomId);
+    await saveMessage(message, productChatRoomId);
     setMessage("");
   };
   useEffect(() => {
     const client = createClient(SUPABASE_URL!, SUPABASE_PUBLIC_KEY!);
-    channel.current = client.channel(`room-${chatRoomId}`);
+    channel.current = client.channel(`room-${productChatRoomId}`);
     channel.current
       .on("broadcast", { event: "message" }, (payload) => {
         setMessages((prevMsgs) => [...prevMsgs, payload.payload]);
@@ -93,7 +94,7 @@ export default function ChatMessagesList({
     return () => {
       channel.current?.unsubscribe();
     };
-  }, [chatRoomId]);
+  }, [productChatRoomId]);
   return (
     <div className="flex flex-col justify-end min-h-screen gap-5 p-5">
       {messages.map((message) => (

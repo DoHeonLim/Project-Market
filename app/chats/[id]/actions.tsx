@@ -7,7 +7,7 @@ History
 Date        Author   Status    Description
 2024.11.09  임도헌   Created
 2024.11.09  임도헌   Modified  채팅 메시지 저장 추가
-2024.11.15
+2024.11.21  임도헌   Modified  Chatroom을 productChatRoom으로 변경
 */
 
 "use server";
@@ -21,7 +21,7 @@ export type InitialChatMessages = Prisma.PromiseReturnType<typeof getMessages>;
 
 // 채팅방 찾고 해당 유저들인지 체크
 export const getRoom = async (id: string) => {
-  const room = await db.chatRoom.findUnique({
+  const room = await db.productChatRoom.findUnique({
     where: {
       id,
     },
@@ -42,10 +42,10 @@ export const getRoom = async (id: string) => {
 };
 
 // 채팅방의 모든 메시지를 가져오는 함수
-export const getMessages = async (chatRoomId: string) => {
+export const getMessages = async (productChatRoomId: string) => {
   const messages = await db.message.findMany({
     where: {
-      chatRoomId,
+      productChatRoomId,
     },
     select: {
       id: true,
@@ -79,12 +79,15 @@ export const getUserProfile = async () => {
   return user;
 };
 
-export const saveMessage = async (payload: string, chatRoomId: string) => {
+export const saveMessage = async (
+  payload: string,
+  productChatRoomId: string
+) => {
   const session = await getSession();
   await db.message.create({
     data: {
       payload,
-      chatRoomId,
+      productChatRoomId,
       userId: session.id!,
     },
     select: { id: true },
@@ -92,10 +95,13 @@ export const saveMessage = async (payload: string, chatRoomId: string) => {
   revalidateTag("chatroom-list");
 };
 
-export const readMessageUpdate = async (chatRoomId: string, userId: number) => {
+export const readMessageUpdate = async (
+  productChatRoomId: string,
+  userId: number
+) => {
   const updateMessage = await db.message.updateMany({
     where: {
-      chatRoomId,
+      productChatRoomId,
       isRead: false,
       // 내가 보낸 메시지는 업데이트 하지 않는다. 내가 아닌 유저가 보낸 메시지 일 경우에만 업데이트한다.
       NOT: {

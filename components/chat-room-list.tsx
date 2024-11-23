@@ -7,6 +7,7 @@
  Date        Author   Status    Description
  2024.11.15  임도헌   Created
  2024.11.15  임도헌   Modified  채팅방 리스트 컴포넌트
+ 2024.11.21  임도헌   Modified  ChatroomId를 productChatRoomId으로 변경
  */
 
 import { UnreadMessageCount } from "@/app/(tabs)/chat/actions";
@@ -80,7 +81,7 @@ export default function ChatRoomList({ userId, room }: IListChatProps) {
               </div>
             </div>
             <div className="flex items-center justify-center gap-3">
-              <UnreadMessageCount id={userId} chatRoomId={room.id} />
+              <UnreadMessageCount id={userId} productChatRoomId={room.id} />
               <span className="text-white">
                 {formatToTimeAgo(room.messages[0]?.created_at.toString())}
               </span>

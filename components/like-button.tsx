@@ -56,9 +56,9 @@ export default function LikeButton({
         }`}
     >
       {state.isLiked ? (
-        <HandThumbUpIcon className="size-5" />
+        <HandThumbUpIcon aria-label="thumb_up" className="size-5" />
       ) : (
-        <OutlineHandThumbUpIcon className="size-5" />
+        <OutlineHandThumbUpIcon aria-label="thumb_down" className="size-5" />
       )}
       <span>
         {state.isLiked ? "취소하기" : "공감하기"} ({state.likeCount})

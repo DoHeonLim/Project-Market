@@ -7,6 +7,8 @@ History
 Date        Author   Status    Description
 2024.10.14  임도헌   Created
 2024.10.14  임도헌   Modified  동네생활 페이지 추가
+2024.11.23  임도헌   Modified  게시글을 최신 게시글순으로 출력되게 수정
+2024.11.23  임도헌   Modified  게시글 생성 링크 추가
 */
 
 import db from "@/lib/db";
@@ -15,6 +17,7 @@ import {
   ChatBubbleBottomCenterIcon,
   HandThumbUpIcon,
 } from "@heroicons/react/24/outline";
+import { PlusIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 
 const getPosts = async () => {
@@ -31,6 +34,9 @@ const getPosts = async () => {
           likes: true,
         },
       },
+    },
+    orderBy: {
+      created_at: "desc",
     },
   });
   return posts;
@@ -60,17 +66,23 @@ export default async function Life() {
             </div>
             <div className="flex items-center gap-4 *:flex *:gap-1 *:items-center">
               <span>
-                <HandThumbUpIcon className="size-4" />
+                <HandThumbUpIcon aria-label="thumb_up" className="size-4" />
                 {post._count.likes}
               </span>
               <span>
-                <ChatBubbleBottomCenterIcon className="size-4" />
+                <ChatBubbleBottomCenterIcon aria-label="comment_count" className="size-4" />
                 {post._count.comments}
               </span>
             </div>
           </div>
         </Link>
       ))}
+      <Link
+        href="posts/add"
+        className="fixed flex items-center justify-center text-white transition-colors bg-indigo-400 rounded-full size-16 bottom-24 right-8 hover:bg-indigo-500"
+      >
+        <PlusIcon aria-label="add_post" className="size-10" />
+      </Link>
     </div>
   );
 }

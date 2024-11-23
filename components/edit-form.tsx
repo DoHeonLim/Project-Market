@@ -161,7 +161,7 @@ export default function EditForm({ product }: IEditFormProps) {
         >
           {preview === "" ? (
             <>
-              <PhotoIcon className="w-20" />
+              <PhotoIcon aria-label="photo" className="w-20" />
               <div className="text-sm text-neutral-400">
                 사진을 추가해주세요.
               </div>

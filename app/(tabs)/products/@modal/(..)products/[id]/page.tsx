@@ -120,7 +120,7 @@ export default async function Modal({
                 alt={product.user.username}
               />
             ) : (
-              <UserIcon />
+              <UserIcon aria-label="user_icon" />
             )}
           </div>
           <div>

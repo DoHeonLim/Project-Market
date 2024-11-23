@@ -174,7 +174,7 @@ export default async function PostDetail({
             alt={post.user.username}
           />
         ) : (
-          <UserIcon className="size-7 rounded-md" />
+          <UserIcon aria-label="user_icon" className="size-7 rounded-md" />
         )}
         <div>
           <span className="text-sm font-semibold">{post.user.username}</span>
@@ -187,7 +187,7 @@ export default async function PostDetail({
       <p className="mb-5">{post.description}</p>
       <div className="flex flex-col items-start gap-5">
         <div className="flex items-center gap-2 text-sm text-neutral-400">
-          <EyeIcon className="size-5" />
+          <EyeIcon aria-label="views" className="size-5" />
           <span>조회 {post.views}</span>
         </div>
         <LikeButton isLiked={isLiked} likeCount={likeCount} postId={id} />

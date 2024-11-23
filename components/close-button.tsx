@@ -22,6 +22,7 @@ export default function CloseButton() {
   return (
     <>
       <button
+        aria-label="Close"
         onClick={handleCloseClick}
         className="absolute right-5 top-5 text-neutral-200"
       >

@@ -114,7 +114,7 @@ export default function ChatMessagesList({
             />
           ) : (
             <div className="size-8">
-              <UserIcon />
+              <UserIcon aria-label="user_icon" />
             </div>
           )}
           <div
@@ -160,7 +160,7 @@ export default function ChatMessagesList({
           name="message"
           placeholder="메세지 쓰기"
         />
-        <button className="absolute right-0 top-1">
+        <button aria-label="send_message" className="absolute right-0 top-1">
           <PaperAirplaneIcon className="text-indigo-500 transition-colors size-8 hover:text-indigo-300" />
         </button>
       </form>

@@ -11,6 +11,8 @@
  2024.11.08  임도헌   Modified  채팅방 생성 함수 추가
  2024.11.11  임도헌   Modified  클라우드 플레어 이미지 variants 추가
  2024.11.15  임도헌   Modified  본인이라면 채팅하기 버튼 필요 없으므로 코드 수정
+ 2024.11.21  임도헌   Modified  Chatroom을 productChatRoom으로 변경
+ 2024.11.21  임도헌   Modified  제품 제목이나 내용이 길어질 경우 창이 커지는 것 수정
  */
 
 import { getIsOwner, getProduct } from "@/app/products/[id]/page";
@@ -48,7 +50,7 @@ export default async function Modal({
     "use server";
     const session = await getSession();
     // 기존에 존재하는 방인지 확인
-    const existingRoom = await db.chatRoom.findFirst({
+    const existingRoom = await db.productChatRoom.findFirst({
       where: {
         productId: product.id,
         users: {
@@ -70,7 +72,7 @@ export default async function Modal({
       return redirect(`/chats/${existingRoom.id}`);
     }
     // 아니라면 채팅방 생성
-    const room = await db.chatRoom.create({
+    const room = await db.productChatRoom.create({
       data: {
         users: {
           connect: [
@@ -125,8 +127,8 @@ export default async function Modal({
             <h3>{product.user.username}</h3>
           </div>
         </div>
-        <div className="p-5">
-          <h1 className="text-2xl font-semibold">{product.title}</h1>
+        <div className="p-3 max-w-[256px] ">
+          <h1 className="text-2xl font-semibold mb-2">{product.title}</h1>
           <p>{product.description}</p>
         </div>
         <div className="flex items-center justify-between max-w-screen-sm gap-5 p-5 bg-neutral-800">

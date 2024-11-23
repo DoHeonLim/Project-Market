@@ -8,6 +8,7 @@ Date        Author   Status    Description
 2024.11.08  임도헌   Created
 2024.11.08  임도헌   Modified  제품 채팅 페이지 추가
 2024.11.15  임도헌   Modified  prisma 코드 actions으로 옮김
+2024.11.21  임도헌   Modified  Chatroom을 productChatRoom으로 변경
 */
 
 // 해야될 것 만약 이미 해당 유저 두명이 존재하는 채팅방이 있다면 새로 방을 생성하지 않고
@@ -44,7 +45,7 @@ export default async function ChatRoom({ params }: { params: { id: string } }) {
 
   return (
     <ChatMessagesList
-      chatRoomId={chatRoomId}
+      productChatRoomId={chatRoomId}
       userId={session.id!}
       username={user.username}
       avatar={user.avatar!}

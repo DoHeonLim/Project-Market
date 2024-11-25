@@ -67,7 +67,7 @@ export default async function RecordingPage({
                 <Image
                   width={40}
                   height={40}
-                  src={stream.user.avatar!}
+                  src={`${stream.user.avatar!}/avatar`}
                   alt={stream.user.username}
                 />
               ) : (

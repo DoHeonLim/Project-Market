@@ -11,7 +11,7 @@ Date        Author   Status    Description
 
 import { notFound, redirect } from "next/navigation";
 import { getIsOwner } from "../page";
-import EditForm from "@/components/edit-form";
+import ProductEditForm from "@/components/product-edit-form";
 import db from "@/lib/db";
 
 async function getProduct(id: number) {
@@ -60,7 +60,7 @@ export default async function EditPage({ params }: { params: { id: string } }) {
 
   return (
     <>
-      <EditForm product={product} />
+      <ProductEditForm product={product} />
       <form
         action={handleDeleteProduct}
         className="flex items-center justify-center"

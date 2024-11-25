@@ -106,7 +106,7 @@ export default function ChatMessagesList({
         >
           {message.userId === userId ? null : message.user.avatar !== null ? (
             <Image
-              src={message.user.avatar!}
+              src={`${message.user.avatar!}/avatar`}
               alt={message.user.username}
               width={50}
               height={50}

@@ -50,11 +50,15 @@ export default async function Life() {
   const posts = await getPosts();
   return (
     <div className="flex flex-col p-5">
-      {posts.map((post) => (
+      {posts.map((post, idx) => (
         <Link
           key={post.id}
           href={`/posts/${post.id}`}
-          className="flex flex-col gap-2 pb-5 mb-5 border-b border-neutral-500 text-neutral-400 last:pb-0 last:border-b-0"
+          className={`flex flex-col gap-2 pb-5 mb-5 text-neutral-400 ${
+            idx === posts.length - 1
+              ? "border-0"
+              : "border-b border-neutral-500"
+          }`}
         >
           <h2 className="text-lg font-semibold text-white">{post.title}</h2>
           <p>{post.description}</p>
@@ -70,7 +74,10 @@ export default async function Life() {
                 {post._count.likes}
               </span>
               <span>
-                <ChatBubbleBottomCenterIcon aria-label="comment_count" className="size-4" />
+                <ChatBubbleBottomCenterIcon
+                  aria-label="comment_count"
+                  className="size-4"
+                />
                 {post._count.comments}
               </span>
             </div>

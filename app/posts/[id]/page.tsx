@@ -170,7 +170,7 @@ export default async function PostDetail({
             width={28}
             height={28}
             className="rounded-md size-7"
-            src={post.user.avatar!}
+            src={`${post.user.avatar!}/avatar`}
             alt={post.user.username}
           />
         ) : (

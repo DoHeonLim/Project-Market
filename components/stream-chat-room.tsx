@@ -128,7 +128,7 @@ export default function StreamChatRoom({
                 <div className="relative">
                   <VideoCameraIcon className="absolute size-5 text-yellow-400 top-1.5 -left-5" />
                   <Image
-                    src={message.user.avatar!}
+                    src={`${message.user.avatar!}/avatar`}
                     alt={message.user.username}
                     width={50}
                     height={50}
@@ -137,7 +137,7 @@ export default function StreamChatRoom({
                 </div>
               ) : (
                 <Image
-                  src={message.user.avatar!}
+                  src={`${message.user.avatar!}/avatar`}
                   alt={message.user.username}
                   width={50}
                   height={50}

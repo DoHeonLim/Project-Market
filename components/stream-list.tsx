@@ -57,7 +57,7 @@ export default function StreamList({
               <Image
                 width={40}
                 height={40}
-                src={user.avatar!}
+                src={`${user.avatar!}/avatar`}
                 alt={user.username}
               />
             ) : (

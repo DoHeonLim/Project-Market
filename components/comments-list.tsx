@@ -67,7 +67,7 @@ export default function CommentsList({
                 width={28}
                 height={28}
                 className="rounded-md size-7"
-                src={comment.user.avatar!}
+                src={`${comment.user.avatar!}/avatar`}
                 alt={comment.user.username}
               />
             ) : (

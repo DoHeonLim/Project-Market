@@ -56,7 +56,7 @@ export default function StreamDetail({
         <div className="overflow-hidden rounded-full size-6">
           {stream.user.avatar !== null ? (
             <Image
-              src={stream.user.avatar!}
+              src={`${stream.user.avatar!}/avatar`}
               width={40}
               height={40}
               alt={stream.user.username}

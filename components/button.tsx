@@ -21,7 +21,7 @@ export default function Button({ text }: IButtonProps) {
   return (
     <button
       disabled={pending}
-      className="h-10 primary-btn disabled:bg-neutral-400 disabled:text-neutral-300 disabled:cursor-not-allowed"
+      className="h-10 font-semibold primary-btn disabled:bg-neutral-400 disabled:text-neutral-300 disabled:cursor-not-allowed"
     >
       {pending ? "로딩 중" : text}
     </button>

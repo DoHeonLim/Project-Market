@@ -116,7 +116,7 @@ export default async function Modal({
               <Image
                 width={40}
                 height={40}
-                src={product.user.avatar!}
+                src={`${product.user.avatar!}/avatar`}
                 alt={product.user.username}
               />
             ) : (

@@ -39,7 +39,7 @@ model User {
   created_at         DateTime          @default(now())
   updated_at         DateTime          @updatedAt
   tokens             SMSToken[]
-  products           Product[]
+  products           Product[]         @relation("Seller") //유저가 판매자로서 등록한 제품
   posts              Post[]
   comments           Comment[]
   likes              Like[]
@@ -47,6 +47,8 @@ model User {
   product_messages   Message[]
   livestreams        LiveStream[]
   streamMessages     StreamMessage[]
+  purchasedProducts  Product[]         @relation("PurchaseUser") //유저가 구매한 제품
+  Review             Review[]
 }
 
 model SMSToken {
@@ -59,17 +61,24 @@ model SMSToken {
   userId     Int
 }
 
+// 판매 제품에 산 유저(purchaseUser) 추가해야되고, 판매 시간(purchaseDate) 추가, 판매 시간으로 제품 판매 여부 체크
+// 판매여부는 판매 시간으로 추정이 가능하다.
 model Product {
-  id          Int               @id @default(autoincrement())
-  title       String
-  price       Float
-  description String
-  photo       String
-  created_at  DateTime          @default(now())
-  updated_at  DateTime          @updatedAt
-  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId      Int
-  chat_rooms  ProductChatRoom[]
+  id              Int               @id @default(autoincrement())
+  title           String
+  price           Float
+  description     String
+  photo           String
+  created_at      DateTime          @default(now())
+  updated_at      DateTime          @updatedAt
+  user            User              @relation("Seller", fields: [userId], references: [id], onDelete: Cascade)
+  userId          Int
+  chat_rooms      ProductChatRoom[]
+  // 구매 관련 속성 추가
+  purchase_userId Int? // 구매한 유저의 ID (null 가능)
+  purchase_user   User?             @relation("PurchaseUser", fields: [purchase_userId], references: [id], onDelete: Cascade)
+  purchase_date   DateTime? // 제품 판매 시간 (null이면 미판매 상태로 간주)
+  reviews         Review[] // 제품 리뷰
 }
 
 model Post {
@@ -174,4 +183,15 @@ model LiveStream {
   user           User            @relation(fields: [userId], references: [id])
   userId         Int
   StreamChatRoom StreamChatRoom?
+}
+
+// Prisma에서 enum 사용 불가능 하기때문에 서버쪽에서 제약조건 추가
+model Review {
+  id        Int     @id @default(autoincrement())
+  user      User    @relation(fields: [userId], references: [id]) //작성자
+  userId    Int
+  product   Product @relation(fields: [productId], references: [id]) // 어떤 제품에 리뷰 했는가?
+  productId Int     @unique
+  payload   String
+  rate      Int
 }

@@ -8,6 +8,7 @@
  2024.11.26  임도헌   Created
  2024.11.26  임도헌   Modified  프로필 수정 스키마 추가
  2024.11.27  임도헌   Modified  깃허브 연동한 유저의 경우 추가
+ 2024.11.28  임도헌   Modified  비밀번호 변경 스키마 추가
 */
 
 import {
@@ -19,7 +20,7 @@ import validator from "validator";
 import { z } from "zod";
 
 // 비밀번호 검증
-const handleCheckPasswords = (isGithubId: boolean) => {
+const handleCheckPasswords = (isGithubId?: boolean) => {
   return ({
     password,
     confirmPassword,
@@ -31,6 +32,7 @@ const handleCheckPasswords = (isGithubId: boolean) => {
     (password && confirmPassword && password === confirmPassword);
 };
 
+// 프로필 수정 스키마
 export const profileEditSchema = (isGithubId: boolean) =>
   z
     .object({
@@ -81,5 +83,29 @@ export const profileEditSchema = (isGithubId: boolean) =>
       message: "비밀번호가 일치하지 않습니다.",
       path: ["confirmPassword"],
     });
+
+// 비밀번호 변경 스키마
+export const passwordUpdateSchema = z
+  .object({
+    currentPassword: z
+      .string()
+      .min(1, { message: "현재 비밀번호를 입력해주세요." })
+      .regex(PASSWORD_REGEX, { message: PASSWORD_REGEX_ERROR }),
+    password: z
+      .string()
+      .min(PASSWORD_MIN_LENGTH, {
+        message: `비밀번호는 최소 ${PASSWORD_MIN_LENGTH}자 이상이어야 합니다.`,
+      })
+      .regex(PASSWORD_REGEX, { message: PASSWORD_REGEX_ERROR }),
+    confirmPassword: z.string().min(PASSWORD_MIN_LENGTH, {
+      message: `비밀번호는 최소 ${PASSWORD_MIN_LENGTH}자 이상이어야 합니다.`,
+    }),
+  })
+  .refine(handleCheckPasswords(), {
+    message: "비밀번호가 일치하지 않습니다.",
+    path: ["confirmPassword"],
+  });
+
+export type PasswordUpdateType = z.infer<typeof passwordUpdateSchema>;
 
 export type ProfileEditType = z.infer<ReturnType<typeof profileEditSchema>>;

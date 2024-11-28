@@ -9,6 +9,7 @@ Date        Author   Status    Description
 2024.11.25  임도헌   Modified  프로필 편집 폼 컴포넌트추가
 2024.11.27  임도헌   Modified  GitHub 연동한 유저의 케이스 추가
 2024.11.27  임도헌   Modified  checkDuplicates 유저 이름, 이메일 검증 코드 추가
+2024.11.28  임도헌   Modified  스키마 위치 변경
 */
 
 "use client";
@@ -24,7 +25,7 @@ import Link from "next/link";
 import {
   profileEditSchema,
   ProfileEditType,
-} from "@/app/(tabs)/profile/edit/schema";
+} from "@/app/(tabs)/profile/schema";
 import {
   EditProfile,
   getExistingUserEmail,

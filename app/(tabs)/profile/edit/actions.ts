@@ -8,11 +8,12 @@ Date        Author   Status    Description
 2024.11.25  임도헌   Created
 2024.11.25  임도헌   Modified  프로필 수정 EditProfile 추가
 2024.11.26  임도헌   Modified  getExistingUser 코드 추가
+2024.11.28  임도헌   Modified  스키마 위치 변경
 */
 "use server";
 
 import db from "@/lib/db";
-import { profileEditSchema, ProfileEditType } from "./schema";
+import { profileEditSchema, ProfileEditType } from "../schema";
 import bcrypt from "bcrypt";
 import { revalidatePath } from "next/cache";
 import { getUser } from "../actions";

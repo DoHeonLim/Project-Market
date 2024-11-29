@@ -75,6 +75,7 @@ model Product {
   userId          Int
   chat_rooms      ProductChatRoom[]
   // 구매 관련 속성 추가
+  reservation_at  DateTime? // 예약한 시간 (null이면 판매 상태로 간주)
   purchase_userId Int? // 구매한 유저의 ID (null 가능)
   purchase_user   User?             @relation("PurchaseUser", fields: [purchase_userId], references: [id], onDelete: Cascade)
   purchase_date   DateTime? // 제품 판매 시간 (null이면 미판매 상태로 간주)

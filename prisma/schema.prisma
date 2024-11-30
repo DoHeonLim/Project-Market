@@ -81,7 +81,7 @@ model Product {
   reservation_userId Int? // 예약한 유저의 ID (초기에는 null)
   purchase_user      User?             @relation("PurchaseUser", fields: [purchase_userId], references: [id], onDelete: SetNull)
   purchase_userId    Int? // 구매한 유저의 ID (초기에는 null)
-  purchase_date      DateTime? // 제품 판매 시간 (null이면 미판매 상태로 간주)
+  purchase_at        DateTime? // 제품 판매 시간 (null이면 미판매 상태로 간주)
   reviews            Review[] // 제품 리뷰
 }
 

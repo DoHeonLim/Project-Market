@@ -7,6 +7,7 @@ History
 Date        Author   Status    Description
 2024.11.28  임도헌   Created
 2024.11.28  임도헌   Modified  프로필 페이지에서 클라이언트 코드 분리
+2024.11.30  임도헌   Modified  프로필 페이지 디자인 변경
 */
 
 "use client";
@@ -34,9 +35,9 @@ export default function Profile({ user, logOut }: ProfileProps) {
     <div className="flex flex-col items-center gap-4 mt-4 px-4">
       <span className="text-2xl font-semibold">프로필</span>
 
-      <div className="flex flex-col gap-10 rounded-xl border-[2px] border-neutral-500 w-full py-10">
-        <div className="flex flex-col items-center space-y-6">
-          <div className="flex items-center justify-center w-full">
+      <div className="flex gap-10 rounded-xl border-[2px] border-neutral-500 w-full py-10">
+        <div className="w-full md:flex-row md:mr-10 flex flex-col justify-around items-center space-y-6">
+          <div className="flex flex-col items-center justify-center w-full">
             {user.avatar !== null ? (
               <Image
                 width={200}
@@ -48,9 +49,6 @@ export default function Profile({ user, logOut }: ProfileProps) {
             ) : (
               <UserIcon className="w-52 h-52 text-gray-300" />
             )}
-          </div>
-
-          <div className="flex items-center justify-center">
             <span>{user.username}</span>
           </div>
 
@@ -80,13 +78,20 @@ export default function Profile({ user, logOut }: ProfileProps) {
         <div className="text-lg font-semibold text-gray-700 mb-4">
           거래 정보
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-neutral-500 rounded-md p-4 text-center">
-            판매 물품
-          </div>
-          <div className="bg-neutral-500 rounded-md p-4 text-center">
-            구매 물품
-          </div>
+        <div className="flex flex-col gap-6">
+          <Link
+            href="/profile/my-sales"
+            className="primary-btn text-lg py-2.5 px-10"
+          >
+            판매 제품
+          </Link>
+
+          <Link
+            href="/profile/my-purchases"
+            className="primary-btn text-lg py-2.5 px-10"
+          >
+            구매 제품
+          </Link>
         </div>
       </div>
 

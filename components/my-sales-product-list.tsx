@@ -7,6 +7,7 @@ History
 Date        Author   Status    Description
 2024.11.30  임도헌   Created
 2024.11.30  임도헌   Modified  나의 판매 제품 리스트 컴포넌트
+2024.12.03  임도헌   Modified  purchase_at을 purchased_at으로 변경
 */
 "use client";
 
@@ -23,7 +24,7 @@ type ProductType = {
   updated_at: Date;
   userId: number;
   reservation_at?: Date | null;
-  purchase_at?: Date | null;
+  purchased_at?: Date | null;
 };
 
 interface ISellingProductList {
@@ -37,14 +38,14 @@ export default function MySalesProductList({ products }: ISellingProductList) {
 
   // 제품 상태별 필터링
   const sellingProducts = products.filter(
-    (product) => !product.reservation_at && !product.purchase_at
+    (product) => !product.reservation_at && !product.purchased_at
   );
 
   const reservedProducts = products.filter(
-    (product) => product.reservation_at && !product.purchase_at
+    (product) => product.reservation_at && !product.purchased_at
   );
 
-  const soldProducts = products.filter((product) => product.purchase_at);
+  const soldProducts = products.filter((product) => product.purchased_at);
 
   // 현재 선택된 탭의 제품 리스트
   const currentProducts =

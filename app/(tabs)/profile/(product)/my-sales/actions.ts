@@ -8,6 +8,7 @@ Date        Author   Status    Description
 2024.11.30  임도헌   Created
 2024.11.30  임도헌   Modified  프로필 나의 판매 제품 서버 코드 추가
 2024.12.02  임도헌   Modified  revalidateTag로 캐싱 기능 추가
+2024.12.03  임도헌   Modified  purchase_at을 purchased_at으로 변경
 */
 "use server";
 
@@ -73,7 +74,7 @@ export const updateProductStatus = async (
         data: {
           reservation_at: new Date(),
           reservation_userId: selectUserId,
-          purchase_at: null,
+          purchased_at: null,
           purchase_userId: null,
         },
       });
@@ -94,7 +95,7 @@ export const updateProductStatus = async (
             id: productId,
           },
           data: {
-            purchase_at: new Date(),
+            purchased_at: new Date(),
             purchase_userId: reservationInfo.reservation_userId,
           },
         });
@@ -107,7 +108,7 @@ export const updateProductStatus = async (
           id: productId,
         },
         data: {
-          purchase_at: null,
+          purchased_at: null,
           purchase_userId: null,
           reservation_at: null,
           reservation_userId: null,

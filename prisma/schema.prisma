@@ -49,7 +49,7 @@ model User {
   product_messages     Message[]
   livestreams          LiveStream[]
   streamMessages       StreamMessage[]
-  Review               Review[]
+  reviews              Review[]
 }
 
 model SMSToken {
@@ -81,7 +81,7 @@ model Product {
   reservation_userId Int? // 예약한 유저의 ID (초기에는 null)
   purchase_user      User?             @relation("PurchaseUser", fields: [purchase_userId], references: [id], onDelete: SetNull)
   purchase_userId    Int? // 구매한 유저의 ID (초기에는 null)
-  purchase_at        DateTime? // 제품 판매 시간 (null이면 미판매 상태로 간주)
+  purchased_at       DateTime? // 제품 판매 시간 (null이면 미판매 상태로 간주)
   reviews            Review[] // 제품 리뷰
 }
 
@@ -146,7 +146,7 @@ model StreamChatRoom {
   live_stream  LiveStream @relation(fields: [liveStreamId], references: [id])
   liveStreamId Int        @unique
 
-  StreamMessage StreamMessage[]
+  streamMessages StreamMessage[]
 }
 
 model StreamMessage {
@@ -186,7 +186,7 @@ model LiveStream {
 
   user           User            @relation(fields: [userId], references: [id])
   userId         Int
-  StreamChatRoom StreamChatRoom?
+  streamChatRoom StreamChatRoom?
 }
 
 // Prisma에서 enum 사용 불가능 하기때문에 서버쪽에서 제약조건 추가
@@ -195,7 +195,7 @@ model Review {
   user      User    @relation(fields: [userId], references: [id]) //작성자
   userId    Int
   product   Product @relation(fields: [productId], references: [id]) // 어떤 제품에 리뷰 했는가?
-  productId Int     @unique
+  productId Int
   payload   String
   rate      Int
 }

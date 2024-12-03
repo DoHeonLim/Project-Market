@@ -6,7 +6,8 @@ Author : 임도헌
 History
 Date        Author   Status    Description
 2024.11.30  임도헌   Created
-2024.11.30  임도헌   Modified  나의 판매 제품 상세 컴포넌트 추가가
+2024.11.30  임도헌   Modified  나의 판매 제품 상세 컴포넌트 추가
+2024.12.03  임도헌   Modified  purchase_at을 purchased_at으로 변경
 */
 import Image from "next/image";
 import Link from "next/link";
@@ -23,7 +24,7 @@ interface ProductItemProps {
     photo: string;
     created_at: Date;
     reservation_at?: Date | null;
-    purchase_at?: Date | null;
+    purchased_at?: Date | null;
   };
   type?: "selling" | "reserved" | "sold";
 }
@@ -67,21 +68,21 @@ export default function MySalesProductItem({
 
           {type === "reserved" &&
             product.reservation_at &&
-            !product.purchase_at && (
+            !product.purchased_at && (
               <span className="text-sm text-yellow-500">
                 예약일: {formatToTimeAgo(product.reservation_at.toString())}
               </span>
             )}
 
-          {type === "sold" && product.purchase_at && (
+          {type === "sold" && product.purchased_at && (
             <span className="text-sm text-green-500">
-              판매일: {formatToTimeAgo(product.purchase_at.toString())}
+              판매일: {formatToTimeAgo(product.purchased_at.toString())}
             </span>
           )}
         </div>
       </Link>
       <div className="flex gap-6 my-6">
-        {type === "sold" && (
+        {(type === "sold" || type === "reserved") && (
           <button
             onClick={handleUpdateToSelling}
             className="px-5 py-2.5 font-semibold bg-indigo-600 rounded-md hover:bg-indigo-400 transition-colors"

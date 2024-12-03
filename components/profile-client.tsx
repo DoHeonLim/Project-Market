@@ -75,9 +75,7 @@ export default function Profile({ user, logOut }: ProfileProps) {
 
       {/* 다른 프로필 섹션들 */}
       <div className="w-full max-w-md">
-        <div className="text-lg font-semibold text-gray-700 mb-4">
-          거래 정보
-        </div>
+        <div className="text-lg font-semibold mb-4">거래 정보</div>
         <div className="flex flex-col gap-6">
           <Link
             href="/profile/my-sales"
@@ -96,9 +94,7 @@ export default function Profile({ user, logOut }: ProfileProps) {
       </div>
 
       <div className="w-full max-w-md">
-        <div className="text-lg font-semibold text-gray-700 mb-4">
-          받은 거래 후기
-        </div>
+        <div className="text-lg font-semibold mb-4">받은 거래 후기</div>
         <div className="neutral-500 rounded-md p-4">
           <div>거래 후기 요약</div>
           <div>거래 후기 리스트</div>

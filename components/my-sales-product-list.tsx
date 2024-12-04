@@ -18,20 +18,35 @@ type ProductType = {
   id: number;
   title: string;
   price: number;
-  description: string;
   photo: string;
   created_at: Date;
   updated_at: Date;
-  userId: number;
-  reservation_at?: Date | null;
-  purchased_at?: Date | null;
+  reservation_userId: number | null;
+  reservation_at: Date | null;
+  purchase_userId: number | null;
+  purchased_at: Date | null;
+  user: {
+    username: string;
+    avatar: string | null;
+  };
+  reviews: {
+    id: number;
+    userId: number;
+    productId: number;
+    payload: string;
+    rate: number;
+  }[];
 };
 
 interface ISellingProductList {
   products: ProductType[];
+  userId: number;
 }
 
-export default function MySalesProductList({ products }: ISellingProductList) {
+export default function MySalesProductList({
+  products,
+  userId,
+}: ISellingProductList) {
   const [activeTab, setActiveTab] = useState<"selling" | "reserved" | "sold">(
     "selling"
   );
@@ -106,6 +121,7 @@ export default function MySalesProductList({ products }: ISellingProductList) {
               key={product.id}
               product={product}
               type={activeTab}
+              userId={userId}
             />
           ))
         )}

@@ -53,6 +53,7 @@ export default function MyPurchasesProductItem({ product }: ProductItemProps) {
   const { isLoading, error, submitReview } = useReview({
     productId: product.id,
     userId: product.purchase_userId!,
+    type: "buyer",
   });
 
   // 구매자와 판매자 리뷰를 분리

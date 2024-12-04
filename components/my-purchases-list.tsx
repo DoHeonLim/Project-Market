@@ -12,16 +12,16 @@ Date        Author   Status    Description
 import MyPurchasesProductItem from "./my-purchases-product-item";
 
 type ProductType = {
-  user: {
-    username: string;
-    avatar: string | null;
-  };
   id: number;
   title: string;
   price: number;
   photo: string;
   purchase_userId: number | null;
   purchased_at: Date | null;
+  user: {
+    username: string;
+    avatar: string | null;
+  };
   reviews: {
     id: number;
     userId: number;

@@ -28,7 +28,7 @@ export default async function MySalesPage() {
 
   return (
     <>
-      <MySalesProductList products={sellingProduct} />
+      <MySalesProductList products={sellingProduct} userId={session.id!} />
     </>
   );
 }

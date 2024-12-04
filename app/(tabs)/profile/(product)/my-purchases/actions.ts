@@ -43,7 +43,7 @@ export const getPurchasedProducts = async (userId: number) => {
 // 제품에 대한 유저의 리뷰 생성
 // 구매자가 판매자에게 리뷰 전송
 // id, userId, productId, payload, rate 5개 넣어야됨
-export const createReview = async (
+export const buyerCreateReview = async (
   userId: number,
   productId: number,
   payload: string,

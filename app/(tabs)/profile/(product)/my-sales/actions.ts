@@ -21,6 +21,25 @@ export const getSellingProducts = async (userId: number) => {
     where: {
       userId,
     },
+    select: {
+      id: true,
+      title: true,
+      price: true,
+      photo: true,
+      created_at: true,
+      updated_at: true,
+      reservation_userId: true,
+      reservation_at: true,
+      purchased_at: true,
+      purchase_userId: true,
+      user: {
+        select: {
+          username: true,
+          avatar: true,
+        },
+      },
+      reviews: true,
+    },
   });
   return SellingProduct;
 };
@@ -118,5 +137,27 @@ export const updateProductStatus = async (
     revalidateTag("selling-product-list");
   } catch (error) {
     console.error("상품 상태 업데이트 중 오류:", error);
+  }
+};
+
+export const sellerCreateReview = async (
+  userId: number,
+  productId: number,
+  payload: string,
+  rate: number
+) => {
+  try {
+    await db.review.create({
+      data: {
+        userId,
+        productId,
+        payload,
+        rate,
+      },
+    });
+    revalidateTag("selling-product-list");
+  } catch (error) {
+    console.error("리뷰 작성 중 오류 :", error);
+    throw new Error("리뷰 작성 중 오류가 발생했습니다.");
   }
 };

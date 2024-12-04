@@ -15,6 +15,8 @@ import { formatToTimeAgo, formatToWon } from "@/lib/utils";
 import { useState } from "react";
 import { SelectUserModal } from "./select-user-modal";
 import { updateProductStatus } from "@/app/(tabs)/profile/(product)/my-sales/actions";
+import CreateReviewModal from "./modals/create-review-modal";
+import { useReview } from "@/hooks/useReview";
 
 interface ProductItemProps {
   product: {
@@ -23,17 +25,38 @@ interface ProductItemProps {
     price: number;
     photo: string;
     created_at: Date;
-    reservation_at?: Date | null;
-    purchased_at?: Date | null;
+    reservation_at: Date | null;
+    purchase_userId: number | null;
+    purchased_at: Date | null;
+    user: {
+      username: string;
+      avatar: string | null;
+    };
   };
   type?: "selling" | "reserved" | "sold";
+  userId: number;
 }
 
 export default function MySalesProductItem({
   product,
   type,
+  userId,
 }: ProductItemProps) {
   const [isReservationModalOpen, setIsReservationModalOpen] = useState(false);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+
+  const { isLoading, error, submitReview } = useReview({
+    productId: product.id,
+    userId: userId,
+    type: "seller",
+  });
+
+  const handleSubmitReview = async (text: string, rating: number) => {
+    await submitReview(text, rating);
+    if (!error) {
+      setIsReviewModalOpen(false);
+    }
+  };
 
   const handleUpdateToSold = async () => {
     await updateProductStatus(product.id, "sold");
@@ -106,7 +129,35 @@ export default function MySalesProductItem({
             판매완료로 변경
           </button>
         )}
+        {type === "sold" && (
+          <button
+            onClick={() => setIsReviewModalOpen(true)}
+            className="px-5 py-2.5 font-semibold bg-indigo-600 rounded-md hover:bg-indigo-400 transition-colors"
+          >
+            구매자 리뷰 작성
+          </button>
+        )}
       </div>
+      {error && (
+        <div className="p-4 text-white bg-red-500 rounded-md">{error}</div>
+      )}
+
+      {isLoading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="p-4 text-white bg-neutral-800 rounded-md">
+            리뷰를 등록하는 중...
+          </div>
+        </div>
+      )}
+
+      <CreateReviewModal
+        isOpen={isReviewModalOpen}
+        onClose={() => setIsReviewModalOpen(false)}
+        onSubmit={handleSubmitReview}
+        username={product.user.username}
+        userAvatar={product.user.avatar}
+      />
+
       <SelectUserModal
         productId={product.id}
         isOpen={isReservationModalOpen}

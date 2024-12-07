@@ -7,6 +7,7 @@ History
 Date        Author   Status    Description
 2024.12.03  임도헌   Created
 2024.12.03  임도헌   Modified  리뷰 작성 훅 추가
+2024.12.04  임도헌   Modified  리뷰 작성 로직을 구매자, 판매자 분리
 */
 
 import { buyerCreateReview } from "@/app/(tabs)/profile/(product)/my-purchases/actions";

@@ -17,6 +17,7 @@ import getSession from "@/lib/session";
 import { notFound, redirect } from "next/navigation";
 import { passwordUpdateSchema } from "./schema";
 
+// 유저 프로필 정보 반환
 export const getUser = async () => {
   const session = await getSession();
   if (session.id) {
@@ -32,6 +33,40 @@ export const getUser = async () => {
   notFound();
 };
 
+// 유저 전체 리뷰 찾아서 반환 (초기 5개만)
+export const getInitialUserReviews = async (userId: number) => {
+  const take = 5; // 초기 5개만 가져오기
+  const reviews = await db.product.findMany({
+    where: {
+      userId,
+      purchase_userId: {
+        not: null,
+      },
+    },
+    select: {
+      reviews: {
+        where: {
+          userId: {
+            not: userId,
+          },
+        },
+        include: {
+          user: {
+            select: {
+              username: true,
+              avatar: true,
+            },
+          },
+        },
+      },
+    },
+    take,
+  });
+
+  return reviews.flatMap((product) => product.reviews);
+};
+
+// 유저 세션 삭제하고 로그아웃 처리
 export const logOut = async () => {
   "use server";
   const session = await getSession();
@@ -48,6 +83,7 @@ type ChangePasswordResponse = {
   };
 };
 
+// 유저 패스워드 변경하는 함수
 export const changePassword = async (
   FormData: FormData
 ): Promise<ChangePasswordResponse> => {
@@ -94,4 +130,87 @@ export const changePassword = async (
       return { success: true };
     }
   }
+};
+
+export const getMoreUserReviews = async (page: number, userId?: number) => {
+  if (!userId) {
+    const session = await getSession();
+    userId = session.id!;
+  }
+  const take = 5; // 한 번에 가져올 리뷰 수
+  const skip = page * take;
+
+  const reviews = await db.product.findMany({
+    where: {
+      userId,
+      purchase_userId: {
+        not: null,
+      },
+    },
+    select: {
+      reviews: {
+        where: {
+          userId: {
+            not: userId,
+          },
+        },
+        include: {
+          user: {
+            select: {
+              username: true,
+              avatar: true,
+            },
+          },
+        },
+      },
+    },
+    take,
+    skip,
+  });
+
+  return reviews.flatMap((product) => product.reviews);
+};
+
+// 유저가 받은 리뷰들의 평균 별점 계산
+export const getUserAverageRating = async (userId?: number) => {
+  if (!userId) {
+    const session = await getSession();
+    userId = session.id!;
+  }
+
+  const reviews = await db.product.findMany({
+    where: {
+      userId,
+      purchase_userId: {
+        not: null,
+      },
+    },
+    select: {
+      reviews: {
+        where: {
+          userId: {
+            not: userId,
+          },
+        },
+        select: {
+          rate: true,
+        },
+      },
+    },
+  });
+
+  const allRatings = reviews.flatMap((product) =>
+    product.reviews.map((r) => r.rate)
+  );
+
+  if (allRatings.length === 0) return null;
+
+  const averageRating =
+    allRatings.reduce((acc, curr) => acc + curr, 0) / allRatings.length;
+  const totalReviews = allRatings.length;
+
+  return {
+    average: Number(averageRating.toFixed(1)),
+    total: totalReviews,
+  };
 };

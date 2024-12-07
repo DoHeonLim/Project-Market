@@ -79,10 +79,8 @@ export default function MyPurchasesProductItem({ product }: ProductItemProps) {
       const confirmed = confirm("리뷰를 삭제하시겠습니까?");
       if (!confirmed) return;
 
-      await deleteReview(buyerReviews[0].id);
+      await deleteReview(buyerReviews[0].id, "buyer");
       setIsBuyerReviewModalOpen(false);
-      // // 페이지 새로고침하여 UI 업데이트
-      // window.location.reload();
     } catch (error) {
       console.error("리뷰 삭제 중 오류 발생:", error);
       alert("리뷰 삭제 중 오류가 발생했습니다.");

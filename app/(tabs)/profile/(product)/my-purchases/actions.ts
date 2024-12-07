@@ -64,14 +64,21 @@ export const buyerCreateReview = async (
 };
 
 // 리뷰 삭제
-export const deleteReview = async (reviewId: number) => {
+export const deleteReview = async (
+  reviewId: number,
+  who: "buyer" | "seller"
+) => {
   try {
     await db.review.delete({
       where: {
         id: reviewId,
       },
     });
-    revalidateTag("purchased-product-list");
+    if (who === "buyer") {
+      revalidateTag("purchased-product-list");
+    } else {
+      revalidateTag("selling-product-list");
+    }
     return { success: true };
   } catch (error) {
     console.error("리뷰 삭제 중 오류 발생:", error);

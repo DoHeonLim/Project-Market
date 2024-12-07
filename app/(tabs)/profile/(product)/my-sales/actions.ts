@@ -9,6 +9,7 @@ Date        Author   Status    Description
 2024.11.30  임도헌   Modified  프로필 나의 판매 제품 서버 코드 추가
 2024.12.02  임도헌   Modified  revalidateTag로 캐싱 기능 추가
 2024.12.03  임도헌   Modified  purchase_at을 purchased_at으로 변경
+2024.12.04  임도헌   Modified  예약 유저 정보 추가
 */
 "use server";
 
@@ -160,4 +161,38 @@ export const sellerCreateReview = async (
     console.error("리뷰 작성 중 오류 :", error);
     throw new Error("리뷰 작성 중 오류가 발생했습니다.");
   }
+};
+
+// 제품의 모든 리뷰 삭제
+export const deleteAllProductReviews = async (productId: number) => {
+  try {
+    await db.review.deleteMany({
+      where: {
+        productId: productId,
+      },
+    });
+    revalidateTag("selling-product-list");
+  } catch (error) {
+    console.error("리뷰 삭제 중 오류:", error);
+    throw new Error("리뷰를 삭제하는 중 오류가 발생했습니다.");
+  }
+};
+
+export const getReservationUserInfo = async (userId: number) => {
+  const user = await db.user.findUnique({
+    where: {
+      id: userId,
+    },
+    select: {
+      username: true,
+      avatar: true,
+    },
+  });
+  return user;
+};
+
+export const getPurchaseUsername = async (userId: number | null) => {
+  if (!userId) return null;
+  const user = await getReservationUserInfo(userId);
+  return user?.username;
 };

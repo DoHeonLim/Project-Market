@@ -1,5 +1,5 @@
 /**
-File Name : components/profile-client
+File Name : components/my-profile
 Description : 프로필 클라이언트 코드
 Author : 임도헌
 
@@ -17,22 +17,45 @@ import { UserIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import Link from "next/link";
 import PasswordChangeModal from "./password-change-modal";
+import ProfileReviewsModal from "./modals/profile-reviews-modal";
+import UserRating from "./user-rating";
 
 type User = {
+  id: number;
   username: string;
   avatar: string | null;
   email: string | null;
 };
 
+type Review = {
+  id: number;
+  userId: number;
+  productId: number;
+  payload: string;
+  rate: number;
+  user: {
+    username: string;
+    avatar: string | null;
+  };
+};
+
 type ProfileProps = {
   user: User;
+  reviews: Review[];
+  averageRating: { average: number; total: number } | null;
   logOut: () => Promise<void>;
 };
-export default function Profile({ user, logOut }: ProfileProps) {
+export default function MyProfile({
+  user,
+  reviews,
+  averageRating,
+  logOut,
+}: ProfileProps) {
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
 
   return (
-    <div className="flex flex-col items-center gap-4 mt-4 px-4">
+    <div className="flex flex-col items-center gap-4 my-4 px-4">
       <span className="text-2xl font-semibold">프로필</span>
 
       <div className="flex gap-10 rounded-xl border-[2px] border-neutral-500 w-full py-10">
@@ -95,9 +118,20 @@ export default function Profile({ user, logOut }: ProfileProps) {
 
       <div className="w-full max-w-md">
         <div className="text-lg font-semibold mb-4">받은 거래 후기</div>
-        <div className="neutral-500 rounded-md p-4">
-          <div>거래 후기 요약</div>
-          <div>거래 후기 리스트</div>
+        <div className="flex flex-col gap-3">
+          {averageRating && (
+            <UserRating
+              rating={averageRating.average}
+              totalReviews={averageRating.total}
+              size="lg"
+            />
+          )}
+          <button
+            onClick={() => setIsReviewModalOpen(true)}
+            className="w-full py-3 bg-indigo-600 rounded-md hover:bg-indigo-400 transition-colors"
+          >
+            전체 후기 보기
+          </button>
         </div>
       </div>
 
@@ -110,6 +144,12 @@ export default function Profile({ user, logOut }: ProfileProps) {
         </button>
       </form>
 
+      <ProfileReviewsModal
+        isOpen={isReviewModalOpen}
+        onClose={() => setIsReviewModalOpen(false)}
+        reviews={reviews}
+        userId={user.id}
+      />
       <PasswordChangeModal
         isOpen={isPasswordModalOpen}
         onClose={() => setIsPasswordModalOpen(false)}

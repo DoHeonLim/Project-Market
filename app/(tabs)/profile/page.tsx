@@ -12,11 +12,25 @@ Date        Author   Status    Description
 2024.11.28  임도헌   Mdofieid  클라이언트 코드 분리
 */
 
-import Profile from "@/components/profile-client";
-import { getUser, logOut } from "./actions";
+import MyProfile from "@/components/my-profile";
+import {
+  getUser,
+  getInitialUserReviews,
+  logOut,
+  getUserAverageRating,
+} from "./actions";
 
 export default async function ProfilePage() {
   const user = await getUser();
+  const reviews = await getInitialUserReviews(user.id);
+  const averageRating = await getUserAverageRating(user.id);
 
-  return <Profile user={user} logOut={logOut} />;
+  return (
+    <MyProfile
+      user={user}
+      reviews={reviews}
+      averageRating={averageRating}
+      logOut={logOut}
+    />
+  );
 }

@@ -6,8 +6,9 @@
  History
  Date        Author   Status    Description
  2024.11.15  임도헌   Created
- 2024.11.15  임도헌   Modified  채팅방 리스트 컴포넌트
+ 2024.11.15  임도헌   Modified  채팅방 리스트 컴포넌트 추가
  2024.11.21  임도헌   Modified  ChatroomId를 productChatRoomId으로 변경
+ 2024.12.07  임도헌   Modified  채팅방 리스트 스타일 변경
  */
 
 import { UnreadMessageCount } from "@/app/(tabs)/chat/actions";
@@ -50,11 +51,11 @@ export default function ChatRoomList({ userId, room }: IListChatProps) {
         <div className="flex items-center justify-center w-full rounded-xl">
           <div className="flex justify-between w-full shadow-xl rounded-xl">
             <div className="flex items-center justify-center gap-4">
-              <div>
+              <div className="relative size-14">
                 <Image
                   src={`${room.product.photo}/avatar`}
-                  width={50}
-                  height={50}
+                  fill
+                  className="object-cover"
                   alt={room.product.title}
                 />
               </div>

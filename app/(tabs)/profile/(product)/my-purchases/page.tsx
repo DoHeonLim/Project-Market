@@ -26,7 +26,6 @@ export default async function MyPurchasesPage() {
     }
   );
   const purchasedProducts = await getCachedPurchasedProducts(session.id!);
-  console.log(purchasedProducts);
 
   return (
     <>

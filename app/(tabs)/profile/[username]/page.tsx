@@ -7,7 +7,9 @@
  Date        Author   Status    Description
  2024.12.07  임도헌   Created
  2024.12.07  임도헌   Modified  유저 프로필 페이지 추가
+ 2024.12.07  임도헌   Modified  평균 평점 가져오는 로직 수정
  */
+
 import { getUserAverageRating } from "../actions";
 import { getUserProducts, getUserProfile } from "./actions";
 import UserProfile from "@/components/user-profile";

@@ -7,6 +7,7 @@ History
 Date        Author   Status    Description
 2024.12.06  임도헌   Created
 2024.12.06  임도헌   Modified  유저 평점 컴포넌트 추가
+2024.12.07  임도헌   Modified  평점 및 갯수 조건 추가
 */
 "use client";
 

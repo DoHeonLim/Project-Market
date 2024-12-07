@@ -10,6 +10,7 @@ Date        Author   Status    Description
 2024.12.07  임도헌   Modified  유저 프로필 제공 함수 추가
 2024.12.07  임도헌   Modified  유저 초기 제품 제공 함수 추가
 2024.12.07  임도헌   Modified  유저 제품 무한 스크롤 함수 추가
+2024.12.07  임도헌   Modified  getUserProfile에 평균 평점 및 갯수 삭제
 */
 
 "use server";
@@ -54,18 +55,7 @@ export const getUserProfile = async (username: string) => {
     redirect("/profile");
   }
 
-  // 평균 평점 계산
-  const ratings = user.reviews.map((review) => review.rate);
-  const averageRating =
-    ratings.length > 0
-      ? Number((ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1))
-      : 0;
-
-  return {
-    ...user,
-    averageRating,
-    totalReviews: ratings.length,
-  };
+  return user;
 };
 
 export const getUserProducts = async (

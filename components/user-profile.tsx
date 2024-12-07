@@ -8,6 +8,7 @@ Date        Author   Status    Description
 2024.12.07  임도헌   Created   
 2024.12.07  임도헌   Modified  유저 프로필 페이지 추가
 2024.12.07  임도헌   Modified  무한 스크롤 추가
+2024.12.07  임도헌   Modified  평균 평점 및 갯수 로직 수정
 */
 "use client";
 

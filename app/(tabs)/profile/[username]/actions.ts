@@ -49,7 +49,7 @@ export const getUserProfile = async (username: string) => {
   if (!user) notFound();
   // 유저 본인이면 본인 프로필로 이동하기 위해서 session 정보 가져오기
   const session = await getSession();
-  // 유저 본인이면 본인 프로필로 이동하기 위해서 session 정보 가져오기
+  //   유저 본인이면 본인 프로필로 이동하기 위해서 session 정보 가져오기
   if (session.id === user.id) {
     redirect("/profile");
   }

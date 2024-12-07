@@ -29,6 +29,11 @@ type Products = {
   purchase_userId: number | null;
 };
 
+type AverageRating = {
+  average: number;
+  total: number;
+};
+
 interface UserProfileProps {
   user: {
     id: number;
@@ -38,10 +43,7 @@ interface UserProfileProps {
   };
   initialSellingProducts: Products[];
   initialSoldProducts: Products[];
-  stats: {
-    averageRating: number;
-    totalReviews: number;
-  };
+  averageRating: AverageRating | null;
 }
 
 type ProductStatus = "selling" | "sold";
@@ -50,7 +52,7 @@ export default function UserProfile({
   user,
   initialSellingProducts,
   initialSoldProducts,
-  stats,
+  averageRating,
 }: UserProfileProps) {
   const [activeTab, setActiveTab] = useState<ProductStatus>("selling"); // 초기 탭 설정
   const [sellingProducts, setSellingProducts] = useState(
@@ -151,8 +153,8 @@ export default function UserProfile({
               </span>
               <div className="flex justify-center items-center">
                 <UserRating
-                  rating={stats.averageRating}
-                  totalReviews={stats.totalReviews}
+                  rating={averageRating?.average}
+                  totalReviews={averageRating?.total}
                   size="md"
                 />
               </div>

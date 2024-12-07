@@ -13,8 +13,8 @@ Date        Author   Status    Description
 import { StarIcon } from "@heroicons/react/24/solid";
 
 interface UserRatingProps {
-  rating: number;
-  totalReviews: number;
+  rating?: number;
+  totalReviews?: number;
   size?: "sm" | "md" | "lg";
 }
 
@@ -44,9 +44,9 @@ export default function UserRating({
             className={`
               ${starSizes[size]}
               ${
-                star <= rating
+                rating && star <= rating
                   ? "text-yellow-500"
-                  : star - rating <= 0.5
+                  : rating && star - rating <= 0.5
                   ? "text-yellow-300"
                   : "text-gray-300"
               }

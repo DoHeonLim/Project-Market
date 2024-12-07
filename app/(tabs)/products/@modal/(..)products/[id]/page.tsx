@@ -13,6 +13,7 @@
  2024.11.15  임도헌   Modified  본인이라면 채팅하기 버튼 필요 없으므로 코드 수정
  2024.11.21  임도헌   Modified  Chatroom을 productChatRoom으로 변경
  2024.11.21  임도헌   Modified  제품 제목이나 내용이 길어질 경우 창이 커지는 것 수정
+ 2024.12.05  임도헌   Modified  제품 상세 페이지 판매 여부 추가
  */
 
 import { getIsOwner, getProduct } from "@/app/products/[id]/page";
@@ -132,9 +133,20 @@ export default async function Modal({
           <p>{product.description}</p>
         </div>
         <div className="flex items-center justify-between max-w-screen-sm gap-5 p-5 bg-neutral-800">
-          <span className="text-sm font-semibold sm:text-sm md:text-md lg:text-lg ">
-            {formatToWon(product.price)}원
-          </span>
+          <div className="flex items-center gap-2">
+            {product.reservation_userId && product.purchase_userId ? (
+              <span className="text-sm font-semibold bg-neutral-500 w-fit p-1 rounded-md">
+                판매 완료
+              </span>
+            ) : product.reservation_userId ? (
+              <span className="text-sm font-semibold bg-green-500 w-fit p-1 rounded-md">
+                예약중
+              </span>
+            ) : null}
+            <span className="text-lg font-semibold">
+              {formatToWon(product.price)}원
+            </span>
+          </div>
           <div className="flex gap-5">
             {isOwner ? (
               <Link

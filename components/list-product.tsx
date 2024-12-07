@@ -10,6 +10,7 @@ Date        Author   Status    Description
 2024.10.17  임도헌   Modified  이미지 object-cover로 변경
 2024.11.02  임도헌   Modified  콘솔에 뜨는 Image에러 size 추가
 2024.11.11  임도헌   Modified  클라우드 플레어 이미지 variants 추가
+2024.12.07  임도헌   Modified  제품 판매 여부 추가
 */
 
 import { formatToTimeAgo, formatToWon } from "@/lib/utils";
@@ -22,6 +23,8 @@ interface IListProductProps {
   created_at: Date;
   photo: string;
   id: number;
+  reservation_userId: number | null;
+  purchase_userId: number | null;
 }
 
 export default function ListProduct({
@@ -30,6 +33,8 @@ export default function ListProduct({
   created_at,
   photo,
   id,
+  reservation_userId,
+  purchase_userId,
 }: IListProductProps) {
   return (
     <Link href={`/products/${id}`} className="flex gap-5">
@@ -42,12 +47,23 @@ export default function ListProduct({
           alt={title}
         />
       </div>
-      <div className="flex flex-col gap-1 *:text-white">
+      <div className="flex flex-col gap-1 justify-center *:text-white">
         <span className="text-lg">{title}</span>
         <span className="text-sm text-neutral-500">
           {formatToTimeAgo(created_at.toString())}
         </span>
-        <span className="text-lg font-semibold">{formatToWon(price)}원</span>
+        <div className="flex items-center gap-2">
+          {reservation_userId && purchase_userId ? (
+            <span className="text-sm font-semibold bg-neutral-500 w-fit p-1 rounded-md">
+              판매 완료
+            </span>
+          ) : reservation_userId ? (
+            <span className="text-sm font-semibold bg-green-500 w-fit p-1 rounded-md">
+              예약중
+            </span>
+          ) : null}
+          <span className="text-lg font-semibold">{formatToWon(price)}원</span>
+        </div>
       </div>
     </Link>
   );

@@ -62,14 +62,14 @@ export default function ProductList({ initialProducts }: IProductListProps) {
       {products.map((product) => (
         <ListProduct key={product.id} {...product} />
       ))}
-      {/* {!isLastPage ? (
+      {!isLastPage ? (
         <span
           ref={trigger}
           className="mb-96 text-sm font-semibold bg-indigo-500 w-fit mx-auto px-3 py-2 rounded-md hover:opacity-90 active:scale-95"
         >
           {isLoading ? "로딩중" : "더 가져오기"}
         </span>
-      ) : null} */}
+      ) : null}
     </div>
   );
 }

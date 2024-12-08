@@ -14,15 +14,15 @@
  2024.11.21  임도헌   Modified  Chatroom을 productChatRoom으로 변경
  2024.11.21  임도헌   Modified  제품 제목이나 내용이 길어질 경우 창이 커지는 것 수정
  2024.12.05  임도헌   Modified  제품 상세 페이지 판매 여부 추가
+ 2024.12.07  임도헌   Modified  프로필 이미지 컴포넌트 분리
  */
 
 import { getIsOwner, getProduct } from "@/app/products/[id]/page";
 import CloseButton from "@/components/close-button";
+import UserAvatar from "@/components/user-avatar";
 import db from "@/lib/db";
 import getSession from "@/lib/session";
-
 import { formatToWon } from "@/lib/utils";
-import { UserIcon } from "@heroicons/react/24/solid";
 import { revalidateTag } from "next/cache";
 import Image from "next/image";
 import Link from "next/link";
@@ -112,21 +112,11 @@ export default async function Modal({
           />
         </div>
         <div className="flex items-center gap-3 p-5 border-b border-neutral-200">
-          <div className="overflow-hidden rounded-full size-10">
-            {product.user.avatar !== null ? (
-              <Image
-                width={40}
-                height={40}
-                src={`${product.user.avatar!}/avatar`}
-                alt={product.user.username}
-              />
-            ) : (
-              <UserIcon aria-label="user_icon" />
-            )}
-          </div>
-          <div>
-            <h3>{product.user.username}</h3>
-          </div>
+          <UserAvatar
+            avatar={product.user.avatar}
+            username={product.user.username}
+            size="md"
+          />
         </div>
         <div className="p-3 max-w-[256px] ">
           <h1 className="text-2xl font-semibold mb-2">{product.title}</h1>

@@ -16,16 +16,17 @@ Date        Author   Status    Description
 2024.11.15  임도헌   Modified  본인이라면 채팅하기 버튼 필요 없으므로 코드 수정, 캐싱 기능 추가
 2024.11.21  임도헌   Modified  Chatroom을 productChatRoom으로 변경
 2024.12.05  임도헌   Modified  제품 상세 페이지 판매 여부 추가
+2024.12.07  임도헌   Modified  프로필 이미지 컴포넌트 분리
 */
 
 import db from "@/lib/db";
 import getSession from "@/lib/session";
 import { formatToWon } from "@/lib/utils";
-import { UserIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { unstable_cache as nextCache, revalidateTag } from "next/cache";
+import UserAvatar from "@/components/user-avatar";
 
 /**
  * 제품 소유자 체크 함수
@@ -173,21 +174,12 @@ export default async function ProductDetail({
         />
       </div>
       <div className="flex items-center gap-3 p-5 border-b border-neutral-700">
-        <div className="overflow-hidden rounded-full size-10">
-          {product.user.avatar !== null ? (
-            <Image
-              width={40}
-              height={40}
-              src={`${product.user.avatar!}/avatar`}
-              alt={product.user.username}
-            />
-          ) : (
-            <UserIcon aria-label="user_icon" />
-          )}
-        </div>
-        <div>
-          <h3>{product.user.username}</h3>
-        </div>
+        <UserAvatar
+          avatar={product.user.avatar}
+          username={product.user.username}
+          size="md"
+          created_at={product.created_at}
+        />
       </div>
       <div className="p-5">
         <h1 className="text-2xl font-semibold">{product.title}</h1>

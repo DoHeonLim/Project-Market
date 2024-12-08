@@ -7,12 +7,12 @@ History
 Date        Author   Status    Description
 2024.12.04  임도헌   Created
 2024.12.04  임도헌   Modified  예약자 정보 컴포넌트 추가
+2024.12.07  임도헌   Modified  프로필 이미지 컴포넌트 분리
 */
 "use client";
 import { getReservationUserInfo } from "@/app/(tabs)/profile/(product)/my-sales/actions";
-import { UserIcon } from "@heroicons/react/24/solid";
-import Image from "next/image";
 import { useEffect, useState } from "react";
+import UserAvatar from "./user-avatar";
 
 interface User {
   username: string;
@@ -41,21 +41,7 @@ export default function ReservationUserInfo({
     <>
       <div className="flex items-center gap-3">
         <span>예약자</span>
-        <div className="overflow-hidden rounded-full size-10">
-          {user.avatar !== null ? (
-            <Image
-              width={40}
-              height={40}
-              src={`${user.avatar!}/avatar`}
-              alt={user.username}
-            />
-          ) : (
-            <UserIcon aria-label="user_icon" />
-          )}
-        </div>
-        <div>
-          <h3>{user.username}</h3>
-        </div>
+        <UserAvatar avatar={user.avatar} username={user.username} size="md" />
       </div>
     </>
   );

@@ -7,11 +7,12 @@ History
 Date        Author   Status    Description
 2024.12.03  임도헌   Created
 2024.12.03  임도헌   Modified  리뷰 작성 모달 컴포넌트 추가
+2024.12.07  임도헌   Modified  프로필 이미지 컴포넌트 분리
 */
 
-import { StarIcon, UserIcon } from "@heroicons/react/24/solid";
-import Image from "next/image";
+import { StarIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
+import UserAvatar from "../user-avatar";
 
 interface ReviewModalProps {
   isOpen: boolean;
@@ -38,22 +39,13 @@ export default function ReviewModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="p-6 rounded-lg bg-neutral-600 w-96">
         <h2 className="mb-4 text-xl font-bold">거래 후기 작성</h2>
-        <div className="flex items-center gap-2 mb-2">
-          {userAvatar !== null ? (
-            <Image
-              width={28}
-              height={28}
-              className="rounded-md size-7"
-              src={`${userAvatar}/avatar`}
-              alt={username}
-            />
-          ) : (
-            <UserIcon aria-label="user_icon" className="rounded-md size-7" />
-          )}
-          <span className="text-sm font-semibold">
-            {username} 님과의 거래는 어떠셨나요?
-          </span>
-        </div>
+        <UserAvatar
+          avatar={userAvatar}
+          username={username}
+          size="sm"
+          disabled={true}
+          text="님과의 거래는 어떠셨나요?"
+        />
 
         <div className="flex justify-center mb-4">
           {[1, 2, 3, 4, 5].map((star) => (

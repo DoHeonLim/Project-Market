@@ -10,17 +10,17 @@ Date        Author   Status    Description
 2024.11.05  임도헌   Modified  댓글 기능 추가
 2024.11.06  임도헌   Modified  댓글 기능 수정
 2024.11.12  임도헌   Modified  프로필 이미지 없을 경우의 코드 추가
+2024.12.07  임도헌   Modified  프로필 이미지 컴포넌트 분리
 */
 
 import Comment from "@/components/comment";
 import LikeButton from "@/components/like-button";
 import db from "@/lib/db";
 import getSession from "@/lib/session";
-import { formatToTimeAgo } from "@/lib/utils";
-import { EyeIcon, UserIcon } from "@heroicons/react/24/solid";
+import { EyeIcon } from "@heroicons/react/24/solid";
 import { unstable_cache as nextCache } from "next/cache";
-import Image from "next/image";
 import { notFound } from "next/navigation";
+import UserAvatar from "@/components/user-avatar";
 
 const getUser = async () => {
   const session = await getSession();
@@ -164,24 +164,12 @@ export default async function PostDetail({
   const { likeCount, isLiked } = await getCachedLikeStatus(id);
   return (
     <div className="p-5 text-white">
-      <div className="flex items-center gap-2 mb-2">
-        {post.user.avatar !== null ? (
-          <Image
-            width={28}
-            height={28}
-            className="rounded-md size-7"
-            src={`${post.user.avatar!}/avatar`}
-            alt={post.user.username}
-          />
-        ) : (
-          <UserIcon aria-label="user_icon" className="size-7 rounded-md" />
-        )}
-        <div>
-          <span className="text-sm font-semibold">{post.user.username}</span>
-          <div className="text-xs">
-            <span>{formatToTimeAgo(post.created_at.toString())}</span>
-          </div>
-        </div>
+      <div className="flex items-center gap-2 mb-2 ">
+        <UserAvatar
+          avatar={post.user.avatar}
+          username={post.user.username}
+          created_at={post.created_at}
+        />
       </div>
       <h2 className="text-lg font-semibold">{post.title}</h2>
       <p className="mb-5">{post.description}</p>

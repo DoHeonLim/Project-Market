@@ -7,9 +7,10 @@ History
 Date        Author   Status    Description
 2024.12.06  임도헌   Created
 2024.12.06  임도헌   Modified  유저 리뷰 컴포넌트 추가
+2024.12.07  임도헌   Modified  프로필 이미지 컴포넌트 분리
 */
-import { UserIcon } from "@heroicons/react/24/solid";
-import Image from "next/image";
+
+import UserAvatar from "./user-avatar";
 
 interface IReviewItemProps {
   review: {
@@ -30,21 +31,13 @@ export default function ReviewItem({ review }: IReviewItemProps) {
     <div className="border-b pb-4 mb-4">
       <div className="flex items-center space-x-4">
         <div className="flex items-center gap-3 p-5">
-          <div className="overflow-hidden rounded-full size-10">
-            {review.user.avatar !== null ? (
-              <Image
-                width={40}
-                height={40}
-                src={`${review.user.avatar!}/avatar`}
-                alt={review.user.username}
-              />
-            ) : (
-              <UserIcon aria-label="user_icon" />
-            )}
-          </div>
+          <UserAvatar
+            avatar={review.user.avatar}
+            username={review.user.username}
+            size="md"
+          />
         </div>
         <div>
-          <h4 className="font-bold">{review.user.username}</h4>
           <div className="flex items-center">
             {[1, 2, 3, 4, 5].map((star) => (
               <svg

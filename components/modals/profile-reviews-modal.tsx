@@ -7,6 +7,7 @@ History
 Date        Author   Status    Description
 2024.12.07  임도헌   Created
 2024.12.07  임도헌   Modified  유저 리뷰 모달 컴포넌트 추가
+2024.12.08  임도헌   Modified  threshold 값 변경(보이는 영역 50%)
 */
 
 "use client";
@@ -69,7 +70,7 @@ export default function ReviewModal({
         }
       },
       {
-        threshold: 1.0,
+        threshold: 0.5,
       }
     );
 

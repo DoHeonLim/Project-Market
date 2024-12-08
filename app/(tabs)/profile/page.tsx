@@ -10,6 +10,7 @@ Date        Author   Status    Description
 2024.10.07  임도헌   Modified  로그아웃 버튼 추가
 2024.11.25  임도헌   Modified  프로필 페이지 레이아웃 추가
 2024.11.28  임도헌   Mdofieid  클라이언트 코드 분리
+2024.12.07  임도헌   Modified  리뷰 초깃값 이름 변경(initialReviews)
 */
 
 import MyProfile from "@/components/my-profile";
@@ -22,13 +23,13 @@ import {
 
 export default async function ProfilePage() {
   const user = await getUser();
-  const reviews = await getInitialUserReviews(user.id);
+  const initialReviews = await getInitialUserReviews(user.id);
   const averageRating = await getUserAverageRating(user.id);
 
   return (
     <MyProfile
       user={user}
-      reviews={reviews}
+      initialReviews={initialReviews}
       averageRating={averageRating}
       logOut={logOut}
     />

@@ -14,7 +14,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { formatToTimeAgo, formatToWon } from "@/lib/utils";
 import { useEffect, useState } from "react";
-import { SelectUserModal } from "./select-user-modal";
+import { SelectUserModal } from "./modals/select-user-modal";
 import {
   getPurchaseUsername,
   updateProductStatus,

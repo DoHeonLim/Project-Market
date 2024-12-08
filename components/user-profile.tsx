@@ -19,6 +19,7 @@ import { useEffect, useRef, useState } from "react";
 import { getMoreUserProducts } from "@/app/(tabs)/profile/[username]/actions";
 import ListProduct from "./list-product";
 import { ProductsSkeleton } from "@/app/(tabs)/profile/[username]/loading";
+import ProfileReviewsModal from "./modals/profile-reviews-modal";
 
 type Products = {
   id: number;
@@ -35,6 +36,18 @@ type AverageRating = {
   total: number;
 };
 
+type Review = {
+  id: number;
+  userId: number;
+  productId: number;
+  payload: string;
+  rate: number;
+  user: {
+    username: string;
+    avatar: string | null;
+  };
+};
+
 interface UserProfileProps {
   user: {
     id: number;
@@ -42,6 +55,7 @@ interface UserProfileProps {
     avatar: string | null;
     created_at: Date;
   };
+  initialReviews: Review[];
   initialSellingProducts: Products[];
   initialSoldProducts: Products[];
   averageRating: AverageRating | null;
@@ -51,6 +65,7 @@ type ProductStatus = "selling" | "sold";
 
 export default function UserProfile({
   user,
+  initialReviews,
   initialSellingProducts,
   initialSoldProducts,
   averageRating,
@@ -66,6 +81,7 @@ export default function UserProfile({
   const [soldPage, setSoldPage] = useState(0); // 판매 완료 제품 페이지 설정
   const [isLastSellingPage, setIsLastSellingPage] = useState(false); // 판매 제품 마지막 페이지 설정
   const [isLastSoldPage, setIsLastSoldPage] = useState(false); // 판매 완료 제품 마지막 페이지 설정
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false); // 리뷰 모달 상태 설정
   const trigger = useRef<HTMLDivElement>(null); // 무한 스크롤 트리거 설정
 
   const currentProducts =
@@ -133,7 +149,7 @@ export default function UserProfile({
     <div className="flex flex-col items-center gap-4 my-4 px-4">
       <span className="text-2xl font-semibold">{user.username}님의 프로필</span>
 
-      <div className="flex gap-10 rounded-xl border-[2px] border-neutral-500 w-full py-10">
+      <div className="flex gap-10 rounded-xl w-full py-10">
         <div className="w-full md:flex-row md:mr-10 flex flex-col justify-around items-center space-y-6">
           <div className="md:flex-row flex flex-col items-center justify-center w-full gap-6">
             {user.avatar !== null ? (
@@ -162,6 +178,16 @@ export default function UserProfile({
             </div>
           </div>
         </div>
+      </div>
+
+      {/* 리뷰 모달 버튼 */}
+      <div>
+        <button
+          onClick={() => setIsReviewModalOpen(true)}
+          className="w-full px-4 py-3 bg-indigo-600 rounded-md hover:bg-indigo-400 transition-colors"
+        >
+          전체 후기 보기
+        </button>
       </div>
 
       {/* 판매 제품 탭 */}
@@ -209,6 +235,14 @@ export default function UserProfile({
           </div>
         )}
       </div>
+
+      {/* 리뷰 모달 */}
+      <ProfileReviewsModal
+        isOpen={isReviewModalOpen}
+        onClose={() => setIsReviewModalOpen(false)}
+        reviews={initialReviews}
+        userId={user.id}
+      />
     </div>
   );
 }

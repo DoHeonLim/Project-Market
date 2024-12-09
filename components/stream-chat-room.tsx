@@ -8,6 +8,7 @@
  2024.11.21  임도헌   Created
  2024.11.21  임도헌   Modified  스트리밍 채팅방 컴포넌트
  2024.11.23  임도헌   Modified  스트리밍 채팅방 컴포넌트 스크롤 및 useRef로 최신 메시지 받을 시 스크롤바를 최하단으로 옮기는 코드 추가
+ 2024.12.08  임도헌   Modified  시간 표시 클라이언트로 변경
  */
 "use client";
 
@@ -15,7 +16,6 @@ import {
   InitialStreamChatMessages,
   saveStreamMessage,
 } from "@/app/streams/[id]/actions";
-import { formatToTimeAgo } from "@/lib/utils";
 import {
   PaperAirplaneIcon,
   UserIcon,
@@ -24,6 +24,7 @@ import {
 import { createClient, RealtimeChannel } from "@supabase/supabase-js";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import TimeAgo from "./time-ago";
 
 const SUPABASE_PUBLIC_KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLIC_KEY;
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -173,7 +174,7 @@ export default function StreamChatRoom({
                 {message.payload}
               </span>
             </div>
-            <span>{formatToTimeAgo(message.created_at.toString())}</span>
+            <TimeAgo date={message.created_at.toString()} />
           </div>
         ))}
       </div>

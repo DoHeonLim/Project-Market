@@ -104,7 +104,8 @@ model Post {
 model PostImage {
   id         Int      @id @default(autoincrement())
   url        String
-  post       Post     @relation(fields: [postId], references: [id])
+  order      Int      @default(0)
+  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
   postId     Int
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -201,7 +202,7 @@ model LiveStream {
   streamChatRoom StreamChatRoom?
 }
 
-// Prisma에서 enum 사용 불가능 하기때문에 서버쪽에�� 제약조건 추가
+// Prisma에서 enum 사용 불가능 하기때문에 서버쪽에 제약조건 추가
 model Review {
   id        Int     @id @default(autoincrement())
   user      User    @relation(fields: [userId], references: [id]) //작성자

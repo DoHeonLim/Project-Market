@@ -18,6 +18,7 @@
 // 2024.11.15  임도헌   Modified   채팅방에 제품Id도 추가(어떤 제품의 채팅방인가? 체크)
 // 2024.11.21  임도헌   Modified   chatroom을 ProductChatRoom 으로 이름 변경
 // 2024.11.21  임도헌   Modified   StreamChatRoom 및 StreamMessage 모델 추가
+// 2024.12.10  임도헌   Modified   PostImage 모델 추가
 
 generator client {
   provider = "prisma-client-js"
@@ -86,16 +87,27 @@ model Product {
 }
 
 model Post {
-  id          Int       @id @default(autoincrement())
+  id          Int         @id @default(autoincrement())
   title       String
   description String?
-  views       Int       @default(0)
-  created_at  DateTime  @default(now())
-  updated_at  DateTime  @updatedAt
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  views       Int         @default(0)
+  created_at  DateTime    @default(now())
+  updated_at  DateTime    @updatedAt
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId      Int
   comments    Comment[]
   likes       Like[]
+  images      PostImage[] // 이미지 관계 추가
+}
+
+// 게시글 이미지를 위한 새로운 모델
+model PostImage {
+  id         Int      @id @default(autoincrement())
+  url        String
+  post       Post     @relation(fields: [postId], references: [id])
+  postId     Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 }
 
 model Comment {

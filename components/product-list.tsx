@@ -8,6 +8,7 @@ Date        Author   Status    Description
 2024.10.14  임도헌   Created
 2024.10.14  임도헌   Modified  제품 컴포넌트 추가
 2024.10.17  임도헌   Modified  무한 스크롤 기능 추가
+2024.12.12  임도헌   Modified  스타일 수정
 */
 "use client";
 
@@ -58,7 +59,7 @@ export default function ProductList({ initialProducts }: IProductListProps) {
     };
   }, [page]);
   return (
-    <div className="flex flex-col gap-5 p-5">
+    <div className="flex flex-col gap-2 p-2">
       {products.map((product) => (
         <ListProduct key={product.id} {...product} />
       ))}

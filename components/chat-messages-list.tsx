@@ -12,6 +12,7 @@
  2024.11.21  임도헌   Modified  ChatroomId를 productChatRoomId으로 변경
  2024.12.07  임도헌   Modified  프로필 이미지 컴포넌트 분리
  2024.12.08  임도헌   Modified  시간 표시 컴포넌트 분리
+ 2024.12.12  임도헌   Modified  스타일 변경
  */
 "use client";
 
@@ -117,7 +118,7 @@ export default function ChatMessagesList({
   }, [messages]);
 
   return (
-    <div className="flex flex-col h-[100vh]">
+    <div className="flex flex-col h-[90vh]">
       <div className="flex-1 overflow-y-auto p-5 space-y-5 scrollbar">
         {messages.map((message) => (
           <div
@@ -166,7 +167,7 @@ export default function ChatMessagesList({
         ))}
         <div ref={messagesEndRef} />
       </div>
-      <div className="p-4 border-t">
+      <div className="p-4">
         <form className="relative flex items-center" onSubmit={onSubmit}>
           <input
             required

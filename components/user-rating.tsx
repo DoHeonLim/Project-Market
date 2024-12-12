@@ -8,6 +8,7 @@ Date        Author   Status    Description
 2024.12.06  임도헌   Created
 2024.12.06  임도헌   Modified  유저 평점 컴포넌트 추가
 2024.12.07  임도헌   Modified  평점 및 갯수 조건 추가
+2024.12.12  임도헌   Modified  리뷰가 없을 경우 0으로 나오게 수정
 */
 "use client";
 
@@ -56,7 +57,7 @@ export default function UserRating({
         ))}
       </div>
       <div className={`${textSizes[size]} text-gray-300`}>
-        {rating} ({totalReviews})
+        {rating} ({!totalReviews ? "0" : totalReviews})
       </div>
     </div>
   );

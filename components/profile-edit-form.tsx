@@ -10,6 +10,7 @@ Date        Author   Status    Description
 2024.11.27  임도헌   Modified  GitHub 연동한 유저의 케이스 추가
 2024.11.27  임도헌   Modified  checkDuplicates 유저 이름, 이메일 검증 코드 추가
 2024.11.28  임도헌   Modified  스키마 위치 변경
+2024.12.12  임도헌   Modified  스타일 수정
 */
 
 "use client";
@@ -332,7 +333,7 @@ export default function ProfileEditForm({ user }: IuserProps) {
         <div className="flex justify-center">
           <label
             htmlFor="photo"
-            className="flex flex-col items-center justify-center w-1/2 m-3 bg-center bg-cover border-2 border-dashed rounded-md cursor-pointer aspect-square text-neutral-300 border-neutral-300"
+            className="flex flex-col items-center justify-center w-1/2 m-3 bg-center bg-cover border-2 border-dashed rounded-full cursor-pointer aspect-square text-neutral-300 border-neutral-300"
             style={{ backgroundImage: `url(${preview})` }}
           >
             {preview === "" ? (
@@ -368,7 +369,7 @@ export default function ProfileEditForm({ user }: IuserProps) {
           </button>
           <Link
             className="flex items-center justify-center flex-1 h-10 font-semibold text-white transition-colors bg-indigo-300 rounded-md px-auto hover:bg-indigo-400"
-            href="/products"
+            href="/profile"
           >
             뒤로가기
           </Link>

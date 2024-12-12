@@ -10,13 +10,14 @@
  2024.11.21  임도헌   Modified  ChatroomId를 productChatRoomId으로 변경
  2024.12.07  임도헌   Modified  채팅방 리스트 스타일 변경
  2024.12.07  임도헌   Modified  프로필 이미지 컴포넌트 분리
+ 2024.12.12  임도헌   Modified  채팅방 생성 시간 표시 변경
  */
 
 import { UnreadMessageCount } from "@/app/(tabs)/chat/actions";
-import { formatToTimeAgo } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 import UserAvatar from "./user-avatar";
+import TimeAgo from "./time-ago";
 
 interface IListChatProps {
   userId: number;
@@ -36,7 +37,9 @@ interface IListChatProps {
     }[];
     product: {
       title: string;
-      photo: string;
+      images: {
+        url: string;
+      }[];
     };
   };
 }
@@ -54,7 +57,7 @@ export default function ChatRoomList({ userId, room }: IListChatProps) {
             <div className="flex items-center justify-center gap-4">
               <div className="relative size-14">
                 <Image
-                  src={`${room.product.photo}/avatar`}
+                  src={`${room.product.images[0]?.url}/avatar`}
                   fill
                   className="object-cover"
                   alt={room.product.title}
@@ -76,9 +79,7 @@ export default function ChatRoomList({ userId, room }: IListChatProps) {
             </div>
             <div className="flex items-center justify-center gap-3">
               <UnreadMessageCount id={userId} productChatRoomId={room.id} />
-              <span className="text-white">
-                {formatToTimeAgo(room.messages[0]?.created_at.toString())}
-              </span>
+              <TimeAgo date={room.messages[0]?.created_at.toString()} />
             </div>
           </div>
         </div>

@@ -9,13 +9,14 @@
  2024.11.19  임도헌   Modified  라이브 스트리밍 녹화본 페이지 추가
  2024.11.21  임도헌   Modified  console.log 삭제
  2024.12.07  임도헌   Modified  프로필 이미지 컴포넌트 분리
+ 2024.12.12  임도헌   Modified  녹화본 생성 시간 표시 변경
  */
 
 import { notFound } from "next/navigation";
 import { getStream, recodingStream } from "../actions";
 import { unstable_cache as nextCache } from "next/cache";
-import { formatToTimeAgo } from "@/lib/utils";
 import UserAvatar from "@/components/user-avatar";
+import TimeAgo from "@/components/time-ago";
 
 interface IRecodingProps {
   meta: { name: string };
@@ -70,7 +71,7 @@ export default async function RecordingPage({
               />
             </div>
             <div>{record.meta.name}</div>
-            <div>{formatToTimeAgo(record.created.toString())}</div>
+            <TimeAgo date={record.created.toString()} />
           </div>
         ))}
       </div>

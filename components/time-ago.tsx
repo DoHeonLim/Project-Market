@@ -7,6 +7,7 @@
  Date        Author   Status    Description
  2024.12.08  임도헌   Created
  2024.12.08  임도헌   Modified  시간 표시 컴포넌트 추가
+ 2024.12.11  임도헌   Modified  마우스 올릴 시 정확한 시간 표시
  */
 
 // 시간을 바꾸는 과정에서 서버와 클라이언트의 시간이 다를 수 있기 때문에 클라이언트로 변경
@@ -34,5 +35,19 @@ export default function TimeAgo({ date }: TimeAgoProps) {
     return null;
   }
 
-  return <span className="text-xs">{formatToTimeAgo(date)}</span>;
+  // 날짜를 한국 시간대로 포맷
+  const fullDate = new Date(date).toLocaleString("ko-KR", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  return (
+    <span className="text-xs" title={fullDate}>
+      {formatToTimeAgo(date)}
+    </span>
+  );
 }

@@ -7,14 +7,15 @@ History
 Date        Author   Status    Description
 2024.12.07  임도헌   Created
 2024.12.07  임도헌   Modified  유저 아바타 컴포넌트 추가
+2024.12.12  임도헌   Modified  유저 아바타 생성시간 표시 변경
 */
 
 "use client";
 
-import { formatToTimeAgo } from "@/lib/utils";
 import { UserIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import Link from "next/link";
+import TimeAgo from "./time-ago";
 
 interface UserAvatarProps {
   avatar: string | null;
@@ -75,7 +76,7 @@ export default function UserAvatar({
           )
         ) : null}
         <div className="text-xs">
-          {created_at && formatToTimeAgo(created_at?.toString() ?? null)}
+          {created_at && <TimeAgo date={created_at?.toString() ?? null} />}
         </div>
       </div>
     </div>

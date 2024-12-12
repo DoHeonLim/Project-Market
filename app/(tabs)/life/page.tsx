@@ -9,10 +9,12 @@ Date        Author   Status    Description
 2024.10.14  임도헌   Modified  동네생활 페이지 추가
 2024.11.23  임도헌   Modified  게시글을 최신 게시글순으로 출력되게 수정
 2024.11.23  임도헌   Modified  게시글 생성 링크 추가
+2024.12.12  임도헌   Modified  게시글 좋아요 명 변경
+2024.12.12  임도헌   Modified  게시글 생성 시간 표시 변경
 */
 
+import TimeAgo from "@/components/time-ago";
 import db from "@/lib/db";
-import { formatToTimeAgo } from "@/lib/utils";
 import {
   ChatBubbleBottomCenterIcon,
   HandThumbUpIcon,
@@ -31,7 +33,7 @@ const getPosts = async () => {
       _count: {
         select: {
           comments: true,
-          likes: true,
+          post_likes: true,
         },
       },
     },
@@ -54,7 +56,7 @@ export default async function Life() {
         <Link
           key={post.id}
           href={`/posts/${post.id}`}
-          className={`flex flex-col gap-2 pb-5 mb-5 text-neutral-400 ${
+          className={`flex flex-col gap-2 p-2 mb-5 hover:bg-neutral-800 hover:rounded-md hover:scale-105 transition-all text-neutral-400 ${
             idx === posts.length - 1
               ? "border-0"
               : "border-b border-neutral-500"
@@ -64,14 +66,14 @@ export default async function Life() {
           <p>{post.description}</p>
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-4">
-              <span>{formatToTimeAgo(post.created_at.toString())}</span>
+              <TimeAgo date={post.created_at?.toString()} />
               <span>.</span>
               <span>조회 {post.views}</span>
             </div>
             <div className="flex items-center gap-4 *:flex *:gap-1 *:items-center">
               <span>
                 <HandThumbUpIcon aria-label="thumb_up" className="size-4" />
-                {post._count.likes}
+                {post._count.post_likes}
               </span>
               <span>
                 <ChatBubbleBottomCenterIcon

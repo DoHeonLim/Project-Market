@@ -11,6 +11,7 @@ Date        Author   Status    Description
 2024.12.07  임도헌   Modified  유저 초기 제품 제공 함수 추가
 2024.12.07  임도헌   Modified  유저 제품 무한 스크롤 함수 추가
 2024.12.07  임도헌   Modified  getUserProfile에 평균 평점 및 갯수 삭제
+2024.12.12  임도헌   Modified  제품 대표 사진 하나 들고오기
 */
 
 "use server";
@@ -72,7 +73,15 @@ export const getUserProducts = async (
       id: true,
       title: true,
       price: true,
-      photo: true,
+      images: {
+        select: {
+          url: true,
+        },
+        orderBy: {
+          order: "asc",
+        },
+        take: 1,
+      },
       created_at: true,
       reservation_userId: true,
       purchase_userId: true,
@@ -102,7 +111,15 @@ export const getMoreUserProducts = async (
       id: true,
       title: true,
       price: true,
-      photo: true,
+      images: {
+        select: {
+          url: true,
+        },
+        orderBy: {
+          order: "asc",
+        },
+        take: 1,
+      },
       created_at: true,
       reservation_userId: true,
       purchase_userId: true,

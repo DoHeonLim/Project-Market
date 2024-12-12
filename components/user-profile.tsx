@@ -9,6 +9,7 @@ Date        Author   Status    Description
 2024.12.07  임도헌   Modified  유저 프로필 페이지 추가
 2024.12.07  임도헌   Modified  무한 스크롤 추가
 2024.12.07  임도헌   Modified  평균 평점 및 갯수 로직 수정
+2024.12.12  임도헌   Modified  photo속성에서 images로 변경
 */
 "use client";
 
@@ -25,7 +26,9 @@ type Products = {
   id: number;
   title: string;
   price: number;
-  photo: string;
+  images: {
+    url: string;
+  }[];
   created_at: Date;
   reservation_userId: number | null;
   purchase_userId: number | null;

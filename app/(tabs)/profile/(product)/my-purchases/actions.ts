@@ -9,6 +9,7 @@ Date        Author   Status    Description
 2024.12.02  임도헌   Modified  내가 구매한 제품 내역 추가
 2024.12.03  임도헌   Modified  리뷰 생성, 삭제 추가
 2024.12.03  임도헌   Modified  revalidateTag로 캐싱 기능 추가
+2024.12.12  임도헌   Modified  제품 대표 사진 하나 들고오기
 */
 "use server";
 
@@ -25,7 +26,15 @@ export const getPurchasedProducts = async (userId: number) => {
       id: true,
       title: true,
       price: true,
-      photo: true,
+      images: {
+        select: {
+          url: true,
+        },
+        orderBy: {
+          order: "asc",
+        },
+        take: 1,
+      },
       purchase_userId: true,
       purchased_at: true,
       user: {

@@ -9,10 +9,12 @@ Date        Author   Status    Description
 2024.11.30  임도헌   Modified  나의 판매 제품 상세 컴포넌트 추가
 2024.12.03  임도헌   Modified  purchase_at을 purchased_at으로 변경
 2024.12.05  임도헌   Modified  구매자 리뷰 볼 때 구매자가 누구인지 명시하는 코드 추가
+2024.12.12  임도헌   Modified  photo속성에서 images로 변경
+2024.12.12  임도헌   Modified  제품 상태 변경 시간 표시 변경
 */
 import Image from "next/image";
 import Link from "next/link";
-import { formatToTimeAgo, formatToWon } from "@/lib/utils";
+import { formatToWon } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { SelectUserModal } from "./modals/select-user-modal";
 import {
@@ -26,13 +28,16 @@ import { deleteAllProductReviews } from "@/app/(tabs)/profile/(product)/my-sales
 import ReviewDetailModal from "./modals/review-detail-modal";
 import { deleteReview } from "@/app/(tabs)/profile/(product)/my-purchases/actions";
 import ReservationUserInfo from "./reservation-user-info";
+import TimeAgo from "./time-ago";
 
 interface ProductItemProps {
   product: {
     id: number;
     title: string;
     price: number;
-    photo: string;
+    images: {
+      url: string;
+    }[];
     created_at: Date;
     reservation_userId: number | null;
     reservation_at: Date | null;
@@ -145,7 +150,7 @@ export default function MySalesProductItem({
           <div className="relative overflow-hidden rounded-md size-28">
             <Image
               fill
-              src={`${product.photo}/avatar`}
+              src={product.images[0]?.url}
               sizes="(max-width: 768px) 112px, 112px"
               className="object-cover"
               alt={product.title}
@@ -153,9 +158,7 @@ export default function MySalesProductItem({
           </div>
           <div className="flex flex-col gap-1 *:text-white">
             <span className="text-lg">{product.title}</span>
-            <span className="text-sm text-neutral-500">
-              {formatToTimeAgo(product.created_at.toString())}
-            </span>
+            <TimeAgo date={product.created_at.toString()} />
             <span className="text-lg font-semibold">
               {formatToWon(product.price)}원
             </span>
@@ -165,14 +168,14 @@ export default function MySalesProductItem({
               !product.purchased_at && (
                 <>
                   <span className="text-sm text-yellow-500">
-                    예약일: {formatToTimeAgo(product.reservation_at.toString())}
+                    예약일: <TimeAgo date={product.reservation_at.toString()} />
                   </span>
                 </>
               )}
 
             {type === "sold" && product.purchased_at && (
               <span className="text-sm text-green-500">
-                판매일: {formatToTimeAgo(product.purchased_at.toString())}
+                판매일: <TimeAgo date={product.purchased_at.toString()} />
               </span>
             )}
           </div>

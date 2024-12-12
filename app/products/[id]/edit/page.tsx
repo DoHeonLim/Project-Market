@@ -7,6 +7,7 @@ History
 Date        Author   Status    Description
 2024.11.02  임도헌   Created
 2024.11.02  임도헌   Modified  제품 편집 페이지 추가
+2024.12.12  임도헌   Modified  제품 대표 사진 하나 들고오기
 */
 
 import { notFound, redirect } from "next/navigation";
@@ -18,7 +19,11 @@ async function getProduct(id: number) {
   const product = await db.product.findUnique({
     where: { id },
     select: {
-      photo: true,
+      images: {
+        orderBy: {
+          order: "asc",
+        },
+      },
       title: true,
       price: true,
       description: true,

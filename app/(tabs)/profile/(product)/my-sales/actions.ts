@@ -10,6 +10,7 @@ Date        Author   Status    Description
 2024.12.02  임도헌   Modified  revalidateTag로 캐싱 기능 추가
 2024.12.03  임도헌   Modified  purchase_at을 purchased_at으로 변경
 2024.12.04  임도헌   Modified  예약 유저 정보 추가
+2024.12.12  임도헌   Modified  제품 대표 사진 하나 들고오기
 */
 "use server";
 
@@ -26,7 +27,15 @@ export const getSellingProducts = async (userId: number) => {
       id: true,
       title: true,
       price: true,
-      photo: true,
+      images: {
+        select: {
+          url: true,
+        },
+        orderBy: {
+          order: "asc",
+        },
+        take: 1,
+      },
       created_at: true,
       updated_at: true,
       reservation_userId: true,

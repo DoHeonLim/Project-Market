@@ -8,142 +8,143 @@ Date        Author   Status    Description
 2024.11.02  임도헌   Created
 2024.11.02  임도헌   Modified  편집 폼 컴포넌트 추가
 2024.11.12  임도헌   Modified  제품 수정 클라우드 플레어로 리팩토링
+2024.12.12  임도헌   Modified  useImageUpload 커스텀 훅으로 분리
+2024.12.12  임도헌   Modified  제품 편집 폼 액션 코드 추가(여러 이미지 업로드)
+2024.12.12  임도헌   Modified  폼 제출 후 모달에서 수정했는지 상세 페이지에서 수정했는지 확인 후 페이지 이동 로직 수정
 */
 "use client";
 
 import Button from "@/components/button";
 import Input from "@/components/input";
-import { MAX_PHOTO_SIZE } from "@/lib/constants";
-import { PhotoIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { editProduct, getUploadUrl } from "@/app/products/[id]/edit/actions";
+import { useEffect } from "react";
+import { editProduct } from "@/app/products/[id]/edit/actions";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import {
   productEditSchema,
   ProductEditType,
 } from "@/app/products/[id]/edit/schema";
+import { useImageUpload } from "@/hooks/useImageUpload";
+import ImageUploader from "@/components/image/image-uploader";
+import { useRouter, usePathname } from "next/navigation";
+import { getUploadUrl } from "@/app/add-product/action";
 
 interface IEditFormProps {
   product: {
     id: number;
     title: string;
-    photo: string;
+    images: { url: string; order: number }[];
     description: string;
     price: number;
   };
 }
 
 export default function EditForm({ product }: IEditFormProps) {
-  // 이미지 미리보기
-  const [preview, setPreview] = useState("");
-  // 클라우드 플레어 이미지 업로드 URL
-  const [uploadUrl, setUploadUrl] = useState("");
-  // 선택한 이미지
-  const [file, setFile] = useState<File | null>(null);
-  // 기존 이미지 경로 관리
-  const [currentPhoto, setCurrentPhoto] = useState(product.photo);
-
-  //react hook form 사용 및 초기값 세팅
+  const router = useRouter();
+  const pathname = usePathname();
   const {
     register,
     handleSubmit,
     setValue,
     formState: { errors },
+    getValues,
   } = useForm<ProductEditType>({
     resolver: zodResolver(productEditSchema),
     defaultValues: {
       title: product.title,
       price: product.price,
       description: product.description,
-      photo: product.photo,
+      photos: product.images.map((image) => image.url),
     },
   });
 
+  // 이미지 업로드 커스텀 훅
+  const {
+    previews,
+    files,
+    isImageFormOpen,
+    setIsImageFormOpen,
+    handleImageChange,
+    handleDeleteImage,
+    handleDragEnd,
+    setPreviews,
+    reset,
+  } = useImageUpload({ maxImages: 5, setValue, getValues });
+
+  // 초기 이미지 설정
   useEffect(() => {
-    if (product.photo) {
-      setPreview(product.photo + "/public");
-      setCurrentPhoto(product.photo);
-      setValue("photo", product.photo);
-    }
-  }, [product.photo, setValue]);
-
-  const handleImageChange = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const {
-      target: { files },
-    } = event;
-    if (!files) {
-      return;
-    }
-    const file = files[0];
-
-    // 이미지 크기 제한 검사
-    if (file.size > MAX_PHOTO_SIZE) {
-      alert("이미지는 3MB 이하로 올려주세요.");
-      event.target.value = "";
-      return;
-    }
-
-    const url = URL.createObjectURL(file);
-    // 미리보기 세팅
-    setPreview(url);
-    // 이미지 파일 세팅
-    setFile(file);
-    // 클라우드 플레어 업로드 이미지 링크 가져오기
-    const { success, result } = await getUploadUrl();
-    if (success) {
-      const { id, uploadURL } = result;
-      setUploadUrl(uploadURL);
+    if (product.images.length > 0) {
+      setPreviews(product.images.map((image) => image.url + "/public"));
       setValue(
-        "photo",
-        `https://imagedelivery.net/3o3hwIVwLhMgAkoMCda2JQ/${id}`
+        "photos",
+        product.images.map((image) => image.url)
       );
     }
-  };
-  // 폼 리셋
-  const reset = () => {
-    setPreview("");
-    setFile(null);
-    setValue("photo", "");
-    const fileInput = document.querySelector(
-      'input[type="file"]'
-    ) as HTMLInputElement;
-    if (fileInput) {
-      fileInput.value = "";
-    }
-  };
+  }, [product.images, setValue, setPreviews]);
 
   const onSubmit = handleSubmit(async (data: ProductEditType) => {
-    // 새 이미지가 있는 경우에만 업로드
-    if (file) {
-      //클라우드 플레어에 이미지 업로드
-      const cloudflareForm = new FormData();
-      cloudflareForm.append("file", file);
-      const response = await fetch(uploadUrl, {
-        method: "POST",
-        body: cloudflareForm,
-      });
-      if (response.status !== 200) {
-        alert("이미지 업로드에 실패했습니다.");
-        return;
-      }
-    } else {
-      // 이미지가 변경되지 않았다면 기존 이미지 경로 사용
-      data.photo = currentPhoto;
+    if (files.length === 0 && previews.length === 0) {
+      alert("최소 1개 이상의 이미지를 업로드해주세요.");
+      return;
     }
-    // 이미지가 업로드 되면 formData의 photo를 교체
+
+    const uploadedPhotoUrls: string[] = [];
+
+    // 새로 추가된 파일들만 업로드
+    if (files.length > 0) {
+      const uploadPromises = files.map(async (file) => {
+        const { success, result } = await getUploadUrl();
+        if (!success) throw new Error("Failed to get upload URL");
+
+        const { uploadURL, id } = result;
+        const cloudflareForm = new FormData();
+        cloudflareForm.append("file", file);
+
+        const response = await fetch(uploadURL, {
+          method: "POST",
+          body: cloudflareForm,
+        });
+
+        if (!response.ok) throw new Error("Failed to upload image");
+
+        return `https://imagedelivery.net/3o3hwIVwLhMgAkoMCda2JQ/${id}`;
+      });
+
+      const urls = await Promise.all(uploadPromises);
+      uploadedPhotoUrls.push(...urls);
+    }
+
+    // 기존 이미지 URL과 새로 업로드된 이미지 URL 합치기
+    const allPhotoUrls = [
+      ...getValues("photos").filter((url) => !url.includes("blob:")),
+      ...uploadedPhotoUrls,
+    ];
+
     const formData = new FormData();
-    formData.append("id", product.id + "");
-    formData.append("photo", data.photo);
+    formData.append("id", product.id.toString());
     formData.append("title", data.title);
     formData.append("description", data.description);
-    formData.append("price", data.price + "");
+    formData.append("price", data.price.toString());
+    allPhotoUrls.forEach((url) => {
+      formData.append("photos[]", url);
+    });
 
-    // editProduct를 리턴한다.
-    return editProduct(formData);
+    const result = await editProduct(formData);
+    if (result?.success) {
+      // 현재 경로가 모달인 경우와 아닌 경우를 구분하여 처리
+      if (pathname.includes("products/[id]/edit")) {
+        router.replace(`/products/${result.productId}`);
+        //router.replace()를 사용하여 상세 페이지로 직접 이동
+        //replace는 브라우저 히스토리를 덮어쓰므로 뒤로가기 시 이전 편집 페이지로 돌아가지 않음
+      } else {
+        router.back(); // 모달에서 편집한 경우 뒤로가기
+        //router.back()을 사용하여 이전 페이지(모달을 열기 전 상태)로 돌아감
+      }
+      router.refresh(); // 데이터 갱신을 위해 페이지 새로고침
+    } else if (result?.error) {
+      alert(result.error);
+    }
   });
 
   const onValid = async () => {
@@ -153,32 +154,22 @@ export default function EditForm({ product }: IEditFormProps) {
   return (
     <div>
       <form action={onValid} className="flex flex-col gap-5 p-5">
-        <input type="hidden" name="id" defaultValue={product.id} />
-        <label
-          htmlFor="photo"
-          className="flex flex-col items-center justify-center bg-center bg-cover border-2 border-dashed rounded-md cursor-pointer aspect-square text-neutral-300 border-neutral-300"
-          style={{ backgroundImage: `url(${preview})` }}
-        >
-          {preview === "" ? (
-            <>
-              <PhotoIcon aria-label="photo" className="w-20" />
-              <div className="text-sm text-neutral-400">
-                사진을 추가해주세요.
-              </div>
-              <div className="text-sm text-rose-700">
-                {errors.photo?.message}
-              </div>
-            </>
-          ) : null}
-        </label>
-        <input
-          onChange={handleImageChange}
-          type="file"
-          id="photo"
-          name="photo"
-          accept="image/*"
-          className="hidden"
-        />
+        <div className="flex flex-col gap-1">
+          <ImageUploader
+            previews={previews}
+            onImageChange={handleImageChange}
+            onDeleteImage={handleDeleteImage}
+            onDragEnd={handleDragEnd}
+            isOpen={isImageFormOpen}
+            onToggle={() => setIsImageFormOpen(!isImageFormOpen)}
+            optional={false}
+          />
+          {previews.length === 0 && (
+            <p className="text-sm text-red-500 px-2">
+              최소 1개 이상의 이미지를 업로드해주세요.
+            </p>
+          )}
+        </div>
         <Input
           type="text"
           required
@@ -205,12 +196,12 @@ export default function EditForm({ product }: IEditFormProps) {
           <button
             type="reset"
             onClick={reset}
-            className="flex items-center justify-center flex-1 h-10 font-semibold text-white transition-colors bg-indigo-300 rounded-md px-auto hover:bg-indigo-400"
+            className="flex-1 h-10 font-semibold text-white transition-colors bg-indigo-300 rounded-md hover:bg-indigo-400"
           >
             초기화
           </button>
           <Link
-            className="flex items-center justify-center flex-1 h-10 font-semibold text-white transition-colors bg-indigo-300 rounded-md px-auto hover:bg-indigo-400"
+            className="flex-1 h-10 font-semibold text-white transition-colors bg-indigo-300 rounded-md flex items-center justify-center hover:bg-indigo-400"
             href="/products"
           >
             뒤로가기

@@ -8,6 +8,7 @@ Date        Author   Status    Description
 2024.11.30  임도헌   Created
 2024.11.30  임도헌   Modified  나의 판매 제품 리스트 컴포넌트
 2024.12.03  임도헌   Modified  purchase_at을 purchased_at으로 변경
+2024.12.12  임도헌   Modified  photo속성에서 images로 변경
 */
 "use client";
 
@@ -18,7 +19,9 @@ type ProductType = {
   id: number;
   title: string;
   price: number;
-  photo: string;
+  images: {
+    url: string;
+  }[];
   created_at: Date;
   updated_at: Date;
   reservation_userId: number | null;
@@ -72,7 +75,9 @@ export default function MySalesProductList({
 
   return (
     <div className="w-full flex flex-col gap-6">
-      <h1 className="text-2xl flex justify-center items-center">판매 제품</h1>
+      <h1 className="text-2xl flex justify-center items-center mt-2">
+        판매 제품
+      </h1>
       {/* 탭 메뉴 */}
       <div className="flex justify-center space-x-4 mb-4">
         <button

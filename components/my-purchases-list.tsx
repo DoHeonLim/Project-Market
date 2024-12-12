@@ -7,6 +7,7 @@ History
 Date        Author   Status    Description
 2024.12.02  임도헌   Created
 2024.12.02  임도헌   Modified  나의 구매 제품 리스트 컴포넌트
+2024.12.12  임도헌   Modified  photo속성에서 images로 변경
 */
 
 import MyPurchasesProductItem from "./my-purchases-product-item";
@@ -15,7 +16,9 @@ type ProductType = {
   id: number;
   title: string;
   price: number;
-  photo: string;
+  images: {
+    url: string;
+  }[];
   purchase_userId: number | null;
   purchased_at: Date | null;
   user: {
@@ -38,7 +41,9 @@ interface IPurchasedProductList {
 export default function MyPurchasesList({ products }: IPurchasedProductList) {
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl flex justify-center items-center">구매 제품</h1>
+      <h1 className="text-2xl flex justify-center items-center mt-2">
+        구매 제품
+      </h1>
       {products.length === 0 ? (
         <p className="text-neutral-500 text-center">구매한 제품이 없습니다.</p>
       ) : (

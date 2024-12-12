@@ -8,7 +8,8 @@
  2024.10.17  임도헌   Created
  2024.10.17  임도헌   Modified  좋아요, 싫어요 기능 추가
  2024.11.05  임도헌   Modified  댓글 생성 기능 추가
- 2024.11.06   임도헌   Modified  댓글 삭제 기능 추가
+ 2024.11.06  임도헌   Modified  댓글 삭제 기능 추가
+ 2024.12.12  임도헌   Modified  like모델을 postLike로 변경
  */
 "use server";
 
@@ -22,7 +23,7 @@ import { z } from "zod";
 export const likePost = async (postId: number) => {
   try {
     const session = await getSession();
-    await db.like.create({
+    await db.postLike.create({
       data: {
         postId,
         userId: session.id!,
@@ -37,7 +38,7 @@ export const likePost = async (postId: number) => {
 export const dislikePost = async (postId: number) => {
   try {
     const session = await getSession();
-    await db.like.delete({
+    await db.postLike.delete({
       where: {
         id: {
           postId,

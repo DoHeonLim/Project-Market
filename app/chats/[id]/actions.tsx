@@ -8,6 +8,7 @@ Date        Author   Status    Description
 2024.11.09  임도헌   Created
 2024.11.09  임도헌   Modified  채팅 메시지 저장 추가
 2024.11.21  임도헌   Modified  Chatroom을 productChatRoom으로 변경
+2024.12.12  임도헌   Modified  message모델을 productMessage로 변경
 */
 
 "use server";
@@ -43,7 +44,7 @@ export const getRoom = async (id: string) => {
 
 // 채팅방의 모든 메시지를 가져오는 함수
 export const getMessages = async (productChatRoomId: string) => {
-  const messages = await db.message.findMany({
+  const messages = await db.productMessage.findMany({
     where: {
       productChatRoomId,
     },
@@ -84,7 +85,7 @@ export const saveMessage = async (
   productChatRoomId: string
 ) => {
   const session = await getSession();
-  await db.message.create({
+  await db.productMessage.create({
     data: {
       payload,
       productChatRoomId,
@@ -99,7 +100,7 @@ export const readMessageUpdate = async (
   productChatRoomId: string,
   userId: number
 ) => {
-  const updateMessage = await db.message.updateMany({
+  const updateMessage = await db.productMessage.updateMany({
     where: {
       productChatRoomId,
       isRead: false,

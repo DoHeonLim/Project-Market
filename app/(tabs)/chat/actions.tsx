@@ -10,6 +10,7 @@ Date        Author   Status    Description
 2024.11.15  임도헌   Modified  읽지 않은 메시지 갯수 함수 추가
 2024.11.18  임도헌   Modified  getChatRooms 최신 메시지 기준으로 정렬
 2024.11.21  임도헌   Modified  Chatroom을 productChatRoom으로 변경
+2024.12.12  임도헌   Modified  제품 대표 사진 하나 들고오기
 */
 
 import UnreadMessageCountBadge from "@/components/unread-message-count-badge";
@@ -46,7 +47,15 @@ export const getChatRooms = async (id: number) => {
       product: {
         select: {
           title: true,
-          photo: true,
+          images: {
+            select: {
+              url: true,
+            },
+            orderBy: {
+              order: "asc",
+            },
+            take: 1,
+          },
         },
       },
       // 마지막으로 보낸 메시지
@@ -78,7 +87,7 @@ export const unreadMessageCountDB = async (
   id: number,
   productChatRoomId: string
 ) => {
-  const count = await db.message.count({
+  const count = await db.productMessage.count({
     where: {
       userId: {
         not: id,

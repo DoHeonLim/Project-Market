@@ -9,6 +9,7 @@
  2024.11.12  임도헌   Modified  라이브 페이지 추가
  2024.11.19  임도헌   Modified  캐싱 기능 추가
  2024.11.21  임도헌   Modified  리스트 결과 값 스타일 수정
+ 2024.12.12  임도헌   Modified  라이브 페이지 스타일 변경
  */
 
 import { PlusIcon } from "@heroicons/react/24/solid";
@@ -22,14 +23,13 @@ const getCachedLiveStreams = nextCache(getLiveStreams, ["stream-list"], {
 });
 
 export default async function Live() {
-  // const list = await listStream();
   const liveStreams = await getCachedLiveStreams();
 
   return (
-    <div>
-      <div className="flex flex-col mt-4 gap-4">
+    <div className="mt-2">
+      <div className="flex flex-col gap-4">
         {liveStreams.length === 0 && (
-          <div className="flex items-center justify-center w-full h-screen text-lg font-semibold">
+          <div className="flex items-center justify-center w-full h-[90vh] text-lg font-semibold">
             생성된 스트리밍이 없습니다.
           </div>
         )}

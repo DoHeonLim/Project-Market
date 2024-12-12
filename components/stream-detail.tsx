@@ -9,15 +9,15 @@ Date        Author   Status    Description
 2024.11.19  임도헌   Modified  스트리밍 상세 컴포넌트 추가
 2024.11.21  임도헌   Modified  Link를 streams/[id]/page에서 StreamDetail로 옮김
 2024.11.21  임도헌   Modified  스트리밍 하기 위한 정보들 본인만 보이게 변경
+2024.12.07  임도헌   Modified  프로필 이미지 컴포넌트 분리
 */
 "use client";
 
-import Image from "next/image";
 import LiveStatusButton from "./live-status-button";
-import { UserIcon } from "@heroicons/react/24/solid";
 import StreamDeleteButton from "./stream-delete-button";
 import { deleteStream } from "@/app/streams/[id]/actions";
 import Link from "next/link";
+import UserAvatar from "./user-avatar";
 
 interface IStreamDetail {
   stream: {
@@ -53,21 +53,11 @@ export default function StreamDetail({
         ></iframe>
       </div>
       <div className="flex items-center gap-3 border-2 p-4 my-2 border-neutral-700 rounded-xl">
-        <div className="overflow-hidden rounded-full size-6">
-          {stream.user.avatar !== null ? (
-            <Image
-              src={stream.user.avatar!}
-              width={40}
-              height={40}
-              alt={stream.user.username}
-            />
-          ) : (
-            <UserIcon aria-label="user_icon" />
-          )}
-        </div>
-        <div>
-          <h3>{stream.user.username}</h3>
-        </div>
+        <UserAvatar
+          avatar={stream.user.avatar}
+          username={stream.user.username}
+          size="md"
+        />
         <div>
           <h1 className="text-2xl font-semibold ml-4">{stream.title}</h1>
         </div>
@@ -97,7 +87,7 @@ export default function StreamDetail({
       )}
       <Link
         href={`/streams/${streamId}/recoding`}
-        className="flex items-center justify-center flex-1 font-semibold text-white transition-colors mb-4 bg-indigo-500 rounded-md h-8 px-auto hover:bg-indigo-600 sm:text-lg md:text-xl"
+        className="flex items-center justify-center flex-1 font-semibold text-white transition-colors my-4 bg-indigo-500 rounded-md h-8 px-auto hover:bg-indigo-600 sm:text-lg md:text-xl"
       >
         녹화본 보기
       </Link>

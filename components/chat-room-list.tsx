@@ -6,15 +6,18 @@
  History
  Date        Author   Status    Description
  2024.11.15  임도헌   Created
- 2024.11.15  임도헌   Modified  채팅방 리스트 컴포넌트
+ 2024.11.15  임도헌   Modified  채팅방 리스트 컴포넌트 추가
  2024.11.21  임도헌   Modified  ChatroomId를 productChatRoomId으로 변경
+ 2024.12.07  임도헌   Modified  채팅방 리스트 스타일 변경
+ 2024.12.07  임도헌   Modified  프로필 이미지 컴포넌트 분리
+ 2024.12.12  임도헌   Modified  채팅방 생성 시간 표시 변경
  */
 
 import { UnreadMessageCount } from "@/app/(tabs)/chat/actions";
-import { formatToTimeAgo } from "@/lib/utils";
-import { UserIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import Link from "next/link";
+import UserAvatar from "./user-avatar";
+import TimeAgo from "./time-ago";
 
 interface IListChatProps {
   userId: number;
@@ -34,7 +37,9 @@ interface IListChatProps {
     }[];
     product: {
       title: string;
-      photo: string;
+      images: {
+        url: string;
+      }[];
     };
   };
 }
@@ -48,31 +53,23 @@ export default function ChatRoomList({ userId, room }: IListChatProps) {
         className="w-full px-10 py-4 transition-colors border-2 cursor-pointer hover:bg-opacity-40 border-neutral-500 hover:bg-indigo-500 hover:border-indigo-400 rounded-xl"
       >
         <div className="flex items-center justify-center w-full rounded-xl">
-          <div className="flex justify-between w-full shadow-xl rounded-xl">
+          <div className="flex justify-between w-full rounded-xl">
             <div className="flex items-center justify-center gap-4">
-              <div>
+              <div className="relative size-14">
                 <Image
-                  src={`${room.product.photo}/avatar`}
-                  width={50}
-                  height={50}
+                  src={`${room.product.images[0]?.url}/avatar`}
+                  fill
+                  className="object-cover"
                   alt={room.product.title}
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <div className="flex gap-2 *:text-white">
-                  {room.users[0].avatar !== null ? (
-                    <Image
-                      width={40}
-                      height={40}
-                      className="rounded-md size-7"
-                      src={room.users[0].avatar}
-                      alt={room.users[0].username}
-                    />
-                  ) : (
-                    <UserIcon aria-label="user_icon" className="rounded-md size-7" />
-                  )}
-                  <span className="text-xl">{room.users[0].username}</span>
-                </div>
+                <UserAvatar
+                  avatar={room.users[0].avatar}
+                  username={room.users[0].username}
+                  size="md"
+                  disabled={true}
+                />
                 <div>
                   <span className="text-neutral-400 text-md">
                     {room.messages[0].payload ?? null}
@@ -82,9 +79,7 @@ export default function ChatRoomList({ userId, room }: IListChatProps) {
             </div>
             <div className="flex items-center justify-center gap-3">
               <UnreadMessageCount id={userId} productChatRoomId={room.id} />
-              <span className="text-white">
-                {formatToTimeAgo(room.messages[0]?.created_at.toString())}
-              </span>
+              <TimeAgo date={room.messages[0]?.created_at.toString()} />
             </div>
           </div>
         </div>

@@ -8,14 +8,14 @@ Date        Author   Status    Description
 2024.11.19  임도헌   Created
 2024.11.19  임도헌   Modified  스트리밍 리스트 컴포넌트 추가
 2024.11.21  임도헌   Modified  현재 라이브 상태 isLived 추가
+2024.12.07  임도헌   Modified  프로필 이미지 컴포넌트 분리
 */
 "use client";
 
 import { streamStatus } from "@/app/(tabs)/live/actions";
-import { UserIcon } from "@heroicons/react/24/solid";
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import UserAvatar from "./user-avatar";
 
 interface IStreamList {
   id: number;
@@ -52,19 +52,12 @@ export default function StreamList({
     >
       <div key={id} className="flex items-center justify-between w-full">
         <div className="flex items-center">
-          <div className="mr-4 size-8">
-            {user.avatar !== null ? (
-              <Image
-                width={40}
-                height={40}
-                src={user.avatar!}
-                alt={user.username}
-              />
-            ) : (
-              <UserIcon aria-label="user_icon" />
-            )}
-          </div>
-          <span>{user.username}</span>
+          <UserAvatar
+            avatar={user.avatar}
+            username={user.username}
+            size="md"
+            disabled={true}
+          />
           <div className="ml-4 text-xl font-semibold">
             <span>{title}</span>
           </div>

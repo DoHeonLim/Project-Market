@@ -9,12 +9,14 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@hello-pangea/dnd": "^17.0.0",
     "@heroicons/react": "^2.1.5",
     "@hookform/resolvers": "^3.9.1",
     "@prisma/client": "^5.20.0",
     "@supabase/supabase-js": "^2.46.1",
     "@types/bcrypt": "^5.0.2",
     "bcrypt": "^5.1.1",
+    "framer-motion": "^11.13.5",
     "iron-session": "^8.0.3",
     "next": "14.2.13",
     "prisma": "^5.20.0",

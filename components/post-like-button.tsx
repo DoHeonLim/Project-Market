@@ -1,6 +1,6 @@
 /**
-File Name : components/button
-Description : 좋아요 버튼 컴포넌트
+File Name : components/post-like-button.tsx
+Description : 게시글 좋아요 버튼 컴포넌트
 Author : 임도헌
 
 History
@@ -22,7 +22,7 @@ interface ILikeButtonProps {
   postId: number;
 }
 
-export default function LikeButton({
+export default function PostLikeButton({
   isLiked,
   likeCount,
   postId,

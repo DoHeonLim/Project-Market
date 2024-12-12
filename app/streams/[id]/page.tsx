@@ -10,6 +10,7 @@
  2024.11.19  임도헌   Modified  캐싱 기능 추가
  2024.11.21  임도헌   Modified  Link를 StreamDetail로 옮김
  2024.11.23  임도헌   Modified  스트리밍 채팅방 컴포넌트 추가
+ 2024.12.12  임도헌   Modified  뒤로가기 버튼 추가
  */
 
 import getSession from "@/lib/session";
@@ -20,6 +21,7 @@ import StreamDetail from "@/components/stream-detail";
 import { unstable_cache as nextCache } from "next/cache";
 import StreamChatRoom from "@/components/stream-chat-room";
 import { getUserProfile } from "@/app/chats/[id]/actions";
+import BackButton from "@/components/back-button";
 
 // 스트리밍 캐싱
 const getCachedStream = nextCache(getStream, ["stream-detail"], {
@@ -65,21 +67,24 @@ export default async function StreamDetailPage({
   console.log(initialStreamMessage);
 
   return (
-    <div className="p-10">
-      <StreamDetail
-        stream={stream}
-        me={session.id!}
-        status={status}
-        streamId={id}
-      />
-      <StreamChatRoom
-        initialStreamMessage={initialStreamMessage}
-        streamChatRoomId={streamChatRoom.id}
-        streamChatRoomhost={streamChatRoom.live_stream.userId}
-        userId={session.id!}
-        username={user.username}
-        avatar={user.avatar!}
-      />
+    <div>
+      <BackButton className="" />
+      <div className="p-10">
+        <StreamDetail
+          stream={stream}
+          me={session.id!}
+          status={status}
+          streamId={id}
+        />
+        <StreamChatRoom
+          initialStreamMessage={initialStreamMessage}
+          streamChatRoomId={streamChatRoom.id}
+          streamChatRoomhost={streamChatRoom.live_stream.userId}
+          userId={session.id!}
+          username={user.username}
+          avatar={user.avatar!}
+        />
+      </div>
     </div>
   );
 }

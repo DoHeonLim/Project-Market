@@ -8,20 +8,25 @@ Date        Author   Status    Description
 2024.10.01  임도헌   Created
 2024.10.01  임도헌   Modified  button 컴포넌트 추가
 2024.10.04  임도헌   Modified  useFormStatus 추가
+2024.12.10  임도헌   Modified  disabled 추가
 */
 "use client";
 import { useFormStatus } from "react-dom";
 
 interface IButtonProps {
   text: string;
+  disabled?: boolean;
 }
 
-export default function Button({ text }: IButtonProps) {
+export default function Button({ text, disabled }: IButtonProps) {
   const { pending } = useFormStatus();
+
+  const isDisabled = pending || disabled;
+
   return (
     <button
-      disabled={pending}
-      className="h-10 primary-btn disabled:bg-neutral-400 disabled:text-neutral-300 disabled:cursor-not-allowed"
+      disabled={isDisabled}
+      className="h-10 font-semibold primary-btn disabled:bg-neutral-400 disabled:text-neutral-300 disabled:cursor-not-allowed"
     >
       {pending ? "로딩 중" : text}
     </button>

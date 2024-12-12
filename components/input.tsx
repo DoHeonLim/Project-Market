@@ -31,7 +31,7 @@ const _Input = (
       <input
         ref={ref}
         name={name}
-        className="w-full h-10 transition bg-transparent border-none rounded-md focus:outline-none ring-2 focus:ring-4 ring-neutral-200 focus:ring-indigo-500 placeholder:text-neutral-400"
+        className="w-full h-10 transition bg-transparent border-none rounded-md focus:outline-none ring-2 focus:ring-4 ring-neutral-200 focus:ring-indigo-500 placeholder:text-neutral-400 appearance-none"
         {...rest}
       />
       {errors.map((error, index) => (

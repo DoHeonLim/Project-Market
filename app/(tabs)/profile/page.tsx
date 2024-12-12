@@ -8,41 +8,30 @@ Date        Author   Status    Description
 2024.10.05  임도헌   Created
 2024.10.05  임도헌   Modified  프로필 페이지 추가
 2024.10.07  임도헌   Modified  로그아웃 버튼 추가
+2024.11.25  임도헌   Modified  프로필 페이지 레이아웃 추가
+2024.11.28  임도헌   Mdofieid  클라이언트 코드 분리
+2024.12.07  임도헌   Modified  리뷰 초깃값 이름 변경(initialReviews)
 */
 
-import db from "@/lib/db";
-import getSession from "@/lib/session";
-import { notFound, redirect } from "next/navigation";
+import MyProfile from "@/components/my-profile";
+import {
+  getUser,
+  getInitialUserReviews,
+  logOut,
+  getUserAverageRating,
+} from "./actions";
 
-const getUser = async () => {
-  const session = await getSession();
-  if (session.id) {
-    const user = await db.user.findUnique({
-      where: {
-        id: session.id,
-      },
-    });
-    if (user) {
-      return user;
-    }
-  }
-  notFound();
-};
-
-export default async function Profile() {
+export default async function ProfilePage() {
   const user = await getUser();
-  const logOut = async () => {
-    "use server";
-    const session = await getSession();
-    session.destroy();
-    redirect("/");
-  };
+  const initialReviews = await getInitialUserReviews(user.id);
+  const averageRating = await getUserAverageRating(user.id);
+
   return (
-    <div>
-      <h1>Welcome {user?.username}!</h1>
-      <form action={logOut}>
-        <button>Log out</button>
-      </form>
-    </div>
+    <MyProfile
+      user={user}
+      initialReviews={initialReviews}
+      averageRating={averageRating}
+      logOut={logOut}
+    />
   );
 }

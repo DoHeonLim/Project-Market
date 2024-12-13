@@ -21,13 +21,337 @@
 }
 
 @layer base {
+  :root {
+    /* 그라데이션 */
+    --gradient-ocean: linear-gradient(to bottom, #60a5fa, #1e40af);
+    --gradient-sunset: linear-gradient(to right, #fcd34d, #f97316);
+
+    /* 그림자 */
+    --shadow-card: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    --shadow-dropdown: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+
+    /* 둥근 모서리 */
+    --radius-small: 0.375rem;
+    --radius-medium: 0.5rem;
+    --radius-large: 0.75rem;
+  }
   a {
     @apply text-indigo-300;
   }
 }
 
 @layer components {
-  .primary-btn {
-    @apply w-full font-medium text-white bg-indigo-600 rounded-md text-center hover:bg-indigo-400 transition-colors;
+  .btn-primary {
+    @apply bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark transition-colors;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary text-white px-4 py-2 rounded-md hover:bg-secondary-dark transition-colors;
+  }
+
+  .card {
+    @apply bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow;
+  }
+
+  .input {
+    @apply border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent;
+  }
+}
+
+/* 구름 애니메이션 */
+.clouds {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  pointer-events: none;
+}
+
+.cloud {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 100px;
+  animation: moveCloud linear infinite;
+}
+
+.cloud1 {
+  width: 120px;
+  height: 40px;
+  top: 25%;
+  animation-duration: 30s;
+}
+
+.cloud2 {
+  width: 80px;
+  height: 30px;
+  top: 15%;
+  animation-duration: 20s;
+  animation-delay: -15s;
+}
+
+.cloud3 {
+  width: 100px;
+  height: 35px;
+  top: 35%;
+  animation-duration: 25s;
+  animation-delay: -7s;
+}
+
+@keyframes moveCloud {
+  from {
+    left: -20%;
+  }
+  to {
+    left: 120%;
+  }
+}
+
+/* 갈매기 애니메이션 */
+.seagulls {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.seagull {
+  position: absolute;
+  width: 60px;
+  height: 40px;
+  animation: fly linear infinite;
+}
+
+.seagull1 {
+  background: url("/images/seagull.svg") no-repeat center/contain;
+  top: 30%;
+  animation-duration: 15s;
+}
+
+.seagull2 {
+  background: url("/images/seagull2.svg") no-repeat center/contain;
+  top: 40%;
+  animation-duration: 12s;
+}
+
+@keyframes fly {
+  from {
+    left: -5%;
+    transform: translateY(0px);
+  }
+  25% {
+    transform: translateY(-20px);
+  }
+  50% {
+    transform: translateY(0px);
+  }
+  75% {
+    transform: translateY(-10px);
+  }
+  to {
+    left: 105%;
+    transform: translateY(0px);
+  }
+}
+
+/* 등대 깜빡임 효과 */
+.lighthouse {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.lighthouse-light {
+  position: absolute;
+  top: 40%;
+  right: -10px;
+  width: 30px;
+  height: 30px;
+  background: rgba(255, 247, 213, 0.8);
+  border-radius: 50%;
+  filter: blur(5px);
+  animation: lighthouse 4s ease-in-out infinite;
+}
+
+@keyframes lighthouse {
+  0%,
+  100% {
+    opacity: 0.2;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+/* 구름 그림자 효과 */
+.cloud::before,
+.cloud::after {
+  content: "";
+  position: absolute;
+  background: inherit;
+  border-radius: 50%;
+}
+
+.cloud::before {
+  width: 50px;
+  height: 50px;
+  top: -20px;
+  left: 15px;
+}
+
+.cloud::after {
+  width: 40px;
+  height: 40px;
+  top: -15px;
+  right: 15px;
+}
+
+/* 별 효과 수정 */
+.stars {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+
+.star {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: white;
+  border-radius: 50%;
+}
+
+/* 각 별들의 위치를 명시적으로 지정 */
+.star1 {
+  top: 10%;
+  left: 10%;
+  animation: twinkle 3s infinite;
+}
+.star2 {
+  top: 20%;
+  left: 25%;
+  animation: twinkle 4s infinite;
+}
+.star3 {
+  top: 15%;
+  left: 50%;
+  animation: twinkle 3.5s infinite;
+}
+.star4 {
+  top: 30%;
+  left: 75%;
+  animation: twinkle 4.5s infinite;
+}
+.star5 {
+  top: 25%;
+  left: 90%;
+  animation: twinkle 3s infinite;
+}
+/* ... 더 많은 별들 추가 ... */
+
+/* 파도 애니메이션 수정 */
+.wave {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 200%;
+  height: 100px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 88.7'%3E%3Cpath d='M800 56.9c-155.5 0-204.9-50-405.5-49.9-200 0-250 49.9-394.5 49.9v31.8h800v-.2-31.6z' fill='%23FFFFFF'/%3E%3C/svg%3E");
+  background-size: 50% 100px;
+}
+
+.wave1 {
+  opacity: 1;
+  z-index: 3;
+  animation: wave 7s linear infinite;
+}
+
+.wave2 {
+  opacity: 0.5;
+  z-index: 2;
+  animation: wave 7s linear infinite;
+  animation-delay: -3.5s;
+}
+
+.wave3 {
+  opacity: 0.3;
+  z-index: 1;
+  animation: wave 7s linear infinite;
+  animation-delay: -2.5s;
+}
+
+@keyframes wave {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.2;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+/* 부드러운 float 애니메이션 */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* 페이드인 애니메이션 */
+.animate-fade-in {
+  animation: fadeIn 1s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 글래스모피즘 효과 */
+.backdrop-blur-sm {
+  backdrop-filter: blur(8px);
+}
+
+/* 반응형 조정 */
+@media (max-width: 640px) {
+  .text-5xl {
+    font-size: 2.5rem;
+  }
+  .text-2xl {
+    font-size: 1.25rem;
+  }
+  .lighthouse-light {
+    width: 20px;
+    height: 20px;
   }
 }

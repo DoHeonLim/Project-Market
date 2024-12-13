@@ -1,27 +1,44 @@
-/**
-File Name : app/layout
-Description : 메인 페이지 레이아웃
-Author : 임도헌
-
-History
-Date        Author   Status    Description
-2024.10.01  임도헌   Created
-2024.10.14  임도헌   Modified  메타 데이타 변경
-*/
-
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import ThemeProvider from "@/components/providers/ThemeProvider";
+import ThemeToggle from "@/components/theme/ThemeToggle";
 
 const inter = Inter({ subsets: ["latin"] });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: "#1E40AF",
+};
+
 export const metadata: Metadata = {
   title: {
-    template: "%s | Bubble Market",
-    default: "Bubble Market",
+    template: "%s | 보드포트",
+    default: "보드포트 - 모든 게임이 모이는 곳",
   },
-  description:
-    "여러 사람들과 중고거래 할 수 있는 플랫폼 버블마켓에 오신 것을 환영합니다.",
+  description: "보드게임과 TRPG 중고거래 및 커뮤니티 플랫폼 보드포트입니다.",
+  manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/images/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/images/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/images/favicon-96x96.png", sizes: "96x96", type: "image/png" },
+    ],
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "보드포트",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
 };
 
 export default function RootLayout({
@@ -30,11 +47,27 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="ko" suppressHydrationWarning>
       <body
-        className={`${inter.className} bg-neutral-900 text-white max-w-screen-sm mx-auto`}
+        className={`${inter.className} 
+          relative min-h-[100dvh] w-full
+          bg-background dark:bg-background-dark 
+          text-text dark:text-text-dark
+          transition-colors duration-300
+          sm:max-w-screen-sm sm:mx-auto sm:shadow-xl
+          pb-[env(safe-area-inset-bottom)]`}
       >
-        {children}
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <div className="fixed top-4 right-4 z-50">
+            <ThemeToggle />
+          </div>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

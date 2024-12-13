@@ -37,3 +37,7 @@ yarn-error.log*
 next-env.d.ts
 *.db
 *.db-journal
+
+# pwa
+public/sw.js*
+public/workbox-*.js*

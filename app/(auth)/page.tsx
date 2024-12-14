@@ -7,6 +7,8 @@ History
 Date        Author   Status    Description
 2024.10.01  임도헌   Created
 2024.10.01  임도헌   Modified  메인 페이지 추가
+2024.12.12  임도헌   Modified  다크모드 적용, 디자인 변경
+2024.12.14  임도헌   Modified  스타일 변경
 */
 
 import Logo from "@/components/logo";
@@ -65,7 +67,7 @@ export default function Login() {
           <span>이미 선원이신가요?</span>
           <Link
             href="/login"
-            className="font-semibold hover:text-white hover:underline transition-colors"
+            className="font-semibold text-primary-light hover:text-white hover:underline transition-colors"
           >
             로그인
           </Link>

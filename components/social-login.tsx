@@ -19,7 +19,7 @@ export default function SocialLogin() {
       <div className="flex flex-col gap-3 ">
         <Link
           aria-label="github_continue"
-          className="flex items-center justify-center h-10 gap-2 primary-btn"
+          className="flex items-center justify-center h-10 gap-2 font-semibold text-primary-dark hover:text-primary-light dark:text-primary-light dark:hover:text-white transition-colors"
           href="/github/start"
         >
           <svg
@@ -38,7 +38,7 @@ export default function SocialLogin() {
           <span>GitHub로 계속하기</span>
         </Link>
         <Link
-          className="flex items-center justify-center h-10 gap-2 primary-btn"
+          className="flex items-center justify-center h-10 gap-2 font-semibold text-primary-dark hover:text-primary-light dark:text-primary-light dark:hover:text-white transition-colors"
           href="/sms"
         >
           <span>

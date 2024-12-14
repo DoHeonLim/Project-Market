@@ -24,10 +24,7 @@ export default function Button({ text, disabled }: IButtonProps) {
   const isDisabled = pending || disabled;
 
   return (
-    <button
-      disabled={isDisabled}
-      className="h-10 font-semibold primary-btn disabled:bg-neutral-400 disabled:text-neutral-300 disabled:cursor-not-allowed"
-    >
+    <button disabled={isDisabled} className="h-10 font-semibold btn-primary">
       {pending ? "로딩 중" : text}
     </button>
   );

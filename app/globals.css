@@ -1,4 +1,6 @@
 /*2024-11-23 커스텀 스크롤바 추가*/
+/*2024-12-14 버튼, 카드, 인풋 디자인 변경*/
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -35,26 +37,47 @@
     --radius-medium: 0.5rem;
     --radius-large: 0.75rem;
   }
-  a {
-    @apply text-indigo-300;
-  }
+  /* a {
+    @apply text-primary-light hover:text-primary-dark 
+           dark:text-primary-light dark:hover:text-primary
+           transition-colors;
+  } */
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark transition-colors;
+    @apply bg-primary hover:bg-primary-dark dark:bg-primary-light dark:hover:bg-primary
+    text-white dark:text-text-dark
+    px-4 py-2 rounded-md transition-colors
+    disabled:bg-neutral-400 dark:disabled:bg-neutral-600 
+    disabled:text-neutral-300 dark:disabled:text-neutral-400 
+    disabled:cursor-not-allowed;
   }
 
   .btn-secondary {
-    @apply bg-secondary text-white px-4 py-2 rounded-md hover:bg-secondary-dark transition-colors;
+    @apply bg-secondary hover:bg-secondary-dark dark:bg-secondary-light dark:hover:bg-secondary
+    text-white dark:text-text-dark
+    px-4 py-2 rounded-md transition-colors
+    disabled:bg-neutral-400 dark:disabled:bg-neutral-600 
+    disabled:text-neutral-300 dark:disabled:text-neutral-400 
+    disabled:cursor-not-allowed;
   }
 
   .card {
-    @apply bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow;
+    @apply bg-white dark:bg-gray-800 
+    rounded-lg shadow-md p-4 
+    hover:shadow-lg transition-shadow
+    dark:shadow-gray-900;
   }
 
-  .input {
-    @apply border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent;
+  .input-primary {
+    @apply w-full transition bg-transparent 
+    border-none rounded-xl appearance-none
+    focus:outline-none ring-2 focus:ring-4 
+    ring-neutral-200 dark:ring-neutral-700 
+    focus:ring-primary focus:dark:ring-primary-light 
+    placeholder:text-neutral-400 dark:placeholder:text-neutral-500 
+    text-text dark:text-text-dark;
   }
 }
 
@@ -337,7 +360,7 @@
   }
 }
 
-/* 글래스모피즘 효과 */
+/* 글래스모피즘(반투명 유리) 효과 */
 .backdrop-blur-sm {
   backdrop-filter: blur(8px);
 }

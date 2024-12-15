@@ -58,7 +58,9 @@ export default function MyProfile({
 
   return (
     <div className="flex flex-col items-center gap-4 my-4 px-4">
-      <span className="text-2xl font-semibold">나의 프로필</span>
+      <span className="text-2xl font-semibold dark:text-white">
+        나의 프로필
+      </span>
 
       <div className="flex gap-10 rounded-xl w-full pt-10">
         <div className="w-full md:flex-row md:mr-10 flex flex-col justify-around items-center space-y-6">
@@ -86,8 +88,11 @@ export default function MyProfile({
           </div>
         </div>
       </div>
-      <div className="flex flex-col md:flex-row items-center justify-center gap-6 w-1/2">
-        <Link href="/profile/edit" className="primary-btn text-lg py-2.5">
+      <div className="flex flex-col md:flex-row items-center justify-center gap-6 w-full max-w-md">
+        <Link
+          href="/profile/edit"
+          className="btn-primary w-full md:w-1/2 text-center text-lg py-2.5 whitespace-nowrap"
+        >
           프로필 수정
         </Link>
         {!user.email ? (
@@ -95,7 +100,7 @@ export default function MyProfile({
         ) : (
           <button
             onClick={() => setIsPasswordModalOpen(true)}
-            className="w-full py-2.5 bg-indigo-600 text-white text-lg rounded-md hover:bg-indigo-400 transition-colors"
+            className="btn-primary w-full md:w-1/2 text-center text-lg py-2.5 whitespace-nowrap"
           >
             비밀번호 수정
           </button>
@@ -104,18 +109,20 @@ export default function MyProfile({
 
       {/* 다른 프로필 섹션들 */}
       <div className="w-full max-w-md">
-        <div className="text-lg font-semibold mb-4">거래 정보</div>
+        <div className="text-lg font-semibold mb-4 dark:text-white">
+          거래 정보
+        </div>
         <div className="flex flex-col md:flex-row gap-6">
           <Link
             href="/profile/my-sales"
-            className="primary-btn text-lg py-2.5 px-10"
+            className="btn-primary w-full text-center text-lg py-2.5"
           >
             판매 제품
           </Link>
 
           <Link
             href="/profile/my-purchases"
-            className="primary-btn text-lg py-2.5 px-10"
+            className="btn-primary w-full text-center text-lg py-2.5"
           >
             구매 제품
           </Link>
@@ -123,7 +130,9 @@ export default function MyProfile({
       </div>
 
       <div className="w-full max-w-md">
-        <div className="text-lg font-semibold mb-4">받은 거래 후기</div>
+        <div className="text-lg font-semibold mb-4 dark:text-white">
+          받은 거래 후기
+        </div>
         <div className="flex flex-col gap-3">
           {averageRating && (
             <UserRating
@@ -134,7 +143,7 @@ export default function MyProfile({
           )}
           <button
             onClick={() => setIsReviewModalOpen(true)}
-            className="w-full py-3 bg-indigo-600 rounded-md hover:bg-indigo-400 transition-colors"
+            className="btn-primary w-full text-lg py-2.5"
           >
             전체 후기 보기
           </button>
@@ -144,7 +153,7 @@ export default function MyProfile({
       <form action={logOut} className="w-full max-w-md mt-4">
         <button
           type="submit"
-          className="w-full py-3 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
+          className="w-full py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-md transition-colors dark:bg-red-600 dark:hover:bg-red-500"
         >
           로그아웃
         </button>

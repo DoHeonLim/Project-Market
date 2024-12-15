@@ -9,6 +9,7 @@
  2024.12.07  임도헌   Modified  유저 프로필 페이지 추가
  2024.12.07  임도헌   Modified  평균 평점 가져오는 로직 수정
  2024.12.07  임도헌   Modified  리뷰 가져오는 로직 수정
+ 2024.12.15  임도헌   Modified  다크모드 적용
  */
 
 import { getInitialUserReviews, getUserAverageRating } from "../actions";
@@ -35,12 +36,14 @@ export default async function UserProfilePage({
   const initialReviews = await getInitialUserReviews(userProfile.id); // 초기 리뷰 가져오기
 
   return (
-    <UserProfile
-      user={userProfile}
-      initialReviews={initialReviews}
-      initialSellingProducts={initialSellingProducts}
-      initialSoldProducts={initialSoldProducts}
-      averageRating={averageRating}
-    />
+    <div className="min-h-screen dark:bg-neutral-900 bg-white transition-colors duration-200">
+      <UserProfile
+        user={userProfile}
+        initialReviews={initialReviews}
+        initialSellingProducts={initialSellingProducts}
+        initialSoldProducts={initialSoldProducts}
+        averageRating={averageRating}
+      />
+    </div>
   );
 }

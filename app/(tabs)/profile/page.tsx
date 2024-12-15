@@ -27,11 +27,13 @@ export default async function ProfilePage() {
   const averageRating = await getUserAverageRating(user.id);
 
   return (
-    <MyProfile
-      user={user}
-      initialReviews={initialReviews}
-      averageRating={averageRating}
-      logOut={logOut}
-    />
+    <div className="min-h-screen dark:bg-neutral-900 bg-white transition-colors duration-200">
+      <MyProfile
+        user={user}
+        initialReviews={initialReviews}
+        averageRating={averageRating}
+        logOut={logOut}
+      />
+    </div>
   );
 }

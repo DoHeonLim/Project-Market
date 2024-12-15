@@ -93,20 +93,20 @@ export default function ReviewModal({
       />
 
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="relative bg-neutral-600 w-full max-w-2xl rounded-lg shadow-xl">
+        <div className="relative dark:bg-neutral-800 bg-white w-full max-w-2xl rounded-lg shadow-xl">
           <div className="px-6 py-4">
-            <h3 className="text-xl font-semibold text-center">
+            <h3 className="text-xl font-semibold text-center dark:text-white">
               받은 거래 후기
             </h3>
           </div>
 
-          <div className="px-6 py-4 max-h-[70vh] overflow-y-auto">
+          <div className="px-6 py-4 max-h-[70vh] overflow-y-auto dark:text-white">
             <ReviewsList reviews={reviews} />
             {!isLastPage ? (
               <div className="flex justify-center">
                 <span
                   ref={trigger}
-                  className="mt-10 text-sm font-semibold bg-indigo-500 w-fit mx-auto px-3 py-2 rounded-md hover:opacity-90 active:scale-95"
+                  className="mt-10 text-sm font-semibold bg-indigo-500 text-white w-fit mx-auto px-3 py-2 rounded-md hover:opacity-90 active:scale-95"
                 >
                   {isLoading ? "로딩중" : "더 가져오기"}
                 </span>
@@ -117,7 +117,7 @@ export default function ReviewModal({
           <div className="px-6 py-4 flex justify-end">
             <button
               onClick={onClose}
-              className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
+              className="px-4 py-2 dark:bg-neutral-700 dark:text-white bg-gray-200 text-gray-800 rounded-md hover:opacity-90 transition-colors"
             >
               닫기
             </button>

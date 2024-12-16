@@ -1,3 +1,14 @@
+/**
+File Name : components/theme/ThemeToggle.tsx
+Description : 테마 변경 버튼
+Author : 임도헌
+
+History
+Date        Author   Status    Description
+2024.12.13  임도헌   Created
+2024.12.13  임도헌   Modified  테마 변경 버튼 추가
+*/
+
 "use client";
 
 import { useTheme } from "next-themes";
@@ -19,7 +30,7 @@ export default function ThemeToggle() {
   return (
     <button
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-      className="rounded-lg p-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+      className="rounded-lg p-2.5 bg-gray-400 dark:bg-gray-400 hover:bg-neutral-900 dark:hover:bg-white transition-colors"
       aria-label="테마 변경"
     >
       {theme === "dark" ? (

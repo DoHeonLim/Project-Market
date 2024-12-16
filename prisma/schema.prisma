@@ -28,6 +28,8 @@
 // 2024.12.14  임도헌   Modified   SearchHistory 모델 추가
 // 2024.12.14  임도헌   Modified   SearchTag 모델 추가
 // 2024.12.14  임도헌   Modified   PopularSearch 모델 추가
+// 2024.12.15  임도헌   Modified   Category 모델 추가
+// 2024.12.16  임도헌   Modified   SearchHistory updated_at 추가
 
 generator client {
   provider = "prisma-client-js"
@@ -408,24 +410,19 @@ model NotificationPreferences {
 
 // 검색 기록 모델
 model SearchHistory {
-  id         Int      @id @default(autoincrement())
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId     Int
-  keyword    String // 검색어
-  created_at DateTime @default(now())
+  id         Int      @id @default(autoincrement()) // 검색 기록 고유 아이디
+  userId     Int // 검색 기록 유저 아이디
+  keyword    String // 검색 기록 키워드
+  category   String? // 검색 기록 카테고리
+  minPrice   Int? // 검색 기록 최소 가격
+  maxPrice   Int? // 검색 기록 최대 가격
+  game_type  String? // 검색 기록 게임 유형
+  condition  String? // 검색 기록 상태
+  created_at DateTime @default(now()) // 검색 기록 생성 시간
+  updated_at DateTime @updatedAt // 검색 기록 업데이트 시간
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade) // 검색 기록 유저
 
-  // 검색 결과 분석용
-  resultCount Int @default(0) // 검색 결과 수
-
-  // 검색 조건 저장
-  category  String? // 선택한 카테고리
-  minPrice  Float? // 최소 가격
-  maxPrice  Float? // 최대 가격
-  game_type String? // 게임 타입
-  condition String? // 상품 상태
-
-  @@index([userId, created_at]) // 사용자별 최근 검색어
-  @@index([keyword]) // 검색어 통계용
+  @@index([userId])
 }
 
 // 검색 태그 모델

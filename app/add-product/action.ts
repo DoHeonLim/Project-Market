@@ -12,6 +12,7 @@
  2024.11.11  임도헌   Modified  클라우드 플레어 이미지 업로드 주소 얻는 함수 추가
  2024.12.11  임도헌   Modified  제품 업로드 함수 반환 타입 추가(성공 시 제품 ID 반환) - 클라이언트에서 redirect 처리
  2024.12.12  임도헌   Modified  products/add 에서 add-product로 이동
+ 2024.12.16  임도헌   Modified  제품 업로드 보드게임 유형으로 변경
  */
 "use server";
 
@@ -19,6 +20,7 @@ import db from "@/lib/db";
 import getSession from "@/lib/session";
 import { productSchema } from "./schema";
 import { revalidatePath, revalidateTag } from "next/cache";
+import { Prisma } from "@prisma/client";
 
 interface UploadProductResponse {
   success: boolean;
@@ -42,11 +44,24 @@ export const uploadProduct = async (
     };
   }
 
+  // FormData에서 태그 데이터 추출 및 처리
+  const tagsString = formData.get("tags")?.toString() || "[]";
+  const tags = JSON.parse(tagsString);
+
   const data = {
     title: formData.get("title"),
     description: formData.get("description"),
     price: formData.get("price"),
     photos: formData.getAll("photos[]").map(String),
+    game_type: formData.get("game_type"),
+    min_players: formData.get("min_players"),
+    max_players: formData.get("max_players"),
+    play_time: formData.get("play_time"),
+    condition: formData.get("condition"),
+    completeness: formData.get("completeness"),
+    has_manual: formData.get("has_manual") === "true",
+    categoryId: formData.get("categoryId"),
+    tags: tags, // 파싱된 태그 배열 사용
   };
 
   const results = productSchema.safeParse(data);
@@ -66,16 +81,49 @@ export const uploadProduct = async (
   }
 
   try {
-    // 제품 생성
+    const productData: Prisma.ProductCreateInput = {
+      title: results.data.title,
+      description: results.data.description,
+      price: results.data.price,
+      game_type: results.data.game_type,
+      min_players: results.data.min_players,
+      max_players: results.data.max_players,
+      play_time: results.data.play_time,
+      condition: results.data.condition,
+      completeness: results.data.completeness,
+      has_manual: results.data.has_manual,
+      category: {
+        connect: {
+          id: results.data.categoryId,
+        },
+      },
+      user: {
+        connect: {
+          id: session.id,
+        },
+      },
+      search_tags: {
+        connectOrCreate: results.data.tags.map((tag) => ({
+          where: { name: tag },
+          create: { name: tag },
+        })),
+      },
+    };
+
     const product = await db.product.create({
+      data: productData,
+    });
+
+    // 태그 사용 횟수 증가
+    await db.searchTag.updateMany({
+      where: {
+        name: {
+          in: results.data.tags,
+        },
+      },
       data: {
-        title: results.data.title,
-        description: results.data.description,
-        price: results.data.price,
-        user: {
-          connect: {
-            id: session.id,
-          },
+        count: {
+          increment: 1,
         },
       },
     });

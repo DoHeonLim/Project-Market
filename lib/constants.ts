@@ -28,3 +28,24 @@ export const MAX_PHOTO_SIZE = 3 * 1024 * 1024;
 // base64로 인코딩된 이미지 픽셀(1*1) - #d0d0d0색상
 export const BLUR_DATA_URL =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mO8UA8AAiUBUcc3qzwAAAAASUVORK5CYII=";
+
+// 게시글 카테고리
+export const POST_CATEGORY = {
+  Free: "자유", //자유
+  CREW: "모험대원 모집", // 게임 모임/파티 모집
+  LOG: "항해 일지", // 게임 후기/리뷰
+  MAP: "보물지도", // 게임 규칙/공략
+  COMPASS: "나침반", // 질문과 답변
+} as const;
+
+// 제품 필터 타입
+export type FilterState = {
+  category: string;
+  minPrice: string;
+  maxPrice: string;
+  game_type: string;
+  condition: string;
+};
+
+// 게시글 카테고리 타입
+export type PostCategory = keyof typeof POST_CATEGORY;

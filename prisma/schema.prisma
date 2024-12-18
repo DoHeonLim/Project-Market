@@ -30,6 +30,7 @@
 // 2024.12.14  임도헌   Modified   PopularSearch 모델 추가
 // 2024.12.15  임도헌   Modified   Category 모델 추가
 // 2024.12.16  임도헌   Modified   SearchHistory updated_at 추가
+// 2024.12.18  임도헌   Modified   PostTag 모델 추가
 
 generator client {
   provider = "prisma-client-js"
@@ -250,15 +251,24 @@ model Post {
   comments    Comment[] //게시글 댓글
   post_likes  PostLike[] //게시글 좋아요
   images      PostImage[] // 이미지 관계 추가
+  tags        PostTag[] // 게시글 태그 추가
+
+  @@index([category])
+  @@index([created_at])
+  @@index([userId])
+  @@index([title]) // 제목 검색을 위한 인덱스
 }
 
-// communityCategories = {
-//   trade: '교역소',              // 거래 게시판
-//   gathering: '선원모집',        // 모임 찾기
-//   review: '항해일지',           // 게임 리뷰
-//   rules: '해도(海圖)',          // 규칙 설명
-//   qna: '나침반',               // 질문/답변
-// }
+// export const POST_CATEGORY = {
+//   CREW: '모험대원 모집',      
+//   LOG: '항해 일지',          
+//   MAP: '보물지도',           
+//   COMPASS: '나침반'         
+// } as const;
+// 모험대원 모집: "새로운 모험을 함께할 대원을 찾습니다!" (게임 모임/파티 모집)
+// 항해 일지: "우리의 게임 항해를 기록합니다" (게임 후기/리뷰)
+// 보물지도: "게임 공략의 지도를 함께 그립니다" (규칙 설명/공략)
+// 나침반: "길을 잃었다면 여기서 물어보세요" (질문과 답변)
 
 // 게시글 이미지 모델
 model PostImage {
@@ -285,6 +295,18 @@ model PostLike {
   //A라는 아이디로 B라는 포스트에 Like를 했을 경우
   //A와 B를 합치게되면 고유한 ID를 만들 수 있게 된다.
   @@id(name: "id", [userId, postId])
+}
+
+// 게시글 태그 모델
+model PostTag {
+  id         Int      @id @default(autoincrement())
+  name       String   @unique // 태그명
+  count      Int      @default(0) // 사용 횟수
+  posts      Post[] // 이 태그가 달린 게시글들
+  created_at DateTime @default(now())
+
+  @@index([name]) // 태그명 검색
+  @@index([count]) // 인기 태그 정렬
 }
 
 // 게시글 댓글 모델
@@ -423,6 +445,7 @@ model SearchHistory {
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade) // 검색 기록 유저
 
   @@index([userId])
+  @@index([keyword]) // 검색어 기반 조회
 }
 
 // 검색 태그 모델
@@ -445,5 +468,5 @@ model PopularSearch {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  @@index([count(sort: Desc)])
+  @@index([count(sort: Desc)]) // 인기 검색어 정렬
 }

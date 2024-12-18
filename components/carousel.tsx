@@ -8,6 +8,7 @@ Date        Author   Status    Description
 2024.12.10  임도헌   Created
 2024.12.10  임도헌   Modified  캐러셀 컴포넌트 추가
 2024.12.11  임도헌   Modified  캐러셀 드래그 기능 추가
+2024.12.17  임도헌   Modified  캐러셀 클래스네임 추가
 */
 "use client";
 
@@ -22,9 +23,10 @@ interface PostImage {
 
 interface CarouselProps {
   images: PostImage[];
+  className?: string;
 }
 
-export default function Carousel({ images }: CarouselProps) {
+export default function Carousel({ images, className = "" }: CarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
@@ -97,9 +99,9 @@ export default function Carousel({ images }: CarouselProps) {
   if (!images.length) return null;
 
   return (
-    <div className="relative w-full overflow-hidden">
+    <div className={`relative w-full ${className}`}>
       {/* 이미지 컨테이너 */}
-      <div className="relative aspect-square w-full">
+      <div className="relative w-full h-full">
         <div
           className="absolute w-full h-full flex transition-transform duration-300 ease-out"
           style={{
@@ -121,13 +123,14 @@ export default function Carousel({ images }: CarouselProps) {
                 {/* 캐러셀의 드래그 기능과 브라우저의 기본 이미지 드래그 기능이 충돌하는 것을 막고
                 사용자가 이미지를 드래그 할 때 캐러셀의 슬라이드 기능만 동작하도록 draggable={false} 추가 */}
                 <Image
-                  src={`${image.url}/width=500,height=500`}
+                  src={`${image.url}/public`}
                   alt={`제품 이미지 ${index + 1}`}
                   fill
-                  className="object-cover rounded-md select-none"
+                  className="object-contain rounded-md select-none" // object-cover를 object-contain으로 변경
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   priority={index === 0}
                   draggable={false}
+                  quality={100}
                 />
               </div>
             </div>

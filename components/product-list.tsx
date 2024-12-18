@@ -9,6 +9,7 @@ Date        Author   Status    Description
 2024.10.14  임도헌   Modified  제품 컴포넌트 추가
 2024.10.17  임도헌   Modified  무한 스크롤 기능 추가
 2024.12.12  임도헌   Modified  스타일 수정
+2024.12.17  임도헌   Modified  스타일 수정
 */
 "use client";
 
@@ -59,14 +60,14 @@ export default function ProductList({ initialProducts }: IProductListProps) {
     };
   }, [page]);
   return (
-    <div className="flex flex-col gap-2 p-2">
+    <div className="flex flex-col gap-4 p-4">
       {products.map((product) => (
         <ListProduct key={product.id} {...product} />
       ))}
       {!isLastPage ? (
         <span
           ref={trigger}
-          className="mb-96 text-sm font-semibold bg-indigo-500 w-fit mx-auto px-3 py-2 rounded-md hover:opacity-90 active:scale-95"
+          className="mb-96 text-sm font-medium bg-primary text-white w-fit mx-auto px-4 py-2 rounded-md hover:bg-primary/90 active:scale-95 transition-all"
         >
           {isLoading ? "로딩중" : "더 가져오기"}
         </span>

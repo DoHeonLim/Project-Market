@@ -9,6 +9,7 @@
  2024.10.17  임도헌   Modified  무한 스크롤 기능 추가
  2024.12.05  임도헌   Modified  무한스크롤 10개씩 들고오게 수정
  2024.12.12  임도헌   Modified  제품 대표 사진 하나 들고오기
+ 2024.12.15  임도헌   Modified  제품에 카테고리 가져오기
  */
 "use server";
 
@@ -30,8 +31,32 @@ export const getInitialProducts = async () => {
         },
       },
       id: true,
+      views: true,
       reservation_userId: true,
       purchase_userId: true,
+      category: {
+        select: {
+          name: true,
+          icon: true,
+          parent: {
+            select: {
+              name: true,
+              icon: true,
+            },
+          },
+        },
+      },
+      game_type: true,
+      _count: {
+        select: {
+          product_likes: true,
+        },
+      },
+      search_tags: {
+        select: {
+          name: true,
+        },
+      },
     },
     orderBy: {
       created_at: "desc",
@@ -58,8 +83,32 @@ export const getMoreProducts = async (page: number) => {
         },
       },
       id: true,
+      views: true,
       reservation_userId: true,
       purchase_userId: true,
+      category: {
+        select: {
+          name: true,
+          icon: true,
+          parent: {
+            select: {
+              name: true,
+              icon: true,
+            },
+          },
+        },
+      },
+      game_type: true,
+      _count: {
+        select: {
+          product_likes: true,
+        },
+      },
+      search_tags: {
+        select: {
+          name: true,
+        },
+      },
     },
     skip,
     take,

@@ -12,26 +12,44 @@ Date        Author   Status    Description
 2024-11-06  임도헌   Modified  캐싱기능 주석 처리
 2024-12-05  임도헌   Modified  제품 초기화 기능 actions로 옮김
 2024.12.12  임도헌   Modified  제품 추가 링크 변경
+2024.12.16  임도헌   Modified  카테고리 얻기 기능 추가
+2024.12.16  임도헌   Modified  최근 검색 기록 얻기 기능 추가
+2024.12.16  임도헌   Modified  인기 검색 기록 얻기 기능 추가
 */
 
 import ProductList from "@/components/product-list";
 import { PlusIcon } from "@heroicons/react/24/solid";
 import { Prisma } from "@prisma/client";
-
-// import { unstable_cache as nextCache, revalidatePath } from "next/cache";
-
 import Link from "next/link";
 import { getInitialProducts } from "./actions";
+import {
+  getCategories,
+  getPopularSearches,
+  getUserSearchHistory,
+} from "@/app/search/products/actions";
+import SearchSection from "@/components/search/search-section";
 
 export type InitialProducts = Prisma.PromiseReturnType<
   typeof getInitialProducts
 >;
 
 export default async function Products() {
-  const initialProducts = await getInitialProducts();
+  const initialProducts = await getInitialProducts(); // 초기 제품 얻기
+  const categories = await getCategories(); // 카테고리 얻기
+  const searchHistory = await getUserSearchHistory(); // 최근 검색 기록 얻기
+  const popularSearches = await getPopularSearches(); // 인기 검색 기록 얻기
+
   return (
-    <div>
+    <div className="flex flex-col gap-4">
+      <SearchSection
+        categories={categories}
+        keyword={""}
+        searchHistory={searchHistory}
+        popularSearches={popularSearches}
+      />
       <ProductList initialProducts={initialProducts} />
+
+      {/* 제품 추가 버튼 */}
       <Link
         href="add-product"
         className="fixed flex items-center justify-center text-white transition-colors bg-indigo-400 rounded-full size-16 bottom-24 right-8 hover:bg-indigo-500"

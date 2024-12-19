@@ -19,13 +19,14 @@ import {
 } from "@heroicons/react/24/solid";
 import SearchBar from "./search-bar";
 import SearchFilters from "./search-filters";
-import CategoryDropdown from "./category-dropdown";
+import ProductCategoryDropdown from "./product-category-dropdown";
 import { useState } from "react";
 import Link from "next/link";
 import {
   deleteSearchHistory,
   deleteAllSearchHistory,
 } from "@/app/search/products/actions";
+import { FilterState } from "@/lib/constants";
 
 interface SearchSectionProps {
   categories: {
@@ -40,6 +41,7 @@ interface SearchSectionProps {
     }[];
   }[];
   keyword: string | undefined;
+  searchParams: { [key: string]: string | undefined };
   searchHistory: {
     keyword: string;
     created_at: Date;
@@ -48,32 +50,27 @@ interface SearchSectionProps {
     keyword: string;
     count: number;
   }[];
+  basePath: string;
 }
-
-export type FilterState = {
-  category: string;
-  minPrice: string;
-  maxPrice: string;
-  game_type: string;
-  condition: string;
-};
 
 export default function SearchSection({
   categories,
   keyword,
+  searchParams,
   searchHistory,
   popularSearches,
+  basePath,
 }: SearchSectionProps) {
-  const [filters, setFilters] = useState<FilterState>({
-    category: "",
-    minPrice: "",
-    maxPrice: "",
-    game_type: "",
-    condition: "",
-  });
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [localSearchHistory, setLocalSearchHistory] = useState(searchHistory);
+  const [filters, setFilters] = useState<FilterState>({
+    category: searchParams.category ?? "",
+    minPrice: searchParams.minPrice ?? "",
+    maxPrice: searchParams.maxPrice ?? "",
+    game_type: searchParams.game_type ?? "",
+    condition: searchParams.condition ?? "",
+  });
 
   const handleDeleteKeyword = async (keywordToDelete: string) => {
     await deleteSearchHistory(keywordToDelete);
@@ -91,7 +88,7 @@ export default function SearchSection({
     <div className="sticky top-0 z-10 bg-white dark:bg-neutral-900">
       {/* 상단 바 */}
       <div className="flex items-center gap-3 p-4 border-b dark:border-neutral-700">
-        <CategoryDropdown categories={categories} />
+        <ProductCategoryDropdown categories={categories} />
         <div className="relative flex-1" onClick={() => setIsSearchOpen(true)}>
           <div className="w-full px-4 py-2 text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-neutral-800 rounded-xl cursor-pointer">
             <div className="flex items-center gap-2">
@@ -108,11 +105,10 @@ export default function SearchSection({
           <div className="p-4">
             <div className="flex gap-3">
               <SearchBar
-                filters={filters}
-                onSearch={() => {
-                  setIsSearchOpen(false);
-                  setIsFilterOpen(false);
-                }}
+                basePath={basePath}
+                placeholder="제품명, 설명으로 검색"
+                additionalParams={filters}
+                onClick={() => setIsSearchOpen(true)}
               />
               <div className="flex justify-between">
                 <SearchFilters

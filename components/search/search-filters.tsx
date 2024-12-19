@@ -10,8 +10,8 @@ Date        Author   Status    Description
 */
 "use client";
 
+import { FilterState } from "@/lib/constants";
 import { useEffect, useState } from "react";
-import { FilterState } from "./search-section";
 
 interface SearchFiltersProps {
   categories: {

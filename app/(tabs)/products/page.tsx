@@ -33,7 +33,14 @@ export type InitialProducts = Prisma.PromiseReturnType<
   typeof getInitialProducts
 >;
 
-export default async function Products() {
+interface ProductsPageProps {
+  searchParams: {
+    category?: string;
+    keyword?: string;
+  };
+}
+
+export default async function Products({ searchParams }: ProductsPageProps) {
   const initialProducts = await getInitialProducts(); // 초기 제품 얻기
   const categories = await getCategories(); // 카테고리 얻기
   const searchHistory = await getUserSearchHistory(); // 최근 검색 기록 얻기
@@ -44,8 +51,10 @@ export default async function Products() {
       <SearchSection
         categories={categories}
         keyword={""}
+        searchParams={searchParams}
         searchHistory={searchHistory}
         popularSearches={popularSearches}
+        basePath="/search/products"
       />
       <ProductList initialProducts={initialProducts} />
 

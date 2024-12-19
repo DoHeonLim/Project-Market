@@ -83,8 +83,10 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       <SearchSection
         categories={categories}
         keyword={searchParams.keyword}
+        searchParams={searchParams}
         searchHistory={searchHistory}
         popularSearches={popularSearches}
+        basePath="/search/products"
       />
       {/* 검색 결과 요약 */}
       <div className="px-4 text-sm text-gray-500 dark:text-gray-400">

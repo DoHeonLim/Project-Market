@@ -70,25 +70,25 @@ export default function TabBar() {
           </span>
         </Link>
         <Link
-          href="/life"
+          href="/posts"
           className="flex flex-col items-center gap-px p-2
             hover:bg-neutral-100 dark:hover:bg-neutral-700 
             rounded-xl transition-colors"
         >
-          {pathname === "/life" ? (
+          {pathname === "/posts" ? (
             <SolidNewspaperIcon
-              aria-label="activate_life_icon"
+              aria-label="activate_posts_icon"
               className="size-7 dark:text-primary-light text-primary"
             />
           ) : (
             <OutlineNewspaperIcon
-              aria-label="deactive_life_icon"
+              aria-label="deactive_posts_icon"
               className="size-7 dark:text-neutral-400 text-neutral-600"
             />
           )}
           <span
             className={`text-sm ${
-              pathname === "/life"
+              pathname === "/posts"
                 ? "dark:text-primary-light text-primary"
                 : "dark:text-neutral-400 text-neutral-600"
             }`}

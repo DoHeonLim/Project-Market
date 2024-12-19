@@ -44,11 +44,11 @@ export default function SearchBar({
       const params = new URLSearchParams();
 
       // 검색어 추가
-      params.set("search", search.trim());
+      params.set("keyword", search.trim());
 
       // 현재 URL의 파라미터 유지
       for (const [key, value] of Array.from(searchParams.entries())) {
-        if (key !== "search" && !additionalParams[key]) {
+        if (key !== "keyword" && !additionalParams[key]) {
           params.set(key, value);
         }
       }

@@ -36,7 +36,7 @@ const _Input = (
 ) => {
   if (type === "textarea") {
     return (
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2 w-full">
         <textarea
           ref={ref as ForwardedRef<HTMLTextAreaElement>}
           name={name}
@@ -56,12 +56,12 @@ const _Input = (
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2 w-full">
       <input
         ref={ref as ForwardedRef<HTMLInputElement>}
         type={type}
         name={name}
-        className={`h-10 input-primary ${className}`}
+        className={`input-primary h-10 w-full ${className}`}
         {...rest}
       />
       {errors.map((error, index) => (

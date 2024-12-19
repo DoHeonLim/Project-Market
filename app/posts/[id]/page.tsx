@@ -27,6 +27,8 @@ import UserAvatar from "@/components/user-avatar";
 import Carousel from "@/components/carousel";
 import BackButton from "@/components/back-button";
 import TimeAgo from "@/components/time-ago";
+import { POST_CATEGORY } from "@/lib/constants";
+import Link from "next/link";
 
 const getUser = async () => {
   const session = await getSession();
@@ -174,34 +176,73 @@ export default async function PostDetail({
 
   const { likeCount, isLiked } = await getCachedLikeStatus(id);
   return (
-    <div className="p-5 mt-14 text-white">
-      <BackButton className="bg-neutral-900 border-b border-neutral-800" />
-      <div className="flex items-center gap-6 mb-2">
-        <UserAvatar avatar={post.user.avatar} username={post.user.username} />
+    <div className="max-w-3xl mx-auto">
+      {/* 헤더 영역 */}
+      <div className="fixed top-0 left-0 right-0 z-10 bg-white dark:bg-neutral-900 border-b border-gray-200 dark:border-neutral-800">
+        <div className="max-w-3xl mx-auto">
+          <BackButton className="p-4" />
+        </div>
       </div>
-      <h2 className="text-lg font-semibold mb-2">{post.title}</h2>
-      <p className="mb-5">{post.description}</p>
 
-      {/* 이미지 갤러리를 Carousel로 교체 */}
-      <div className="w-full">
-        <div className="w-2/3 mx-auto mb-5 flex justify-center">
-          {post.images && post.images.length > 0 && (
-            <Carousel images={post.images} />
+      {/* 메인 컨텐츠 */}
+      <div className="p-5 mt-16 space-y-4 bg-white dark:bg-neutral-900">
+        {/* 작성자 정보 & 카테고리 */}
+        <div className="flex items-center justify-between">
+          <UserAvatar
+            avatar={post.user.avatar}
+            username={post.user.username}
+            size="md"
+          />
+          {post.category && (
+            <Link
+              href={`/posts?category=${post.category}`}
+              className="px-3 py-1.5 text-sm text-gray-700 dark:text-white rounded-full bg-gray-100 dark:bg-neutral-700 hover:bg-gray-200 dark:hover:bg-neutral-600 transition-colors"
+            >
+              {POST_CATEGORY[post.category as keyof typeof POST_CATEGORY]}
+            </Link>
           )}
         </div>
-      </div>
 
-      <div className="flex flex-col items-start mt-3 gap-5">
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 text-sm text-neutral-400">
-            <EyeIcon aria-label="views" className="size-5" />
-            <span>조회 {post.views}</span>
-          </div>
-          <TimeAgo date={post.created_at?.toString() ?? null} />
+        {/* 게시글 제목 & 내용 */}
+        <div className="space-y-4">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            {post.title}
+          </h1>
+          <p className="text-gray-600 dark:text-neutral-300 leading-relaxed">
+            {post.description}
+          </p>
         </div>
-        <PostLikeButton isLiked={isLiked} likeCount={likeCount} postId={id} />
+
+        {/* 이미지 갤러리 */}
+        {post.images.length > 0 && (
+          <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-gray-100 dark:bg-neutral-800">
+            <Carousel
+              images={post.images}
+              className="w-full h-full rounded-lg"
+            />
+          </div>
+        )}
+
+        {/* 메타 정보 */}
+        <div className="flex gap-4 pt-4 border-t border-gray-200 dark:border-neutral-800 justify-between">
+          <PostLikeButton isLiked={isLiked} likeCount={likeCount} postId={id} />
+          <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-neutral-400">
+            <div className="flex items-center gap-2">
+              <EyeIcon className="size-5" />
+              <span>조회 {post.views}</span>
+            </div>
+            <TimeAgo date={post.created_at?.toString() ?? null} />
+          </div>
+        </div>
+
+        {/* 댓글 섹션 */}
+        <div className="pt-6 border-t border-gray-200 dark:border-neutral-800">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            댓글
+          </h2>
+          <Comment postId={id} comments={comments} user={user} />
+        </div>
       </div>
-      <Comment postId={id} comments={comments} user={user} />
     </div>
   );
 }

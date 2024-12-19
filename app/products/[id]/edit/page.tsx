@@ -11,7 +11,7 @@ Date        Author   Status    Description
 */
 
 import { notFound, redirect } from "next/navigation";
-import { getIsOwner } from "../page";
+import { getIsOwner } from "../actions";
 import ProductEditForm from "@/components/product-edit-form";
 import db from "@/lib/db";
 

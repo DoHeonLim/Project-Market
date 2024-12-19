@@ -8,6 +8,7 @@ Date        Author   Status    Description
 2024.11.06  임도헌   Created
 2024.11.06  임도헌   Modified  댓글 폼 추가
 2024.11.06  임도헌   Modified  useOptimistic기능으로 댓글 추가 구현
+2024.12.19  임도헌   Modified  댓글 폼 스타일 변경
 
 */
 "use client";
@@ -58,20 +59,18 @@ export default function CommentForm({
   const [state, action] = useFormState(createComment, null);
   return (
     <>
-      <form ref={formRef} action={handleSubmit} className="mt-4 gap-2">
+      <form ref={formRef} action={handleSubmit} className="mt-4 w-full">
         <input type="hidden" name="postId" defaultValue={postId} />
-        <div className="flex flex-row justify-around mx-auto text-black">
+        <div className="flex w-full gap-2">
           <Input
             name="payload"
             type="text"
             required
-            placeholder="댓글추가"
+            placeholder="댓글을 입력하세요"
             errors={state?.fieldErrors.payload}
-            className="w-full sm:w-[400px] md:w-[500px]"
+            className="flex-1 min-w-0 bg-white dark:bg-neutral-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-neutral-400"
           />
-          <div className="w-20">
-            <Button text="댓글 추가" />
-          </div>
+          <Button text="추가" />
         </div>
       </form>
     </>

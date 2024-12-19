@@ -8,6 +8,7 @@ Date        Author   Status    Description
 2024.11.01  임도헌   Created
 2024.11.01  임도헌   Modified  좋아요 버튼 추가
 2024.11.06  임도헌   Modified  useOptimistic에 payload 사용하지 않아서 삭제
+2024.12.18  임도헌   Modified  sm:hidden 추가(모바일 반응형 추가)
 */
 "use client";
 
@@ -51,7 +52,7 @@ export default function PostLikeButton({
         text-sm border border-neutral-400 rounded-full p-2 transition-colors
         ${
           state.isLiked
-            ? "bg-indigo-500 text-white border-indigo-500 hover:bg-neutral-800"
+            ? "bg-indigo-500 text-white border-indigo-500 hover:bg-indigo-600"
             : "hover:bg-indigo-500 hover:text-white hover:border-indigo-500"
         }`}
     >
@@ -60,9 +61,10 @@ export default function PostLikeButton({
       ) : (
         <OutlineHandThumbUpIcon aria-label="thumb_down" className="size-5" />
       )}
-      <span>
+      <span className="hidden sm:inline">
         {state.isLiked ? "취소하기" : "공감하기"} ({state.likeCount})
       </span>
+      <span className="sm:hidden">{state.likeCount}</span>
     </button>
   );
 }

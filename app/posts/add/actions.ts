@@ -13,29 +13,35 @@ Date        Author   Status    Description
 
 import db from "@/lib/db";
 import getSession from "@/lib/session";
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath } from "next/cache";
 import { postSchema } from "./schema";
 
 export const uploadPost = async (formData: FormData) => {
+  const session = await getSession();
+  if (!session.id) return { error: "로그인이 필요합니다." };
+
   const data = {
     title: formData.get("title"),
     description: formData.get("description"),
+    category: formData.get("category"),
+    tags: formData.getAll("tags[]").map(String),
     photos: formData.getAll("photos[]").map(String),
   };
 
   const results = postSchema.safeParse(data);
   if (!results.success) {
-    return results.error.flatten();
+    return { error: results.error.flatten() };
   }
 
-  const session = await getSession();
-  if (session.id) {
-    try {
+  try {
+    // 트랜잭션으로 게시글과 관련 데이터를 한번에 생성
+    const post = await db.$transaction(async (tx) => {
       // 1. 게시글 생성
-      const post = await db.post.create({
+      const post = await tx.post.create({
         data: {
           title: results.data.title,
           description: results.data.description,
+          category: results.data.category,
           user: {
             connect: {
               id: session.id,
@@ -44,11 +50,33 @@ export const uploadPost = async (formData: FormData) => {
         },
       });
 
-      // 2. 이미지 URL이 있다면 PostImage 테이블에 순서와 함께 저장
+      // 2. 태그 처리
+      if (results.data.tags?.length) {
+        for (const tagName of results.data.tags) {
+          // 태그 생성 또는 업데이트
+          const tag = await tx.postTag.upsert({
+            where: { name: tagName },
+            create: { name: tagName, count: 1 },
+            update: { count: { increment: 1 } },
+          });
+
+          // 게시글과 태그 연결
+          await tx.post.update({
+            where: { id: post.id },
+            data: {
+              tags: {
+                connect: { id: tag.id },
+              },
+            },
+          });
+        }
+      }
+
+      // 3. 이미지 처리
       if (results.data.photos?.length) {
         await Promise.all(
           results.data.photos.map((url, index) =>
-            db.postImage.create({
+            tx.postImage.create({
               data: {
                 url,
                 order: index,
@@ -63,11 +91,13 @@ export const uploadPost = async (formData: FormData) => {
         );
       }
 
-      revalidatePath("/life");
-      revalidateTag("post-detail");
-    } catch (error) {
-      console.error("게시글 생성 중 오류 발생:", error);
-      throw new Error("게시글 생성에 실패했습니다.");
-    }
+      return post; // 생성된 게시글 반환
+    });
+
+    revalidatePath("/posts");
+    return { success: true, postId: post.id }; // 게시글 ID 반환
+  } catch (error) {
+    console.error("게시글 생성 중 오류 발생:", error);
+    return { error: "게시글 생성에 실패했습니다." };
   }
 };

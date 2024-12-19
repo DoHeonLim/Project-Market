@@ -12,6 +12,7 @@ Date        Author   Status    Description
 2024.11.11  임도헌   Modified  react hook form을 사용하는 코드로 변경
 2024.12.12  임도헌   Modified  products/add 에서 add-product로 이동
 2024.12.16  임도헌   Modified  제품 업로드를 보드게임 형식으로 변경
+2024.12.18  임도헌   Modified  태그 입력 컴포넌트로 분리
 
 */
 "use client";
@@ -35,7 +36,7 @@ import ImageUploader from "@/components/image/image-uploader";
 import { useRouter } from "next/navigation";
 import Select from "@/components/select";
 import { Category } from "@prisma/client";
-import { XMarkIcon } from "@heroicons/react/24/solid";
+import TagInput from "@/components/tag-input";
 
 export default function AddProduct() {
   const router = useRouter();
@@ -45,8 +46,6 @@ export default function AddProduct() {
     number | null
   >(null);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [tagInput, setTagInput] = useState("");
-  const [tags, setTags] = useState<string[]>([]);
 
   useEffect(() => {
     // 카테고리 목록 가져오기
@@ -171,24 +170,6 @@ export default function AddProduct() {
     setValue("condition", "새제품급");
     setValue("completeness", "구성품전체");
     setValue("has_manual", true);
-  };
-
-  const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" || e.key === ",") {
-      e.preventDefault();
-      const newTag = tagInput.trim();
-      if (newTag && !tags.includes(newTag) && tags.length < 5) {
-        setTags([...tags, newTag]);
-        setValue("tags", [...tags, newTag]); // react-hook-form에 값 설정
-        setTagInput("");
-      }
-    }
-  };
-
-  const handleRemoveTag = (tagToRemove: string) => {
-    const newTags = tags.filter((tag) => tag !== tagToRemove);
-    setTags(newTags);
-    setValue("tags", newTags);
   };
 
   return (
@@ -348,40 +329,11 @@ export default function AddProduct() {
           </Select>
         </div>
 
-        <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium dark:text-white">
-            태그 (최대 5개, 쉼표 또는 엔터로 구분)
-          </label>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {tags.map((tag, index) => (
-              <div
-                key={index}
-                className="flex items-center gap-1 px-2 py-1 bg-primary/10 rounded-full"
-              >
-                <span className="text-sm text-primary">#{tag}</span>
-                <button
-                  type="button"
-                  onClick={() => handleRemoveTag(tag)}
-                  className="text-primary hover:text-primary-dark"
-                >
-                  <XMarkIcon className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
-          </div>
-          <input
-            type="text"
-            value={tagInput}
-            onChange={(e) => setTagInput(e.target.value)}
-            onKeyDown={handleAddTag}
-            placeholder="태그를 입력하세요"
-            className="p-2 border rounded-md dark:bg-neutral-800 dark:border-neutral-700"
-            disabled={tags.length >= 5}
-          />
-          {errors.tags && (
-            <p className="text-sm text-red-500">{errors.tags.message}</p>
-          )}
-        </div>
+        <TagInput
+          onTagsChange={(tags) => setValue("tags", tags)}
+          errors={[errors.tags?.message ?? ""]}
+          maxTags={5}
+        />
 
         <div className="flex gap-2 mt-4">
           <Button

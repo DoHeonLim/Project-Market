@@ -34,7 +34,7 @@ const GAME_TYPES = [
   { id: "card", name: "카드게임", icon: "🃏" },
 ];
 
-export default function CategoryDropdown({
+export default function ProductCategoryDropdown({
   categories,
 }: CategoryDropdownProps) {
   const router = useRouter();

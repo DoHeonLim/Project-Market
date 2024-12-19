@@ -53,7 +53,7 @@ export default function ImageUploader({
         <div className="flex items-center gap-2">
           <PhotoIcon className="w-6 h-6 text-gray-500" />
           <span className="text-gray-500">
-            이미지 추가{optional ?? "(선택사항)"}
+            이미지 추가{optional && "(선택사항)"}
             {previews.length > 0 && ` (${previews.length}개)`}
           </span>
         </div>

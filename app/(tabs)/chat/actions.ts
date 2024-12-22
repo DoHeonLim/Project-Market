@@ -12,13 +12,87 @@ Date        Author   Status    Description
 2024.11.21  임도헌   Modified  Chatroom을 productChatRoom으로 변경
 2024.12.12  임도헌   Modified  제품 대표 사진 하나 들고오기
 */
+"use server";
 
-import UnreadMessageCountBadge from "@/components/unread-message-count-badge";
 import db from "@/lib/db";
+
+export type ChatRoomType = {
+  id: string;
+  created_at: Date;
+  updated_at: Date;
+  productId: number;
+  users: {
+    id: number;
+    username: string;
+    avatar: string | null;
+  }[];
+  messages: {
+    payload: string;
+    created_at: Date;
+    isRead: boolean;
+    userId: number;
+  }[];
+  product: {
+    id: number;
+    title: string;
+    images: {
+      url: string;
+    }[];
+  };
+};
+
+export const getChatRoom = async (id: string, userId: number) => {
+  const chatRoom = (await db.productChatRoom.findUnique({
+    where: {
+      id,
+    },
+    include: {
+      // 상대 유저
+      users: {
+        where: {
+          NOT: {
+            id: userId,
+          },
+        },
+        select: {
+          id: true,
+          username: true,
+          avatar: true,
+        },
+      },
+      // 제품명 및 제품 사진
+      product: {
+        select: {
+          id: true,
+          title: true,
+          images: {
+            where: { order: 0 },
+            select: { url: true },
+            take: 1,
+          },
+        },
+      },
+      // 마지막으로 보낸 메시지
+      messages: {
+        orderBy: {
+          created_at: "desc",
+        },
+        take: 1,
+        select: {
+          payload: true,
+          created_at: true,
+          isRead: true,
+          userId: true,
+        },
+      },
+    },
+  })) as ChatRoomType;
+  return chatRoom;
+};
 
 // 모든 활성화된 채팅방 불러오기
 export const getChatRooms = async (id: number) => {
-  const chatRooms = await db.productChatRoom.findMany({
+  const chatRooms = (await db.productChatRoom.findMany({
     // 로그인한 유저의 id가 포함된 채팅방 찾기
     where: {
       users: {
@@ -39,6 +113,7 @@ export const getChatRooms = async (id: number) => {
           },
         },
         select: {
+          id: true,
           username: true,
           avatar: true,
         },
@@ -46,32 +121,31 @@ export const getChatRooms = async (id: number) => {
       // 제품명 및 제품 사진
       product: {
         select: {
+          id: true,
           title: true,
           images: {
-            select: {
-              url: true,
-            },
-            orderBy: {
-              order: "asc",
-            },
+            where: { order: 0 },
+            select: { url: true },
             take: 1,
           },
         },
       },
       // 마지막으로 보낸 메시지
       messages: {
-        select: {
-          payload: true,
-          id: true,
-          created_at: true,
-        },
         orderBy: {
           created_at: "desc",
         },
         take: 1,
+        select: {
+          payload: true,
+          created_at: true,
+          isRead: true,
+          userId: true,
+        },
       },
     },
-  });
+  })) as ChatRoomType[];
+
   // 메시지의 created_at을 기준으로 채팅방을 정렬
   chatRooms.sort((a, b) => {
     const aCreatedAt = a.messages[0]?.created_at || new Date(0);
@@ -87,29 +161,19 @@ export const unreadMessageCountDB = async (
   id: number,
   productChatRoomId: string
 ) => {
-  const count = await db.productMessage.count({
-    where: {
-      userId: {
-        not: id,
+  try {
+    const count = await db.productMessage.count({
+      where: {
+        userId: {
+          not: id,
+        },
+        productChatRoomId,
+        isRead: false,
       },
-      productChatRoomId,
-      isRead: false,
-    },
-  });
-  return count;
-};
-
-interface UnreadMessageCountProps {
-  id: number;
-  productChatRoomId: string;
-}
-
-export const UnreadMessageCount = async ({
-  id,
-  productChatRoomId,
-}: UnreadMessageCountProps) => {
-  const count = await unreadMessageCountDB(id, productChatRoomId);
-  return (
-    <>{count == 0 ? null : <UnreadMessageCountBadge unreadCount={count} />}</>
-  );
+    });
+    return count;
+  } catch (error) {
+    console.error("Error counting unread messages:", error);
+    return 0;
+  }
 };

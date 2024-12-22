@@ -8,6 +8,7 @@ Date        Author   Status    Description
 2024.12.12  임도헌   Created
 2024.12.12  임도헌   Modified  제품 상세보기 서버 코드 추가
 2024.12.17  임도헌   Modified  page에 있는 서버 코드들 전부 actions로 옮김
+2024.12.22  임도헌   Modified  채팅방 생성 함수 변경, 제품 캐싱 함수 변경
 */
 "use server";
 
@@ -75,7 +76,7 @@ export const getProduct = async (id: number) => {
  * 제품 상세 정보 캐싱 함수
  */
 export const getCachedProduct = (id: number) => {
-  return nextCache(() => getProduct(id), ["product-detail"], {
+  return nextCache(() => getProduct(id), [`product-detail-${id}`], {
     tags: ["product-detail", `product-views-${id}`],
   })();
 };
@@ -94,13 +95,11 @@ export const getProductTitle = async (id: number) => {
 /**
  * 제품 제목 캐싱 함수
  */
-export const getCachedProductTitle = nextCache(
-  getProductTitle,
-  ["product-title"],
-  {
+export const getCachedProductTitle = (id: number) => {
+  return nextCache(() => getProductTitle(id), [`product-title-${id}`], {
     tags: ["product-title"],
-  }
-);
+  })();
+};
 
 // =========== 조회수 관련 함수 ===========
 
@@ -164,7 +163,7 @@ export const getCachedProductLikeStatus = async (productId: number) => {
   const userId = session.id;
   const cachedOperation = nextCache(
     getProductLikeStatus,
-    ["product-like-status"],
+    [`product-like-status-${productId}`],
     {
       tags: [`product-like-status-${productId}`],
     }
@@ -225,11 +224,21 @@ export const getIsOwner = async (userId: number) => {
  * @returns 생성된 채팅방으로 리다이렉트
  */
 export const createChatRoom = async (productId: number) => {
-  "use server";
-
   const session = await getSession();
   if (!session.id) {
     throw new Error("로그인이 필요합니다.");
+  }
+
+  // 제품 정보와 판매자 정보 가져오기
+  const product = await db.product.findUnique({
+    where: { id: productId },
+    select: {
+      userId: true, // 판매자 ID
+    },
+  });
+
+  if (!product) {
+    throw new Error("존재하지 않는 제품입니다.");
   }
 
   // 기존 채팅방 확인
@@ -239,7 +248,7 @@ export const createChatRoom = async (productId: number) => {
       users: {
         every: {
           id: {
-            in: [productId, session.id!],
+            in: [product.userId, session.id], // productId 대신 판매자 ID 사용
           },
         },
       },
@@ -256,7 +265,7 @@ export const createChatRoom = async (productId: number) => {
   const room = await db.productChatRoom.create({
     data: {
       users: {
-        connect: [{ id: productId }, { id: session.id }],
+        connect: [{ id: product.userId }, { id: session.id }],
       },
       product: {
         connect: { id: productId },

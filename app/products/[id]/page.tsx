@@ -25,6 +25,7 @@ Date        Author   Status    Description
 2024.12.16  임도헌   Modified  제품 조회수 업데이트 함수 추가
 2024.12.16  임도헌   Modified  제품 상세를 보드게임 제품 형식으로 변경
 2024.12.17  임도헌   Modified  서버코드 모두 app/products/[id]/actions로 이동
+2024.12.22  임도헌   Modified  채팅방 생성 함수 변경, 제품 캐싱 함수 변경
 */
 
 import db from "@/lib/db";
@@ -43,8 +44,17 @@ import {
   getCachedProductTitle,
   getCachedProductWithViews,
   getIsOwner,
-  createChatRoom,
 } from "./actions";
+import ChatButton from "@/components/chat-button";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+/**
+ * 조회수 업데이트 중 오류 발생: n [Error]: Dynamic server usage: Route /products/2 couldn't be rendered statically because it used `revalidateTag product-views-2`
+ * 이 에러는 Next.js에서 정적 페이지 생성(Static Site Generation, SSG) 중에 동적 기능을 사용하려고 할 때 발생하는 문제
+구체적으로, /products/[id] 페이지에서 revalidateTag를 사용하여 조회수를 업데이트하려고 하는데, 이는 동적 기능이라 정적 생성과 충돌이 발생
+페이지를 동적으로 렌더링하도록 설정
+ */
 
 export async function generateMetadata({ params }: { params: { id: string } }) {
   const product = await getCachedProductTitle(Number(params.id));
@@ -219,11 +229,7 @@ export default async function ProductDetail({
                 수정하기
               </Link>
             ) : (
-              <form action={() => createChatRoom(id)}>
-                <button className="px-5 py-2.5 font-medium text-white bg-primary hover:bg-primary/90 rounded-md transition-colors">
-                  채팅하기
-                </button>
-              </form>
+              <ChatButton id={id} />
             )}
           </div>
         </div>

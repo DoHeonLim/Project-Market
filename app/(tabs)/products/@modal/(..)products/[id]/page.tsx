@@ -32,12 +32,12 @@ import ProductLikeButton from "@/components/product-like-button";
 import TimeAgo from "@/components/time-ago";
 import { EyeIcon } from "@heroicons/react/24/solid";
 import {
-  createChatRoom,
   getCachedProduct,
   getCachedProductLikeStatus,
   getCachedProductWithViews,
   getIsOwner,
 } from "@/app/products/[id]/actions";
+import ChatButton from "@/components/chat-button";
 
 export default async function Modal({
   params,
@@ -209,11 +209,7 @@ export default async function Modal({
                   수정하기
                 </Link>
               ) : (
-                <form action={() => createChatRoom(id)}>
-                  <button className="px-4 py-2 font-medium text-white bg-primary hover:bg-primary/90 rounded-md transition-colors text-sm">
-                    채팅하기
-                  </button>
-                </form>
+                <ChatButton id={id} />
               )}
             </div>
           </div>

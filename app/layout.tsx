@@ -2,6 +2,9 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import ThemeProvider from "@/components/providers/ThemeProvider";
+import { Toaster } from "sonner";
+import NotificationListener from "@/components/notification-listener";
+import getSession from "@/lib/session";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -40,11 +43,17 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("/sw.js");
+    });
+  }
+  const session = await getSession();
   return (
     <html lang="ko" suppressHydrationWarning>
       <body
@@ -56,12 +65,14 @@ export default function RootLayout({
           sm:max-w-screen-sm sm:mx-auto sm:shadow-xl
           pb-[env(safe-area-inset-bottom)]`}
       >
+        <Toaster />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
         >
+          {session.id && <NotificationListener userId={session.id} />}
           {children}
         </ThemeProvider>
       </body>

@@ -64,7 +64,6 @@ export default async function StreamDetailPage({
 
   // 방송 메시지 초기화
   const initialStreamMessage = await getStreamMessages(streamChatRoom.id);
-  console.log(initialStreamMessage);
 
   return (
     <div>

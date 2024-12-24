@@ -12,6 +12,7 @@ Date        Author   Status    Description
 2024.12.03  임도헌   Modified  로딩 및 에러 처리 추가
 2024.12.12  임도헌   Modified  photo속성에서 images로 변경
 2024.12.12  임도헌   Modified  제품 상태 변경 시간 표시 변경
+2024.12.22  임도헌   Modified  오타 수정
 */
 
 "use client";
@@ -176,7 +177,7 @@ export default function MyPurchasesProductItem({ product }: ProductItemProps) {
       <ReviewDetailModal
         isOpen={isSellerReviewModalOpen}
         onClose={() => setIsSellerReviewModalOpen(false)}
-        title={`${product.user.username}님의 ���뷰`}
+        title={`${product.user.username}님의 리뷰`}
         review={sellerReviews[0]}
         emptyMessage={`${product.user.username}님이 아직 리뷰를 보내지 않았습니다.`}
       />

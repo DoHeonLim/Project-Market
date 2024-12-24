@@ -46,7 +46,6 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const categories = await getCategories();
 
   const searchHistory = await getUserSearchHistory();
-  console.log(searchHistory, "최근 검색 기록");
   const popularSearches = await getPopularSearches();
 
   // 카테고리 이름 찾기

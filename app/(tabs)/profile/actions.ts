@@ -96,7 +96,6 @@ export const changePassword = async (
 
   // 유저 데이터 얻어오기
   const user = await getUser();
-  console.log("유저", user);
 
   const results = passwordUpdateSchema.safeParse(data);
   if (!results.success) {
@@ -121,7 +120,6 @@ export const changePassword = async (
     } else {
       // 변경할 비밀번호 암호화
       const hashedPassword = await bcrypt.hash(results.data.password, 12);
-      console.log(hashedPassword);
       await db.user.update({
         where: { id: user.id },
         data: { password: hashedPassword },

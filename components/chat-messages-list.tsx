@@ -13,18 +13,23 @@
  2024.12.07  임도헌   Modified  프로필 이미지 컴포넌트 분리
  2024.12.08  임도헌   Modified  시간 표시 컴포넌트 분리
  2024.12.12  임도헌   Modified  스타일 변경
+ 2024.12.19  임도헌   Modified  supabase 클라이언트 코드 lib로 이동
+ 2024.12.22  임도헌   Modified  메시지 저장 코드 변경(실시간 통신)
  */
 "use client";
 
-import { InitialChatMessages, saveMessage } from "@/app/chats/[id]/actions";
+import {
+  InitialChatMessages,
+  saveMessage,
+  readMessageUpdate,
+} from "@/app/chats/[id]/actions";
 import { PaperAirplaneIcon } from "@heroicons/react/24/solid";
-import { createClient, RealtimeChannel } from "@supabase/supabase-js";
-import { useEffect, useRef, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { RealtimeChannel } from "@supabase/supabase-js";
+import { useEffect, useRef, useState, useCallback } from "react";
 import UserAvatar from "./user-avatar";
 import TimeAgo from "./time-ago";
-
-const SUPABASE_PUBLIC_KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLIC_KEY;
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+import Image from "next/image";
 
 interface IChatMessageListProps {
   initialMessages: InitialChatMessages;
@@ -32,6 +37,10 @@ interface IChatMessageListProps {
   productChatRoomId: string;
   username: string;
   avatar: string;
+  product: {
+    title: string;
+    images: { url: string }[];
+  };
 }
 
 export default function ChatMessagesList({
@@ -40,10 +49,12 @@ export default function ChatMessagesList({
   productChatRoomId,
   username,
   avatar,
+  product,
 }: IChatMessageListProps) {
   const [messages, setMessages] = useState(initialMessages);
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const channel = useRef<RealtimeChannel>();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -58,6 +69,7 @@ export default function ChatMessagesList({
     if (isSubmitting || !message.trim()) return;
 
     setIsSubmitting(true);
+    setError(null);
 
     const newMessage = {
       id: Date.now(),
@@ -71,29 +83,35 @@ export default function ChatMessagesList({
       },
     };
 
+    setMessages((prevMsgs) => [...prevMsgs, newMessage]);
+    setMessage("");
+
     try {
-      await saveMessage(message, productChatRoomId);
-
-      setMessages((prevMsgs) => [...prevMsgs, newMessage]);
-
       channel.current?.send({
         type: "broadcast",
         event: "message",
-        payload: newMessage,
+        payload: {
+          ...newMessage,
+          productChatRoomId,
+        },
       });
 
-      setMessage("");
+      await saveMessage(message, productChatRoomId);
     } catch (error) {
+      setMessages((prevMsgs) =>
+        prevMsgs.filter((msg) => msg.id !== newMessage.id)
+      );
+      setError("메시지 전송에 실패했습니다. 다시 시도해주세요.");
       console.error("메시지 전송 실패:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
   useEffect(() => {
-    const client = createClient(SUPABASE_URL!, SUPABASE_PUBLIC_KEY!);
+    const client = supabase;
     channel.current = client.channel(`room-${productChatRoomId}`);
     channel.current
-      .on("broadcast", { event: "message" }, (payload) => {
+      .on("broadcast", { event: "message" }, async (payload) => {
         setMessages((prevMsgs) => {
           const isDuplicate = prevMsgs.some(
             (msg) => msg.id === payload.payload.id
@@ -101,24 +119,49 @@ export default function ChatMessagesList({
           if (isDuplicate) return prevMsgs;
           return [...prevMsgs, payload.payload];
         });
+
+        if (payload.payload.userId !== userId) {
+          await readMessageUpdate(productChatRoomId, userId);
+        }
       })
-      .subscribe();
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          console.log("Connected to realtime channel");
+        }
+      });
     //user가 페이지를 떠나면 channel의 구독을 해제한다.
     return () => {
       channel.current?.unsubscribe();
     };
-  }, [productChatRoomId]);
+  }, [productChatRoomId, userId]);
 
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  }, []);
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [scrollToBottom]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
 
   return (
-    <div className="flex flex-col h-[90vh]">
+    <div className="flex flex-col h-[95vh]">
+      <div className="relative p-4 border-b dark:border-neutral-800">
+        <div className="flex items-center gap-3">
+          <div className="relative size-10">
+            <Image
+              src={`${product.images[0]?.url}/avatar`}
+              alt={product.title}
+              fill
+              className="object-cover rounded-md"
+            />
+          </div>
+          <h2 className="font-medium">{product.title}</h2>
+        </div>
+      </div>
       <div className="flex-1 overflow-y-auto p-5 space-y-5 scrollbar">
         {messages.map((message) => (
           <div
@@ -193,6 +236,11 @@ export default function ChatMessagesList({
           </button>
         </form>
       </div>
+      {error && (
+        <div className="p-2 text-sm text-red-500 bg-red-100 rounded">
+          {error}
+        </div>
+      )}
     </div>
   );
 }

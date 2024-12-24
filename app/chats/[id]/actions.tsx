@@ -9,26 +9,67 @@ Date        Author   Status    Description
 2024.11.09  임도헌   Modified  채팅 메시지 저장 추가
 2024.11.21  임도헌   Modified  Chatroom을 productChatRoom으로 변경
 2024.12.12  임도헌   Modified  message모델을 productMessage로 변경
+2024.12.22  임도헌   Modified  채팅 메시지 웹 푸시 기능 추가
 */
 
 "use server";
 
 import db from "@/lib/db";
 import getSession from "@/lib/session";
-import { Prisma } from "@prisma/client";
 import { revalidateTag } from "next/cache";
+import { sendPushNotification } from "@/lib/push-notification";
+import { supabase } from "@/lib/supabase";
 
-export type InitialChatMessages = Prisma.PromiseReturnType<typeof getMessages>;
+export interface ChatMessage {
+  id: number;
+  payload: string;
+  created_at: Date;
+  userId: number;
+  isRead: boolean;
+  user: {
+    username: string;
+    avatar: string | null;
+  };
+}
+
+export interface ChatRoom {
+  id: string;
+  product: {
+    title: string;
+    images: {
+      url: string;
+    }[];
+  };
+  users: {
+    id: number;
+  }[];
+}
+
+export type InitialChatMessages = ChatMessage[];
 
 // 채팅방 찾고 해당 유저들인지 체크
 export const getRoom = async (id: string) => {
   const room = await db.productChatRoom.findUnique({
-    where: {
-      id,
-    },
+    where: { id },
     include: {
       users: {
-        select: { id: true },
+        select: {
+          id: true,
+          username: true,
+          avatar: true,
+        },
+      },
+      product: {
+        select: {
+          id: true,
+          title: true,
+          price: true,
+          images: {
+            where: { order: 0 },
+            select: { url: true },
+            take: 1,
+          },
+        },
       },
     },
   });
@@ -62,7 +103,7 @@ export const getMessages = async (productChatRoomId: string) => {
       },
     },
   });
-  return messages;
+  return messages as ChatMessage[];
 };
 
 // 채팅방의 유저 정보
@@ -84,22 +125,101 @@ export const saveMessage = async (
   payload: string,
   productChatRoomId: string
 ) => {
+  "use server";
+
   const session = await getSession();
-  await db.productMessage.create({
-    data: {
-      payload,
-      productChatRoomId,
-      userId: session.id!,
-    },
-    select: { id: true },
-  });
-  revalidateTag("chatroom-list");
+
+  try {
+    // 1. 메시지 생성
+    await db.productMessage.create({
+      data: {
+        payload,
+        productChatRoomId,
+        userId: session.id!,
+      },
+    });
+
+    // 2. 수신자 정보 조회 (내가 아닌 사용자)
+    const receiver = await db.user.findFirst({
+      where: {
+        product_chat_rooms: {
+          some: { id: productChatRoomId },
+        },
+        NOT: { id: session.id! },
+      },
+      select: {
+        id: true,
+        username: true,
+        notification_preferences: true,
+      },
+    });
+
+    // 3. 알림 생성 및 푸시 알림 전송
+    if (receiver?.notification_preferences?.chat) {
+      // 알림 생성
+      const notification = await db.notification.create({
+        data: {
+          userId: receiver.id,
+          title: "새 메시지",
+          body: `${receiver.username}님이 메시지를 보냈습니다: ${payload.slice(
+            0,
+            20
+          )}${payload.length > 20 ? "..." : ""}`,
+          type: "CHAT",
+          link: `/chats/${productChatRoomId}`,
+          isPushSent: false,
+        },
+      });
+
+      // 4. 알림 브로드캐스트 (즉시 실행)
+      await Promise.all([
+        // Supabase 브로드캐스트
+        supabase.channel("notifications").send({
+          type: "broadcast",
+          event: "notification",
+          payload: {
+            userId: receiver.id,
+            title: notification.title,
+            body: notification.body,
+            link: notification.link,
+            type: notification.type,
+          },
+        }),
+
+        // 푸시 알림 전송
+        sendPushNotification({
+          targetUserId: receiver.id,
+          title: notification.title,
+          message: notification.body,
+          url: notification.link || "",
+          type: "CHAT",
+        }).then(async (result) => {
+          if (result.success) {
+            await db.notification.update({
+              where: { id: notification.id },
+              data: { isPushSent: true, sentAt: new Date() },
+            });
+          }
+        }),
+      ]);
+    }
+
+    revalidateTag("messages");
+    revalidateTag("chatroom-list");
+
+    return { success: true };
+  } catch (error) {
+    console.error("메시지 저장 중 오류 발생:", error);
+    return { success: false, error: "메시지 전송에 실패했습니다." };
+  }
 };
 
 export const readMessageUpdate = async (
   productChatRoomId: string,
   userId: number
 ) => {
+  "use server";
+
   const updateMessage = await db.productMessage.updateMany({
     where: {
       productChatRoomId,

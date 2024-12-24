@@ -9,6 +9,7 @@
  2024.11.21  임도헌   Modified  스트리밍 채팅방 컴포넌트
  2024.11.23  임도헌   Modified  스트리밍 채팅방 컴포넌트 스크롤 및 useRef로 최신 메시지 받을 시 스크롤바를 최하단으로 옮기는 코드 추가
  2024.12.08  임도헌   Modified  시간 표시 클라이언트로 변경
+ 2024.12.19  임도헌   Modified  supabase 클라이언트 코드 lib로 이동
  */
 "use client";
 
@@ -21,13 +22,11 @@ import {
   UserIcon,
   VideoCameraIcon,
 } from "@heroicons/react/24/solid";
-import { createClient, RealtimeChannel } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
+import { RealtimeChannel } from "@supabase/supabase-js";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import TimeAgo from "./time-ago";
-
-const SUPABASE_PUBLIC_KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLIC_KEY;
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
 interface IStreamChatMessageListProps {
   initialStreamMessage: InitialStreamChatMessages;
@@ -99,7 +98,7 @@ export default function StreamChatRoom({
     setMessage("");
   };
   useEffect(() => {
-    const client = createClient(SUPABASE_URL!, SUPABASE_PUBLIC_KEY!);
+    const client = supabase;
     channel.current = client.channel(`room-${streamChatRoomId}`);
     channel.current
       .on("broadcast", { event: "message" }, (payload) => {

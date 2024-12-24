@@ -12,6 +12,7 @@ Date        Author   Status    Description
 2024.12.07  임도헌   Modified  유저 제품 무한 스크롤 함수 추가
 2024.12.07  임도헌   Modified  getUserProfile에 평균 평점 및 갯수 삭제
 2024.12.12  임도헌   Modified  제품 대표 사진 하나 들고오기
+2024.12.22  임도헌   Modified  제품 모델 변경에 따른 리턴값 변경
 */
 
 "use server";
@@ -70,21 +71,43 @@ export const getUserProducts = async (
       purchase_userId: status === "sold" ? { not: null } : null,
     },
     select: {
-      id: true,
       title: true,
       price: true,
+      created_at: true,
       images: {
+        where: { order: 0 },
+        take: 1,
         select: {
           url: true,
         },
-        orderBy: {
-          order: "asc",
-        },
-        take: 1,
       },
-      created_at: true,
+      id: true,
+      views: true,
       reservation_userId: true,
       purchase_userId: true,
+      category: {
+        select: {
+          name: true,
+          icon: true,
+          parent: {
+            select: {
+              name: true,
+              icon: true,
+            },
+          },
+        },
+      },
+      game_type: true,
+      _count: {
+        select: {
+          product_likes: true,
+        },
+      },
+      search_tags: {
+        select: {
+          name: true,
+        },
+      },
     },
     orderBy: {
       created_at: "desc",
@@ -108,21 +131,43 @@ export const getMoreUserProducts = async (
       purchase_userId: status === "sold" ? { not: null } : null,
     },
     select: {
-      id: true,
       title: true,
       price: true,
+      created_at: true,
       images: {
+        where: { order: 0 },
+        take: 1,
         select: {
           url: true,
         },
-        orderBy: {
-          order: "asc",
-        },
-        take: 1,
       },
-      created_at: true,
+      id: true,
+      views: true,
       reservation_userId: true,
       purchase_userId: true,
+      category: {
+        select: {
+          name: true,
+          icon: true,
+          parent: {
+            select: {
+              name: true,
+              icon: true,
+            },
+          },
+        },
+      },
+      game_type: true,
+      _count: {
+        select: {
+          product_likes: true,
+        },
+      },
+      search_tags: {
+        select: {
+          name: true,
+        },
+      },
     },
     orderBy: {
       created_at: "desc",
@@ -130,7 +175,6 @@ export const getMoreUserProducts = async (
     take,
     skip,
   });
-  console.log(products);
 
   return products;
 };

@@ -10,6 +10,7 @@ Date        Author   Status    Description
 2024.12.07  임도헌   Modified  무한 스크롤 추가
 2024.12.07  임도헌   Modified  평균 평점 및 갯수 로직 수정
 2024.12.12  임도헌   Modified  photo속성에서 images로 변경
+2024.12.22  임도헌   Modified  제품 모델 변경에 따른 제품 타입 변경
 */
 "use client";
 
@@ -23,15 +24,29 @@ import { ProductsSkeleton } from "@/app/(tabs)/profile/[username]/loading";
 import ProfileReviewsModal from "./modals/profile-reviews-modal";
 
 type Products = {
-  id: number;
   title: string;
   price: number;
-  images: {
-    url: string;
-  }[];
   created_at: Date;
+  images: { url: string }[];
+  id: number;
   reservation_userId: number | null;
   purchase_userId: number | null;
+  category: {
+    name: string | null;
+    icon: string | null;
+    parent: {
+      name: string | null;
+      icon: string | null;
+    } | null;
+  } | null;
+  views: number;
+  game_type: string;
+  _count: {
+    product_likes: number;
+  };
+  search_tags: {
+    name: string;
+  }[];
 };
 
 type AverageRating = {
@@ -149,7 +164,7 @@ export default function UserProfile({
   }, [user.id, activeTab, currentPage, isLoading, isLastPage]);
 
   return (
-    <div className="flex flex-col items-center gap-4 my-4 px-4">
+    <div className="flex flex-col items-center gap-4">
       <span className="text-2xl font-semibold">{user.username}님의 프로필</span>
 
       <div className="flex gap-10 rounded-xl w-full py-10">

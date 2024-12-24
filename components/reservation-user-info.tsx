@@ -8,9 +8,10 @@ Date        Author   Status    Description
 2024.12.04  임도헌   Created
 2024.12.04  임도헌   Modified  예약자 정보 컴포넌트 추가
 2024.12.07  임도헌   Modified  프로필 이미지 컴포넌트 분리
+2024.12.22  임도헌   Modified  함수명 변경
 */
 "use client";
-import { getReservationUserInfo } from "@/app/(tabs)/profile/(product)/my-sales/actions";
+import { getUserInfo } from "@/app/(tabs)/profile/(product)/my-sales/actions";
 import { useEffect, useState } from "react";
 import UserAvatar from "./user-avatar";
 
@@ -29,7 +30,7 @@ export default function ReservationUserInfo({
     if (!userId) return;
 
     const fetchUser = async () => {
-      const user = await getReservationUserInfo(userId);
+      const user = await getUserInfo(userId);
       setUser(user);
     };
 

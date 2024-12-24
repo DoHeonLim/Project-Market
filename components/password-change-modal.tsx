@@ -7,6 +7,7 @@ History
 Date        Author   Status    Description
 2024.11.28  임도헌   Created
 2024.11.28  임도헌   Modified  비밀번호 변경 모달 컴포넌트 추가
+2024.12.17  임도헌   Modified  비밀번호 변경 모달 디자인 변경(다크모드)
 */
 
 "use client";
@@ -97,22 +98,24 @@ export default function PasswordChangeModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-neutral-600 rounded-lg shadow-xl w-full max-w-md mx-4 p-6">
-        <div className="flex justify-between items-center border-b pb-3 mb-4">
-          <h2 className="text-xl font-semibold">비밀번호 변경</h2>
+      <div className="dark:bg-neutral-800 bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6">
+        <div className="flex justify-between items-center border-b dark:border-neutral-600 pb-3 mb-4">
+          <h2 className="text-xl font-semibold dark:text-white">
+            비밀번호 변경
+          </h2>
           <button
             onClick={() => {
               reset();
               onClose();
             }}
-            className="text-white hover:text-gray-700"
+            className="dark:text-white text-gray-700 hover:opacity-70"
           >
             ✕
           </button>
         </div>
 
         <form action={onValid} className="space-y-4">
-          <label htmlFor="password" className="my-2">
+          <label htmlFor="password" className="my-2 dark:text-white">
             현재 비밀번호
           </label>
           <div className="relative">
@@ -184,14 +187,14 @@ export default function PasswordChangeModal({
               )}
             </button>
           </div>
-          <div className="flex justify-end space-x-2 pt-4 border-t">
+          <div className="flex justify-end space-x-2 pt-4 border-t dark:border-neutral-600">
             <button
               type="button"
               onClick={() => {
                 reset();
                 onClose();
               }}
-              className="w-1/3 py-2 text-sm font-medium bg-rose-600 rounded-md hover:bg-rose-400 focus:outline-none focus:ring-2 focus:ring-white disabled:opacity-50"
+              className="w-1/3 py-2 text-sm font-medium bg-rose-600 text-white rounded-md hover:bg-rose-400 focus:outline-none focus:ring-2 focus:ring-white disabled:opacity-50"
             >
               취소
             </button>

@@ -10,6 +10,8 @@ Date        Author   Status    Description
 2024.11.30  임도헌   Modified  프로필 페이지 디자인 변경
 2024.12.07  임도헌   Modified  프로필 페이지 디자인 다시 변경
 2024.12.07  임도헌   Modified  프로필 이미지 컴포넌트 분리
+2024.12.17  임도헌   Modified  프로필 페이지 디자인 변경
+2024.12.20  임도헌   Modified  푸시 알림 토글 컴포넌트 추가
 */
 
 "use client";
@@ -20,6 +22,7 @@ import PasswordChangeModal from "./password-change-modal";
 import ProfileReviewsModal from "./modals/profile-reviews-modal";
 import UserRating from "./user-rating";
 import UserAvatar from "./user-avatar";
+import { PushNotificationToggle } from "./push-notification-toggle";
 
 type User = {
   id: number;
@@ -57,8 +60,8 @@ export default function MyProfile({
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
 
   return (
-    <div className="flex flex-col items-center gap-4 my-4 px-4">
-      <span className="text-2xl font-semibold dark:text-white">
+    <div className="flex flex-col items-center gap-4">
+      <span className="text-2xl font-semibold dark:text-white mt-10">
         나의 프로필
       </span>
 
@@ -107,7 +110,21 @@ export default function MyProfile({
         )}
       </div>
 
-      {/* 다른 프로필 섹션들 */}
+      <div className="w-full max-w-md">
+        <div className="text-lg font-semibold mb-4 dark:text-white">
+          알림 설정
+        </div>
+        <div className="flex items-center justify-between p-4 bg-white dark:bg-neutral-800 rounded-lg border border-gray-200 dark:border-neutral-700">
+          <div>
+            <h3 className="font-medium">푸시 알림</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              새로운 메시지나 거래 알림을 받아보세요
+            </p>
+          </div>
+          <PushNotificationToggle />
+        </div>
+      </div>
+
       <div className="w-full max-w-md">
         <div className="text-lg font-semibold mb-4 dark:text-white">
           거래 정보

@@ -7,6 +7,7 @@ History
 Date        Author   Status    Description
 2024.12.17  임도헌   Created
 2024.12.17  임도헌   Modified  검색 바 컴포넌트 생성
+2024.12.23  임도헌   Modified  검색 바 컴포넌트 다크모드 추가
 */
 "use client";
 
@@ -68,12 +69,12 @@ export default function SearchBar({
         name="search"
         placeholder={placeholder}
         defaultValue={searchParams.get("search") ?? ""}
-        className="w-full px-4 py-2 pl-10 bg-neutral-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+        className="w-full px-4 py-2 pl-10 bg-white dark:bg-neutral-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-neutral-400 rounded-lg border border-gray-200 dark:border-neutral-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 dark:focus:ring-indigo-500"
       />
-      <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-neutral-400" />
+      <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-neutral-500" />
       {isPending && (
         <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-          <div className="w-4 h-4 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+          <div className="w-4 h-4 border-2 border-indigo-400 dark:border-indigo-500 border-t-transparent rounded-full animate-spin" />
         </div>
       )}
     </form>

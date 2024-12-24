@@ -8,6 +8,7 @@ Date        Author   Status    Description
 2024.12.07  임도헌   Created
 2024.12.07  임도헌   Modified  유저 아바타 컴포넌트 추가
 2024.12.12  임도헌   Modified  유저 아바타 생성시간 표시 변경
+2024.12.16  임도헌   Modified  다크모드 적용
 */
 
 "use client";
@@ -44,8 +45,8 @@ export default function UserAvatar({
 
   const AvatarContent = () => (
     <div
-      className={`flex items-center gap-2 *:text-white ${
-        disabled ? "" : "hover:bg-neutral-400"
+      className={`flex items-center gap-2 ${
+        disabled ? "" : "hover:bg-neutral-400 dark:hover:bg-neutral-700"
       } rounded-md pr-2`}
     >
       {avatar !== null ? (
@@ -60,22 +61,24 @@ export default function UserAvatar({
         <UserIcon
           aria-label="user_icon"
           className={`${sizes[size]} ${
-            size === "lg" ? "text-gray-300" : ""
+            size === "lg" ? "text-gray-300 dark:text-gray-500" : ""
           } rounded-${size === "lg" ? "full" : "md"}`}
         />
       )}
       <div className="flex items-start h-full">
         {showUsername ? (
           text ? (
-            <div className="text-sm font-semibold">
+            <div className="text-sm font-semibold dark:text-white">
               {username}
               {text}
             </div>
           ) : (
-            <div className="text-sm font-semibold">{username}</div>
+            <div className="text-sm font-semibold dark:text-white">
+              {username}
+            </div>
           )
         ) : null}
-        <div className="text-xs">
+        <div className="text-xs text-gray-600 dark:text-gray-400">
           {created_at && <TimeAgo date={created_at?.toString() ?? null} />}
         </div>
       </div>

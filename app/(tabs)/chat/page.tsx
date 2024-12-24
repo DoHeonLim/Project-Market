@@ -13,23 +13,13 @@ Date        Author   Status    Description
 
 import getSession from "@/lib/session";
 import { getChatRooms } from "./actions";
-import { unstable_cache as nextCache } from "next/cache";
-
-import ChatRoomList from "@/components/chat-room-list";
+import ChatRoomListContainer from "@/components/chat-room-list-container";
 
 export default async function Chat() {
   const session = await getSession();
-
-  const getCachedChatRooms = nextCache(getChatRooms, ["chatroom-list"], {
-    tags: ["chatroom-list"],
-  });
-  const chatRooms = await getCachedChatRooms(session.id!);
+  const chatRooms = await getChatRooms(session.id!);
 
   return (
-    <div className="flex flex-col items-center justify-start gap-3 py-4">
-      {chatRooms.map((room) => (
-        <ChatRoomList key={room.id} userId={session.id!} room={room} />
-      ))}
-    </div>
+    <ChatRoomListContainer initialRooms={chatRooms} userId={session.id!} />
   );
 }

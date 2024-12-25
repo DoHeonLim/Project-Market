@@ -8,6 +8,7 @@ Date        Author   Status    Description
 2024.12.03  임도헌   Created
 2024.12.03  임도헌   Modified  리뷰 작성 모달 컴포넌트 추가
 2024.12.07  임도헌   Modified  프로필 이미지 컴포넌트 분리
+2024.12.22  임도헌   Modified  리뷰 로딩 추가, 폼 제출 후 초기화
 */
 
 import { StarIcon } from "@heroicons/react/24/solid";
@@ -32,6 +33,24 @@ export default function ReviewModal({
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const resetForm = () => {
+    setRating(0);
+    setReviewText("");
+    setHoverRating(0);
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    onSubmit(reviewText, rating);
+    setIsSubmitting(false);
+  };
 
   if (!isOpen) return null;
 
@@ -78,21 +97,20 @@ export default function ReviewModal({
 
         <div className="flex justify-between">
           <button
-            onClick={() => {
-              onClose();
-              setRating(0);
-              setReviewText("");
-            }}
+            onClick={handleClose}
             className="px-4 py-2 transition-colors rounded-md bg-rose-500 hover:bg-rose-600"
           >
             취소
           </button>
           <button
-            onClick={() => onSubmit(reviewText, rating)}
-            disabled={rating === 0 || reviewText.trim() === ""}
+            onClick={() => {
+              handleSubmit();
+              handleClose();
+            }}
+            disabled={rating === 0 || reviewText.trim() === "" || isSubmitting}
             className="px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-400 disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
-            후기 제출
+            {isSubmitting ? "작성 중..." : "후기 제출"}
           </button>
         </div>
       </div>

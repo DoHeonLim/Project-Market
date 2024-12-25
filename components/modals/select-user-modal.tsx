@@ -8,6 +8,7 @@
  2024.12.02  임도헌   Created
  2024.12.02  임도헌   Modified  예약자 선택 모달 컴포넌트 추가
  2024.12.07  임도헌   Modified  프로필 이미지 컴포넌트 분리
+ 2024.12.22  임도헌   Modified  이벤트 버블링을 방지하기 위해 e.stopPropagation() 추가
  */
 
 import {
@@ -35,6 +36,7 @@ export function SelectUserModal({
 }: ISelectUserModalProps) {
   const [chatUsers, setChatUsers] = useState<ChatUser[]>([]); // ChatUser 타입 사용
   const [isLoading, setIsLoading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     const fetchChatUsers = async () => {
@@ -55,8 +57,15 @@ export function SelectUserModal({
   }, [productId, isOpen]);
 
   const handleUserSelect = async (selectUserId: number) => {
-    await updateProductStatus(productId, "reserved", selectUserId);
-    onOpenChange(false);
+    if (isProcessing) return;
+
+    try {
+      setIsProcessing(true);
+      await updateProductStatus(productId, "reserved", selectUserId);
+      onOpenChange(false);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -84,7 +93,6 @@ export function SelectUserModal({
                 <div
                   key={user.id}
                   className="flex items-center justify-between p-2 rounded-md"
-                  onClick={() => handleUserSelect(user.id)}
                 >
                   <div className="flex items-center space-x-3">
                     <UserAvatar
@@ -95,13 +103,14 @@ export function SelectUserModal({
                     />
                   </div>
                   <button
-                    className="px-3 py-1 text-xs border rounded hover:bg-indigo-400"
-                    onClick={() => {
+                    className="px-3 py-1 text-xs border rounded hover:bg-indigo-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={(e) => {
+                      e.stopPropagation();
                       handleUserSelect(user.id);
-                      alert("예약중으로 변경되었습니다.");
                     }}
+                    disabled={isProcessing}
                   >
-                    선택
+                    {isProcessing ? "처리중..." : "선택"}
                   </button>
                 </div>
               ))}

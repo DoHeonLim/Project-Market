@@ -10,6 +10,7 @@ Date        Author   Status    Description
 2024.12.03  임도헌   Modified  리뷰 생성, 삭제 추가
 2024.12.03  임도헌   Modified  revalidateTag로 캐싱 기능 추가
 2024.12.12  임도헌   Modified  제품 대표 사진 하나 들고오기
+2024.12.25  임도헌   Modified  CreateReview 위치 변경(proifle\(product)\actions.ts)
 */
 "use server";
 
@@ -47,29 +48,6 @@ export const getPurchasedProducts = async (userId: number) => {
     },
   });
   return purchasedProducts;
-};
-
-// 제품에 대한 유저의 리뷰 생성
-// 구매자가 판매자에게 리뷰 전송
-// id, userId, productId, payload, rate 5개 넣어야됨
-export const buyerCreateReview = async (
-  userId: number,
-  productId: number,
-  payload: string,
-  rate: number
-) => {
-  await db.review.create({
-    data: {
-      userId,
-      productId,
-      payload,
-      rate,
-    },
-    select: {
-      id: true,
-    },
-  });
-  revalidateTag("purchased-product-list");
 };
 
 // 리뷰 삭제

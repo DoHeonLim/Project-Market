@@ -10,6 +10,7 @@ Date        Author   Status    Description
 2024.10.04  임도헌   Modified  name props 추가 및 InputHTMLAttributes<HTMLInputElement> 추가
 2024.11.11  임도헌   Modified  forwardRef를 사용하는 코드 추가
 2024.12.15  임도헌   Modified  textarea 지원 추가
+2024.12.24  임도헌   Modified  icon prop 추가
 */
 
 /**
@@ -28,10 +29,18 @@ interface IInputProps
   type?: string;
   required?: boolean;
   errors?: string[];
+  icon?: React.ReactNode;
 }
 
 const _Input = (
-  { errors = [], name, type = "text", className = "", ...rest }: IInputProps,
+  {
+    errors = [],
+    name,
+    type = "text",
+    className = "",
+    icon,
+    ...rest
+  }: IInputProps,
   ref: ForwardedRef<HTMLInputElement | HTMLTextAreaElement>
 ) => {
   if (type === "textarea") {
@@ -57,13 +66,22 @@ const _Input = (
 
   return (
     <div className="flex flex-col gap-2 w-full">
-      <input
-        ref={ref as ForwardedRef<HTMLInputElement>}
-        type={type}
-        name={name}
-        className={`input-primary h-10 w-full ${className}`}
-        {...rest}
-      />
+      <div className="relative">
+        {icon && (
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text/50 dark:text-text-dark/50">
+            {icon}
+          </div>
+        )}
+        <input
+          ref={ref as ForwardedRef<HTMLInputElement>}
+          type={type}
+          name={name}
+          className={`input-primary h-10 w-full ${
+            icon ? "pl-10" : "pl-3"
+          } ${className}`}
+          {...rest}
+        />
+      </div>
       {errors.map((error, index) => (
         <span
           key={index}

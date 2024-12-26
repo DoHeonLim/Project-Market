@@ -9,6 +9,7 @@ Date        Author   Status    Description
 2024.10.01  임도헌   Modified  메인 페이지 추가
 2024.12.12  임도헌   Modified  다크모드 적용, 디자인 변경
 2024.12.14  임도헌   Modified  스타일 변경
+2024.12.24  임도헌   Modified  스타일 재변경
 */
 
 import Logo from "@/components/logo";
@@ -45,11 +46,13 @@ export default function Login() {
       {/* 메인 콘텐츠 */}
       <div className="my-auto flex flex-col items-center gap-4 z-10 animate-fade-in">
         <Logo variant="full" size={256} />
-        <p className="text-center text-white dark:text-gray-200 mt-2 drop-shadow-md">
-          새로운 보드게임의 바다로
-          <br />
-          항해를 시작하세요
-        </p>
+        <div className="text-center text-white dark:text-gray-200 mt-2 drop-shadow-md space-y-2">
+          <p className="text-lg">
+            보드게임과 TRPG의 새로운 항구,
+            <br />
+            보드포트에서 당신의 항해를 시작하세요
+          </p>
+        </div>
       </div>
 
       {/* 버튼 영역 */}
@@ -59,17 +62,32 @@ export default function Login() {
           className="w-full py-3 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm 
                    text-primary dark:text-secondary rounded-lg text-center font-semibold 
                    hover:bg-white dark:hover:bg-gray-800 hover:scale-105 
-                   transition-all duration-300 shadow-lg"
+                   transition-all duration-300 shadow-lg
+                   flex items-center justify-center gap-2"
         >
-          새로운 항해 시작하기
+          <span>새로운 선원으로 등록하기</span>
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M17 8l4 4m0 0l-4 4m4-4H3"
+            />
+          </svg>
         </Link>
         <div className="flex gap-2 text-white/90">
           <span>이미 선원이신가요?</span>
           <Link
             href="/login"
-            className="font-semibold text-primary-light hover:text-white hover:underline transition-colors"
+            className="font-semibold text-primary-light hover:text-white transition-colors"
           >
-            로그인
+            항해 계속하기
           </Link>
         </div>
       </div>

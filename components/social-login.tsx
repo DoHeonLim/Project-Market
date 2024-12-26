@@ -15,7 +15,6 @@ import Link from "next/link";
 export default function SocialLogin() {
   return (
     <>
-      <div className="w-full h-px bg-neutral-500" />
       <div className="flex flex-col gap-3 ">
         <Link
           aria-label="github_continue"

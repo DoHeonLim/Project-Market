@@ -9,11 +9,12 @@ Date        Author   Status    Description
 2024.11.01  임도헌   Modified  좋아요 버튼 추가
 2024.11.06  임도헌   Modified  useOptimistic에 payload 사용하지 않아서 삭제
 2024.12.18  임도헌   Modified  sm:hidden 추가(모바일 반응형 추가)
+2024.12.24  임도헌   Modified  좋아요 버튼 아이콘 변경
 */
 "use client";
 
-import { HandThumbUpIcon } from "@heroicons/react/24/solid";
-import { HandThumbUpIcon as OutlineHandThumbUpIcon } from "@heroicons/react/24/outline";
+import { HeartIcon } from "@heroicons/react/24/solid";
+import { HeartIcon as OutlineHeartIcon } from "@heroicons/react/24/outline";
 import { useOptimistic } from "react";
 import { dislikePost, likePost } from "@/app/posts/[id]/actions";
 
@@ -48,23 +49,19 @@ export default function PostLikeButton({
   return (
     <button
       onClick={handleClick}
-      className={`flex items-center gap-2 text-neutral-400
-        text-sm border border-neutral-400 rounded-full p-2 transition-colors
+      className={`flex items-center gap-1 p-2 transition-colors
         ${
           state.isLiked
-            ? "bg-indigo-500 text-white border-indigo-500 hover:bg-indigo-600"
-            : "hover:bg-indigo-500 hover:text-white hover:border-indigo-500"
+            ? "text-rose-500"
+            : "text-neutral-400 hover:text-rose-500"
         }`}
     >
       {state.isLiked ? (
-        <HandThumbUpIcon aria-label="thumb_up" className="size-5" />
+        <HeartIcon aria-label="heart" className="size-10" />
       ) : (
-        <OutlineHandThumbUpIcon aria-label="thumb_down" className="size-5" />
+        <OutlineHeartIcon aria-label="heart_outline" className="size-10" />
       )}
-      <span className="hidden sm:inline">
-        {state.isLiked ? "취소하기" : "공감하기"} ({state.likeCount})
-      </span>
-      <span className="sm:hidden">{state.likeCount}</span>
+      <span>{state.likeCount}</span>
     </button>
   );
 }

@@ -15,6 +15,7 @@ Date        Author   Status    Description
 2024.12.16  임도헌   Modified  카테고리 얻기 기능 추가
 2024.12.16  임도헌   Modified  최근 검색 기록 얻기 기능 추가
 2024.12.16  임도헌   Modified  인기 검색 기록 얻기 기능 추가
+2024.12.27  임도헌   Modified  제품 페이지 다크모드 추가
 */
 
 import ProductList from "@/components/product-list";
@@ -47,7 +48,7 @@ export default async function Products({ searchParams }: ProductsPageProps) {
   const popularSearches = await getPopularSearches(); // 인기 검색 기록 얻기
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6 p-6 bg-gradient-to-b from-background to-background/95 dark:from-background-dark dark:to-background-dark/95">
       <SearchSection
         categories={categories}
         keyword={""}

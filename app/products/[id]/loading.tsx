@@ -7,15 +7,14 @@ History
 Date        Author   Status    Description
 2024.10.14  임도헌   Created
 2024.10.14  임도헌   Modified  제품 상세 로딩 페이지 추가
+2024.12.23  임도헌   Modified  제품 상세 로딩 페이지 아이콘 변경
 */
-
-import { PhotoIcon } from "@heroicons/react/24/solid";
 
 export default function Loading() {
   return (
     <div className="flex flex-col gap-5 p-5 animate-pulse">
       <div className="flex items-center justify-center border-4 border-dashed rounded-md text-neutral-700 aspect-square border-neutral-700">
-        <PhotoIcon className="h-28" />
+        <span className="text-4xl">🎲</span>
       </div>
       <div className="flex items-center gap-2">
         <div className="rounded-full size-14 bg-neutral-700" />

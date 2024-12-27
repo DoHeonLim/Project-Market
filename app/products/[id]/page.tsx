@@ -26,6 +26,8 @@ Date        Author   Status    Description
 2024.12.16  임도헌   Modified  제품 상세를 보드게임 제품 형식으로 변경
 2024.12.17  임도헌   Modified  서버코드 모두 app/products/[id]/actions로 이동
 2024.12.22  임도헌   Modified  채팅방 생성 함수 변경, 제품 캐싱 함수 변경
+2024.12.25  임도헌   Modified  제품 상세 페이지 다크모드 추가
+2024.12.25  임도헌   Modified  제품 상세 정보 컴포넌트 분리
 */
 
 import db from "@/lib/db";
@@ -46,6 +48,7 @@ import {
   getIsOwner,
 } from "./actions";
 import ChatButton from "@/components/chat-button";
+import ProductInfoItem from "@/components/product-info-item";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -84,107 +87,98 @@ export default async function ProductDetail({
     <div className="min-h-screen bg-white dark:bg-neutral-900 pb-10">
       <BackButton className="p-4" />
       <div className="mb-24 max-w-4xl mx-auto overflow-hidden">
-        <div className="w-full h-[300px]">
+        {/* 이미지 캐러셀 */}
+        <div className="w-full h-[300px] relative">
           <Carousel images={product.images} className="w-full h-full" />
-        </div>
-
-        {/* 판매자 정보 섹션 */}
-        <div className="flex items-center justify-between p-5 border-b dark:border-neutral-700">
-          <div className="flex items-center gap-3">
-            <UserAvatar
-              avatar={product.user.avatar}
-              username={product.user.username}
-              size="md"
-            />
+          <div className="absolute top-4 right-4 flex items-center gap-1 px-2 py-1 bg-black/50 rounded-full text-white text-sm">
+            <EyeIcon className="size-4" />
+            <span>{views}</span>
           </div>
-          <TimeAgo date={product.created_at?.toString()} />
         </div>
 
-        {/* 제품 정보 섹션 */}
-        <div className="p-5 space-y-4 overflow-y-auto">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold dark:text-white">
-              {product.title}
-            </h1>
+        {/* 판매자 정보 */}
+        <div className="flex items-center justify-between p-4 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800/50">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-neutral-500">⚓ 판매 선원</span>
+            <div className="flex items-center gap-3">
+              <UserAvatar
+                avatar={product.user.avatar}
+                username={product.user.username}
+                size="md"
+              />
+            </div>
+          </div>
+          <TimeAgo date={product.created_at.toString()} />
+        </div>
+
+        {/* 제품 정보 */}
+        <div className="p-4 space-y-4">
+          <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2">
-              <span className="text-xl font-semibold text-primary">
-                {formatToWon(product.price)}원
+              <Link
+                href={`/search/products?game_type=${product.game_type}`}
+                className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-primary/10 text-primary dark:bg-primary-light/10 dark:text-primary-light rounded-full hover:bg-primary/20 dark:hover:bg-primary-light/20 transition-all hover:scale-105 active:scale-95"
+              >
+                🎲 {product.game_type}
+              </Link>
+            </div>
+            <div className="flex justify-between items-center">
+              <h1 className="text-2xl font-bold text-text dark:text-text-dark">
+                🎲 {product.title}
+              </h1>
+              <span className="text-lg font-bold text-accent dark:text-accent-light">
+                💰 {formatToWon(product.price)}원
               </span>
-              <div className="flex items-center gap-1 text-sm text-neutral-500 dark:text-neutral-400">
-                <EyeIcon className="size-4" />
-                <span>{views}</span>
-              </div>
             </div>
           </div>
 
           {/* 제품 상태 정보 */}
-          <div className="grid grid-cols-2 gap-4 py-4 border-y dark:border-neutral-700">
-            <div className="space-y-1">
-              <h3 className="text-sm text-neutral-500 dark:text-neutral-400">
-                카테고리
-              </h3>
-              <p className="dark:text-white flex items-center gap-2">
-                {product.category.parent && (
-                  <>
-                    <span>
-                      {product.category.parent.icon}
-                      {product.category.parent.name}
-                    </span>
-                    <span className="text-neutral-400">&gt;</span>
-                  </>
-                )}
-                <span>
-                  {product.category.icon} {product.category.name}
+          <div className="grid grid-cols-2 gap-4 p-4 bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700">
+            <ProductInfoItem
+              label="📁 카테고리"
+              value={
+                <span className="flex items-center gap-2">
+                  {product.category.parent && (
+                    <>
+                      <span>
+                        {product.category.parent.icon}{" "}
+                        {product.category.parent.name}
+                      </span>
+                      <span className="text-neutral-400">&gt;</span>
+                    </>
+                  )}
+                  <span>
+                    {product.category.icon} {product.category.name}
+                  </span>
                 </span>
-              </p>
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-sm text-neutral-500 dark:text-neutral-400">
-                제품 상태
-              </h3>
-              <p className="dark:text-white">{product.condition}</p>
-            </div>
-
-            <div className="space-y-1">
-              <h3 className="text-sm text-neutral-500 dark:text-neutral-400">
-                게임 인원
-              </h3>
-              <p className="dark:text-white">
-                {product.min_players} - {product.max_players}명
-              </p>
-            </div>
-
-            <div className="space-y-1">
-              <h3 className="text-sm text-neutral-500 dark:text-neutral-400">
-                구성품 상태
-              </h3>
-              <p className="dark:text-white">{product.completeness}</p>
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-sm text-neutral-500 dark:text-neutral-400">
-                플레이 시간
-              </h3>
-              <p className="dark:text-white">{product.play_time}</p>
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-sm text-neutral-500 dark:text-neutral-400">
-                설명서 포함
-              </h3>
-              <p className="dark:text-white">
-                {product.has_manual ? "⭕" : "❌"}
-              </p>
-            </div>
+              }
+            />
+            <ProductInfoItem
+              label="🎮 게임 인원"
+              value={`${product.min_players} - ${product.max_players}명`}
+            />
+            <ProductInfoItem label="⌛ 플레이 시간" value={product.play_time} />
+            <ProductInfoItem label="📦 제품 상태" value={product.condition} />
+            <ProductInfoItem
+              label="🧩 구성품 상태"
+              value={product.completeness}
+            />
+            <ProductInfoItem
+              label="📖 설명서"
+              value={product.has_manual ? "✅ 포함" : "❌ 미포함"}
+            />
           </div>
+
           {/* 태그 섹션 */}
           {product.search_tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 border-b dark:border-neutral-700 pb-4">
+            <div className="flex flex-wrap gap-2 py-4 border-y dark:border-neutral-700">
               {product.search_tags.map((tag, index) => (
                 <Link
                   key={index}
                   href={`/search/products?keyword=${tag.name}`}
-                  className="px-3 py-1 text-sm bg-primary/10 text-primary rounded-full hover:bg-primary/20 transition-colors"
+                  className="px-3 py-1 text-sm bg-primary/10 text-primary dark:bg-primary-light/10 dark:text-primary-light rounded-full hover:bg-primary/20 dark:hover:bg-primary-light/20 transition-colors"
                 >
-                  #{tag.name}
+                  🏷️ {tag.name}
                 </Link>
               ))}
             </div>
@@ -192,18 +186,18 @@ export default async function ProductDetail({
 
           {/* 제품 설명 */}
           <div className="space-y-2">
-            <h3 className="text-sm text-neutral-500 dark:text-neutral-400">
-              상세 설명
+            <h3 className="text-sm font-medium text-neutral-500 dark:text-neutral-400">
+              📝 상세 설명
             </h3>
-            <p className="whitespace-pre-wrap dark:text-white">
+            <p className="whitespace-pre-wrap text-text dark:text-text-dark text-sm">
               {product.description}
             </p>
           </div>
         </div>
 
         {/* 하단 고정 액션 바 */}
-        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 flex items-center justify-between w-full max-w-screen-sm px-5 py-2 bg-white dark:bg-neutral-800 border-t dark:border-neutral-700">
-          <div className="flex items-center gap-4">
+        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 flex items-center justify-between w-full max-w-screen-sm px-5 py-2 bg-white dark:bg-neutral-800 border-t dark:border-neutral-700 backdrop-blur-lg">
+          <div className="flex items-center gap-3">
             <ProductLikeButton
               isLiked={isLiked}
               likeCount={likeCount}
@@ -211,11 +205,11 @@ export default async function ProductDetail({
             />
             {product.reservation_userId && product.purchase_userId ? (
               <span className="px-3 py-1 text-sm font-medium bg-neutral-500 text-white rounded-full">
-                판매완료
+                ⚓ 판매완료
               </span>
             ) : product.reservation_userId ? (
               <span className="px-3 py-1 text-sm font-medium bg-green-500 text-white rounded-full">
-                예약중
+                🛞 예약중
               </span>
             ) : null}
           </div>
@@ -224,9 +218,9 @@ export default async function ProductDetail({
             {isOwner ? (
               <Link
                 href={`/products/${id}/edit`}
-                className="px-5 py-2.5 rounded-md text-white font-medium bg-rose-600 hover:bg-rose-500 transition-colors"
+                className="px-4 py-2 rounded-md text-white font-medium bg-primary hover:bg-primary/90 transition-colors text-sm flex items-center gap-2"
               >
-                수정하기
+                ⚙️ 수정하기
               </Link>
             ) : (
               <ChatButton id={id} />

@@ -10,6 +10,7 @@ Date        Author   Status    Description
 2024.10.17  임도헌   Modified  무한 스크롤 기능 추가
 2024.12.12  임도헌   Modified  스타일 수정
 2024.12.17  임도헌   Modified  스타일 수정
+2024.12.24  임도헌   Modified  스타일 재 수정
 */
 "use client";
 
@@ -28,6 +29,7 @@ export default function ProductList({ initialProducts }: IProductListProps) {
   const [page, setPage] = useState(0);
   const [isLastPage, setIsLastPage] = useState(false);
   const trigger = useRef<HTMLSpanElement>(null);
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       async (
@@ -59,19 +61,46 @@ export default function ProductList({ initialProducts }: IProductListProps) {
       observer.disconnect();
     };
   }, [page]);
+
   return (
-    <div className="flex flex-col gap-4 p-4">
-      {products.map((product) => (
-        <ListProduct key={product.id} {...product} />
-      ))}
-      {!isLastPage ? (
-        <span
-          ref={trigger}
-          className="mb-96 text-sm font-medium bg-primary text-white w-fit mx-auto px-4 py-2 rounded-md hover:bg-primary/90 active:scale-95 transition-all"
-        >
-          {isLoading ? "로딩중" : "더 가져오기"}
-        </span>
-      ) : null}
+    <div className="flex flex-col gap-6 p-4">
+      {products.length === 0 ? (
+        <div className="flex flex-col items-center justify-center gap-4 p-8 text-text/80 dark:text-text-dark/80">
+          <span className="text-4xl">🌊</span>
+          <p className="text-lg font-medium text-center">
+            아직 항해중인 보드게임이 없습니다
+          </p>
+          <p className="text-sm text-center">
+            첫 번째 보드게임을 등록하고 새로운 항해를 시작해보세요!
+          </p>
+        </div>
+      ) : (
+        <>
+          <div className="grid gap-6">
+            {products.map((product) => (
+              <ListProduct key={product.id} {...product} />
+            ))}
+          </div>
+
+          {!isLastPage && (
+            <span
+              ref={trigger}
+              className="mb-96 text-sm font-medium bg-primary dark:bg-primary-light text-white dark:text-text-dark w-fit mx-auto px-4 py-2 rounded-md hover:bg-primary/90 dark:hover:bg-primary-light/90 active:scale-95 transition-all cursor-pointer flex items-center gap-2"
+            >
+              {isLoading ? (
+                <>
+                  <span className="animate-spin">🌊</span>
+                  항해중...
+                </>
+              ) : (
+                <>
+                  <span>⚓</span>더 많은 보드게임 찾기
+                </>
+              )}
+            </span>
+          )}
+        </>
+      )}
     </div>
   );
 }

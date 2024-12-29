@@ -144,9 +144,9 @@ export default function SearchSection({
                       <div key={index} className="relative group">
                         <Link
                           href={`/search/products?keyword=${item.keyword}`}
-                          className="flex items-center gap-1 text-sm text-gray-700 dark:text-gray-300 hover:text-primary"
+                          className="flex items-center gap-1 text-sm text-white dark:text-gray-300"
                         >
-                          <div className="bg-neutral-500 px-2 py-1 border-1 border-neutral-600 rounded-md">
+                          <div className="bg-neutral-500 px-2 py-1 border-1 border-neutral-600 rounded-md hover:bg-neutral-700">
                             {item.keyword}
                           </div>
                         </Link>
@@ -175,10 +175,10 @@ export default function SearchSection({
                       <Link
                         key={index}
                         href={`/search/products?keyword=${item.keyword}`}
-                        className="flex items-center gap-1 text-sm text-gray-700 dark:text-gray-300 hover:text-primary"
+                        className="flex items-center gap-1 text-sm text-gray-700 dark:text-gray-300"
                       >
                         <div className="w-4 ml-4">{index + 1 + "."}</div>
-                        <div className="px-2 py-1 hover:bg-neutral-600 rounded-md">
+                        <div className="px-2 py-1 hover:bg-neutral-500 hover:text-white dark:hover:bg-neutral-700 rounded-md">
                           {item.keyword}
                         </div>
                       </Link>

@@ -45,7 +45,7 @@ export default function UserAvatar({
 
   const AvatarContent = () => (
     <div
-      className={`flex items-center gap-2 ${
+      className={`flex items-center gap-2 p-2 ${
         disabled ? "" : "hover:bg-neutral-400 dark:hover:bg-neutral-700"
       } rounded-md pr-2`}
     >

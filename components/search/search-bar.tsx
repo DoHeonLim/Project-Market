@@ -69,7 +69,7 @@ export default function SearchBar({
         name="search"
         placeholder={placeholder}
         defaultValue={searchParams.get("search") ?? ""}
-        className="w-full px-4 py-2 pl-10 bg-white dark:bg-neutral-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-neutral-400 rounded-lg border border-gray-200 dark:border-neutral-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 dark:focus:ring-indigo-500"
+        className="w-full px-4 py-2 pl-10 bg-neutral-100/50 dark:bg-neutral-800/50 text-neutral-700 dark:text-neutral-300 placeholder-neutral-500 dark:placeholder-neutral-400 rounded-lg border border-neutral-200/20 dark:border-primary-dark/30 focus:outline-none focus:ring-2 focus:ring-primary/50 dark:focus:ring-primary-light/50 transition-colors"
       />
       <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-neutral-500" />
       {isPending && (

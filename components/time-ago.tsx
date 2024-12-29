@@ -8,6 +8,7 @@
  2024.12.08  임도헌   Created
  2024.12.08  임도헌   Modified  시간 표시 컴포넌트 추가
  2024.12.11  임도헌   Modified  마우스 올릴 시 정확한 시간 표시
+ 2024.12.26  임도헌   Modified  다크모드 추가
  */
 
 // 시간을 바꾸는 과정에서 서버와 클라이언트의 시간이 다를 수 있기 때문에 클라이언트로 변경
@@ -46,7 +47,10 @@ export default function TimeAgo({ date }: TimeAgoProps) {
   });
 
   return (
-    <span className="text-xs" title={fullDate}>
+    <span
+      className="text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300 transition-colors"
+      title={fullDate}
+    >
       {formatToTimeAgo(date)}
     </span>
   );

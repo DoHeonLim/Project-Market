@@ -17,12 +17,8 @@ Date        Author   Status    Description
 
 import TimeAgo from "@/components/time-ago";
 import db from "@/lib/db";
-import {
-  ChatBubbleBottomCenterIcon,
-  HandThumbUpIcon,
-  PhotoIcon,
-} from "@heroicons/react/24/outline";
-import { PlusIcon } from "@heroicons/react/24/solid";
+import { PhotoIcon } from "@heroicons/react/24/outline";
+import { EyeIcon, HeartIcon, PlusIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { POST_CATEGORY } from "@/lib/constants";
 import Image from "next/image";
@@ -93,105 +89,102 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
   const posts = await getPosts(searchParams.category, searchParams.keyword);
 
   return (
-    <div className="flex flex-col p-5 dark:bg-neutral-900">
-      <PostCategoryTabs currentCategory={searchParams.category} />
-      <div className="mt-4">
-        <SearchBar
-          basePath="/posts"
-          placeholder="제목, 내용으로 검색"
-          additionalParams={{
-            category: searchParams.category ?? "",
-          }}
-        />
+    <div className="flex flex-col px-5 pt-5">
+      {/* 카테고리 탭 컨테이너 */}
+      <div className="sticky -top-1 bg-white dark:bg-neutral-900 z-10 pb-4 border-b-2 border-neutral-200 dark:border-neutral-700">
+        <div className="relative">
+          <PostCategoryTabs currentCategory={searchParams.category} />
+        </div>
+        <div className="mt-4">
+          <SearchBar
+            basePath="/posts"
+            placeholder="⚓ 항해 일지 검색"
+            additionalParams={{
+              category: searchParams.category ?? "",
+            }}
+          />
+        </div>
       </div>
+
       {/* 게시글 목록 */}
-      <div className="grid gap-4 mt-4">
-        {posts.map((post) => (
-          <Link
-            key={post.id}
-            href={`/posts/${post.id}`}
-            className="flex gap-4 p-4 transition-all bg-white dark:bg-neutral-800/30 hover:bg-opacity-40 border-b border-neutral-300 dark:border-neutral-600 hover:bg-indigo-400 dark:hover:bg-neutral-800 hover:scale-[1.02] rounded-lg"
-          >
-            {/* 게시글 썸네일 */}
-            <div className="flex flex-col justify-center items-center">
-              <div className="relative w-24 h-24 overflow-hidden rounded-md shrink-0">
-                {post.images[0] ? (
-                  <Image
-                    src={`${post.images[0].url}/public`}
-                    alt={post.title}
-                    fill
-                    sizes="(max-width: 768px) 100px, 
-                           (max-width: 1200px) 96px, 
-                           96px"
-                    className="object-cover size-full"
-                  />
-                ) : (
-                  <div className="flex items-center justify-center w-full h-full bg-gray-200 dark:bg-neutral-700">
-                    <PhotoIcon className="w-8 h-8 text-gray-400 dark:text-neutral-400" />
-                  </div>
-                )}
-              </div>
-              <div className="flex items-center gap-6 mt-4">
-                <UserAvatar
-                  avatar={post.user.avatar}
-                  username={post.user.username}
-                  disabled={true}
-                />
-              </div>
-            </div>
-
-            {/* 게시글 내용 */}
-            <div className="flex flex-col flex-1 gap-2">
-              <div className="flex items-center gap-2">
-                <span className="px-2 py-1 text-xs text-white rounded-full bg-gray-600 dark:bg-neutral-700">
-                  {POST_CATEGORY[post.category as keyof typeof POST_CATEGORY]}
-                </span>
-                <TimeAgo date={post.created_at?.toString()} />
-              </div>
-
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white line-clamp-1">
-                {post.title}
-              </h2>
-
-              <p className="text-sm text-gray-500 dark:text-neutral-400 line-clamp-2">
-                {post.description}
-              </p>
-
-              {/* 태그 */}
-              {post.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {post.tags.map((tag) => (
-                    <span
-                      key={tag.name}
-                      className="px-2 py-0.5 text-xs bg-gray-200 dark:bg-neutral-700 text-gray-700 dark:text-neutral-300 rounded-full"
-                    >
-                      {tag.name}
-                    </span>
-                  ))}
+      <div className="grid gap-4 mt-4 z-0">
+        {posts.length > 0 ? (
+          posts.map((post) => (
+            <Link
+              key={post.id}
+              href={`/posts/${post.id}`}
+              className="flex gap-4 p-4 transition-all bg-white dark:bg-neutral-800/30 hover:bg-opacity-40 border border-neutral-200 dark:border-neutral-700 hover:border-primary dark:hover:border-primary-light hover:scale-[1.02] rounded-lg"
+            >
+              {/* 게시글 썸네일 */}
+              <div className="flex flex-col justify-center items-center">
+                <div className="relative w-24 h-24 overflow-hidden rounded-md shrink-0">
+                  {post.images[0] ? (
+                    <Image
+                      src={`${post.images[0].url}/public`}
+                      alt={post.title}
+                      fill
+                      sizes="(max-width: 768px) 100px, (max-width: 1200px) 96px, 96px"
+                      className="object-cover size-full"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center w-full h-full bg-neutral-100 dark:bg-neutral-700">
+                      <PhotoIcon className="w-8 h-8 text-neutral-400" />
+                    </div>
+                  )}
                 </div>
-              )}
-
-              {/* 조회수, 좋아요, 댓글 수 */}
-              <div className="flex items-center gap-4 mt-auto text-sm text-gray-500 dark:text-neutral-400">
-                <span>조회 {post.views}</span>
-                <span className="flex items-center gap-1">
-                  <HandThumbUpIcon className="w-4 h-4" />
-                  {post._count.post_likes}
-                </span>
-                <span className="flex items-center gap-1">
-                  <ChatBubbleBottomCenterIcon className="w-4 h-4" />
-                  {post._count.comments}
-                </span>
+                <div className="flex items-center gap-6 mt-4">
+                  <UserAvatar
+                    avatar={post.user.avatar}
+                    username={post.user.username}
+                    disabled={true}
+                  />
+                </div>
               </div>
-            </div>
-          </Link>
-        ))}
+
+              {/* 게시글 내용 */}
+              <div className="flex flex-col flex-1 gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-1 text-xs text-white rounded-full bg-primary/80 dark:bg-primary-light/80">
+                    {POST_CATEGORY[post.category as keyof typeof POST_CATEGORY]}
+                  </span>
+                  <TimeAgo date={post.created_at?.toString()} />
+                </div>
+
+                <h2 className="text-lg font-semibold text-neutral-900 dark:text-white line-clamp-1">
+                  {post.title}
+                </h2>
+
+                <p className="text-sm text-neutral-500 dark:text-neutral-400 line-clamp-2">
+                  {post.description}
+                </p>
+
+                <div className="flex items-center gap-4 mt-auto text-sm text-neutral-500 dark:text-neutral-400">
+                  <span className="flex items-center gap-1">
+                    <EyeIcon className="size-5" />
+                    {post.views}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <HeartIcon className="size-4 text-rose-600" />
+                    {post._count.post_likes}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    💬 {post._count.comments}
+                  </span>
+                </div>
+              </div>
+            </Link>
+          ))
+        ) : (
+          <div className="flex items-center justify-center w-full bg-transparent">
+            <span className="text-sm font-semibold">게시글이 없습니다.</span>
+          </div>
+        )}
       </div>
 
       {/* 글쓰기 버튼 */}
       <Link
         href="posts/add"
-        className="fixed flex items-center justify-center text-white transition-colors bg-indigo-500 dark:bg-indigo-400 hover:bg-indigo-600 dark:hover:bg-indigo-500 rounded-full size-16 bottom-24 right-8"
+        className="fixed flex items-center justify-center text-white transition-all bg-primary dark:bg-primary-light hover:bg-primary/90 dark:hover:bg-primary-light/90 hover:scale-105 rounded-full size-16 bottom-24 right-8 shadow-lg shadow-primary/30 dark:shadow-primary-light/30"
       >
         <PlusIcon aria-label="add_post" className="size-10" />
       </Link>

@@ -82,13 +82,13 @@ export default function SearchFilters({
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="px-4 py-2 bg-white dark:bg-neutral-800 border dark:border-neutral-700 rounded-lg"
+        className="px-4 py-2 bg-primary/10 dark:bg-primary-light/10 text-primary dark:text-primary-light border border-neutral-200/20 dark:border-primary-dark/30 rounded-lg hover:bg-primary/20 dark:hover:bg-primary-light/20 transition-colors"
       >
-        필터
+        🎲 필터
       </button>
 
       {isOpen && (
-        <div className="absolute top-full mt-2 w-72 p-4 bg-white dark:bg-neutral-800 border dark:border-neutral-700 rounded-lg shadow-lg">
+        <div className="absolute top-full mt-2 w-72 p-4 bg-white/95 dark:bg-background-dark/95 border border-neutral-200/20 dark:border-primary-dark/30 rounded-lg shadow-lg backdrop-blur-sm">
           <div className="space-y-4">
             {/* 카테고리 필터 */}
             <div>
@@ -98,7 +98,7 @@ export default function SearchFilters({
               <select
                 value={selectedParentCategory}
                 onChange={(e) => handleParentCategoryChange(e.target.value)}
-                className="w-full px-3 py-1 mb-2 bg-white dark:bg-neutral-700 border dark:border-neutral-600 rounded"
+                className="w-full px-3 py-1 bg-neutral-100/50 dark:bg-neutral-800/50 border border-neutral-200/20 dark:border-primary-dark/30 rounded text-neutral-700 dark:text-neutral-300"
               >
                 <option value="">전체</option>
                 {categories
@@ -205,7 +205,7 @@ export default function SearchFilters({
               </button>
               <button
                 onClick={handleApplyFilters}
-                className="flex-1 py-2 text-sm text-white bg-primary rounded hover:bg-primary/90 transition-colors"
+                className="flex-1 py-2 text-sm text-white bg-primary hover:bg-primary/90 dark:bg-primary-light dark:hover:bg-primary-light/90 rounded transition-colors"
               >
                 적용
               </button>

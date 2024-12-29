@@ -185,18 +185,21 @@ export default async function PostDetail({
       </div>
 
       {/* 메인 컨텐츠 */}
-      <div className="p-5 mt-16 space-y-4 bg-white dark:bg-neutral-900">
+      <div className="p-5 mt-16 space-y-2 bg-white dark:bg-neutral-900">
         {/* 작성자 정보 & 카테고리 */}
         <div className="flex items-center justify-between">
-          <UserAvatar
-            avatar={post.user.avatar}
-            username={post.user.username}
-            size="md"
-          />
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-neutral-500">⚓ 항해자</span>
+            <UserAvatar
+              avatar={post.user.avatar}
+              username={post.user.username}
+              size="md"
+            />
+          </div>
           {post.category && (
             <Link
               href={`/posts?category=${post.category}`}
-              className="px-3 py-1.5 text-sm text-gray-700 dark:text-white rounded-full bg-gray-100 dark:bg-neutral-700 hover:bg-gray-200 dark:hover:bg-neutral-600 transition-colors"
+              className="px-3 py-1.5 text-sm text-primary dark:text-primary-light rounded-full bg-primary/10 dark:bg-primary-light/10 hover:bg-primary/20 dark:hover:bg-primary-light/20 transition-colors"
             >
               {POST_CATEGORY[post.category as keyof typeof POST_CATEGORY]}
             </Link>
@@ -204,18 +207,18 @@ export default async function PostDetail({
         </div>
 
         {/* 게시글 제목 & 내용 */}
-        <div className="space-y-4">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+        <div className="space-y-4 p-4 bg-neutral-50 dark:bg-neutral-800/50 rounded-lg">
+          <h1 className="text-2xl font-bold text-text dark:text-text-dark">
             {post.title}
           </h1>
-          <p className="text-gray-600 dark:text-neutral-300 leading-relaxed">
+          <p className="text-text/80 dark:text-text-dark/80 leading-relaxed">
             {post.description}
           </p>
         </div>
 
         {/* 이미지 갤러리 */}
         {post.images.length > 0 && (
-          <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-gray-100 dark:bg-neutral-800">
+          <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-neutral-100 dark:bg-neutral-800 shadow-lg">
             <Carousel
               images={post.images}
               className="w-full h-full rounded-lg"
@@ -224,21 +227,21 @@ export default async function PostDetail({
         )}
 
         {/* 메타 정보 */}
-        <div className="flex gap-4 pt-4 border-t border-gray-200 dark:border-neutral-800 justify-between">
+        <div className="flex gap-4 pt-4 border-t border-neutral-200 dark:border-neutral-800 justify-between">
           <PostLikeButton isLiked={isLiked} likeCount={likeCount} postId={id} />
-          <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-neutral-400">
+          <div className="flex items-center gap-4 text-sm text-neutral-500 dark:text-neutral-400">
             <div className="flex items-center gap-2">
               <EyeIcon className="size-5" />
-              <span>조회 {post.views}</span>
+              <span>{post.views}</span>
             </div>
             <TimeAgo date={post.created_at?.toString() ?? null} />
           </div>
         </div>
 
         {/* 댓글 섹션 */}
-        <div className="pt-6 border-t border-gray-200 dark:border-neutral-800">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            댓글
+        <div className="pt-6 border-t border-neutral-200 dark:border-neutral-800">
+          <h2 className="text-lg font-semibold text-text dark:text-text-dark mb-4 flex items-center gap-2">
+            💬 항해 로그
           </h2>
           <Comment postId={id} comments={comments} user={user} />
         </div>

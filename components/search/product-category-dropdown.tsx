@@ -61,14 +61,14 @@ export default function ProductCategoryDropdown({
         )}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-1 px-4 py-2 text-sm bg-primary text-white font-semibold dark:text-gray-300 hover:bg-primary-light dark:hover:bg-primary-dark rounded-md transition-colors"
+          className="flex items-center gap-1 px-4 py-2 text-sm bg-primary dark:bg-primary-light text-white font-semibold rounded-md hover:bg-primary/90 dark:hover:bg-primary-light/90 transition-colors"
         >
-          분류
+          🎲 분류
         </button>
       </div>
 
       {isOpen && (
-        <div className="absolute left-full top-0 ml-2 w-48 bg-white dark:bg-neutral-800 rounded-md shadow-lg border dark:border-neutral-700 z-50">
+        <div className="absolute left-full top-0 ml-2 w-48 bg-white/95 dark:bg-background-dark/95 rounded-md shadow-lg border border-neutral-200/20 dark:border-primary-dark/30 backdrop-blur-sm z-50">
           <div className="p-2">
             <div className="relative mb-4">
               <button
@@ -104,7 +104,7 @@ export default function ProductCategoryDropdown({
                     <button
                       key={category.id}
                       onClick={() => handleCategoryClick(category.id)}
-                      className="w-full flex items-center px-2 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-neutral-700 rounded"
+                      className="w-full flex items-center px-2 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100/50 dark:hover:bg-neutral-800/50 rounded transition-colors"
                     >
                       {category.icon}{" "}
                       <span className="ml-2">{category.name}</span>

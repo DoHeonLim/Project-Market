@@ -31,11 +31,11 @@ export const BLUR_DATA_URL =
 
 // 게시글 카테고리
 export const POST_CATEGORY = {
-  Free: "자유", //자유
-  CREW: "모험대원 모집", // 게임 모임/파티 모집
-  LOG: "항해 일지", // 게임 후기/리뷰
-  MAP: "보물지도", // 게임 규칙/공략
-  COMPASS: "나침반", // 질문과 답변
+  Free: "⛵ 자유", // 자유
+  CREW: "🏴‍☠️ 모험대원 모집", // 게임 모임/파티 모집
+  LOG: "📜 항해 일지", // 게임 후기/리뷰
+  MAP: "🗺️ 보물지도", // 게임 규칙/공략
+  COMPASS: "🧭 나침반", // 질문과 답변
 } as const;
 
 // 제품 필터 타입

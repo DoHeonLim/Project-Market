@@ -22,11 +22,15 @@ export default function BackButton({ className = "" }: BackButtonProps) {
   const router = useRouter();
 
   return (
-    <button
-      onClick={() => router.back()}
-      className={`fixed left-1/2 -translate-x-1/2 top-0 z-10 p-3 text-neutral-500 transition-colors hover:text-neutral-300 max-w-screen-sm w-full flex justify-start ${className}`}
+    <div
+      className={`fixed left-1/2 -translate-x-1/2 top-0 z-10 max-w-screen-sm w-full ${className}`}
     >
-      <ArrowLeftCircleIcon className="w-10 h-10 text-semibold" />
-    </button>
+      <button
+        onClick={() => router.back()}
+        className="p-3 text-neutral-500 transition-colors hover:text-neutral-300 flex justify-start"
+      >
+        <ArrowLeftCircleIcon className="w-10 h-10 text-semibold" />
+      </button>
+    </div>
   );
 }

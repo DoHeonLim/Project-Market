@@ -7,6 +7,7 @@ History
 Date        Author   Status    Description
 2024.12.17  임도헌   Created
 2024.12.17  임도헌   Modified  검색 섹션 컴포넌트 생성
+2024.12.29  임도헌   Modified  검색후 섹션 컴포넌트 닫히게 변경
 */
 "use client";
 
@@ -109,6 +110,7 @@ export default function SearchSection({
                 placeholder="제품명, 설명으로 검색"
                 additionalParams={filters}
                 onClick={() => setIsSearchOpen(true)}
+                onSearch={() => setIsSearchOpen(false)}
               />
               <div className="flex justify-between">
                 <SearchFilters

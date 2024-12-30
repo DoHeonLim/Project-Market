@@ -86,7 +86,7 @@ export default async function ProductDetail({
   return (
     <div className="min-h-screen bg-white dark:bg-neutral-900 pb-10">
       <BackButton className="p-4" />
-      <div className="mb-24 max-w-4xl mx-auto overflow-hidden">
+      <div className="mb-24 mx-auto overflow-hidden">
         {/* 이미지 캐러셀 */}
         <div className="w-full h-[300px] relative">
           <Carousel images={product.images} className="w-full h-full" />

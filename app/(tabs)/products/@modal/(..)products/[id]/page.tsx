@@ -64,7 +64,7 @@ export default async function Modal({
   return (
     <div className="fixed top-0 left-0 z-50 flex items-center justify-center w-full h-full bg-black/60">
       <CloseButton />
-      <div className="flex flex-col w-full max-w-2xl bg-white dark:bg-neutral-800 rounded-lg overflow-hidden max-h-[90vh]">
+      <div className="flex flex-col w-full bg-white dark:bg-neutral-800 rounded-lg overflow-hidden max-h-[90vh]">
         {/* 이미지 캐러셀 */}
         <div className="w-full h-[300px] relative">
           <Carousel images={product.images} className="w-full h-full" />

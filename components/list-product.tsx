@@ -85,7 +85,7 @@ export default function ListProduct({
         {(reservation_userId || purchase_userId) && (
           <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
             <span className="text-white font-bold">
-              {purchase_userId ? "⚓ 판매완료" : "🎯 예약중"}
+              {purchase_userId ? "⚓ 판매완료" : "🛞 예약중"}
             </span>
           </div>
         )}

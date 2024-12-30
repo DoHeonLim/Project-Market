@@ -8,6 +8,7 @@ Date        Author   Status    Description
 2024.12.17  임도헌   Created
 2024.12.17  임도헌   Modified  검색 바 컴포넌트 생성
 2024.12.23  임도헌   Modified  검색 바 컴포넌트 다크모드 추가
+2024.12.29  임도헌   Modified  검색후 섹션 컴포넌트 닫히게 변경
 */
 "use client";
 
@@ -21,6 +22,7 @@ interface SearchBarProps {
   additionalParams?: Record<string, string>;
   className?: string;
   onClick?: () => void;
+  onSearch?: () => void;
 }
 
 export default function SearchBar({
@@ -29,6 +31,7 @@ export default function SearchBar({
   additionalParams = {},
   className = "",
   onClick,
+  onSearch,
 }: SearchBarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -54,7 +57,14 @@ export default function SearchBar({
         }
       }
 
+      // 추가 파라미터 설정
+      Object.entries(additionalParams).forEach(([key, value]) => {
+        if (value) params.set(key, value);
+      });
+
       router.push(`${basePath}?${params.toString()}`);
+      // onSearch가 존재하면 함수로 호출
+      onSearch?.();
     });
   };
 

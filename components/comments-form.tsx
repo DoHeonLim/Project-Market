@@ -9,6 +9,7 @@ Date        Author   Status    Description
 2024.11.06  임도헌   Modified  댓글 폼 추가
 2024.11.06  임도헌   Modified  useOptimistic기능으로 댓글 추가 구현
 2024.12.19  임도헌   Modified  댓글 폼 스타일 변경
+2024.12.29  임도헌   Modified  댓글 input에 text색 변경
 
 */
 "use client";
@@ -66,11 +67,11 @@ export default function CommentForm({
             name="payload"
             type="text"
             required
-            placeholder="댓글을 입력하세요"
+            placeholder="항해 일지를 남겨보세요"
             errors={state?.fieldErrors.payload}
-            className="flex-1 min-w-0 bg-white dark:bg-neutral-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-neutral-400"
+            className="flex-1 min-w-0 bg-white/10 border-neutral-600 text-black dark:text-white placeholder-neutral-400"
           />
-          <Button text="추가" />
+          <Button text="기록" />
         </div>
       </form>
     </>

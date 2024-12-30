@@ -86,7 +86,7 @@ export default function Comment({
   };
 
   return (
-    <>
+    <div className="space-y-4">
       <CommentForm
         postId={postId}
         addOptimisticComment={addOptimisticComment}
@@ -100,8 +100,10 @@ export default function Comment({
           user={user}
         />
       ) : (
-        <div className="mt-4 ml-1">댓글이 없습니다.</div>
+        <div className="mt-4 ml-1 text-neutral-400">
+          아직 항해 일지가 없습니다.
+        </div>
       )}
-    </>
+    </div>
   );
 }

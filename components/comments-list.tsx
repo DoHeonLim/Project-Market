@@ -13,13 +13,14 @@ Date        Author   Status    Description
                                때문에 생긴 오류를 수정해서 일치시키게 변경
 2024.12.07  임도헌   Modified  프로필 이미지 컴포넌트 분리
 2024.12.12  임도헌   Modified  댓글 생성 시간 표시 변경
+2024.12.25  임도헌   Modified  댓글 목록 스타일 변경
 */
 "use client";
 
 import { deleteComment } from "@/app/posts/[id]/actions";
-import DeleteButton from "./comment-delete-button";
 import UserAvatar from "./user-avatar";
 import TimeAgo from "./time-ago";
+import CommentDeleteButton from "./comment-delete-button";
 
 interface ICommentsProps {
   id: number;
@@ -50,34 +51,36 @@ export default function CommentsList({
       {comments.map((comment) => (
         <div
           key={comment.id}
-          className="flex gap-4 pb-5 border-b border-neutral-500 last:pb-0 last:border-b-0"
+          className="flex flex-col pb-5 group 
+            bg-neutral-100 dark:bg-neutral-900
+            border border-neutral-200 dark:border-neutral-700
+            p-4 rounded-lg transition-colors"
         >
-          <div className="flex justify-center items-center">
-            <UserAvatar
-              avatar={comment.user.avatar}
-              username={comment.user.username}
-              size="sm"
-            />
-          </div>
-          <div className="flex flex-col gap-1 flex-1">
-            <div className="flex flex-row gap-4 items-center">
-              <span className="font-semibold">{comment.user.username}</span>
-              <TimeAgo date={comment.created_at.toString()} />
-            </div>
-            <div className="flex">
-              <span className="">{comment.payload}</span>
-            </div>
-          </div>
-          {user.id === comment.userId && (
-            <div className="flex items-center ml-auto">
-              <DeleteButton
-                commentId={comment.id}
-                postId={postId}
-                onDelete={deleteComment}
-                onOptimisticDelete={deleteOptimisticComment}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <UserAvatar
+                avatar={comment.user.avatar}
+                username={comment.user.username}
+                size="sm"
               />
             </div>
-          )}
+            <div className="flex items-center gap-2">
+              {user.id === comment.userId && (
+                <div className="group-hover:opacity-100 transition-all">
+                  <CommentDeleteButton
+                    commentId={comment.id}
+                    postId={postId}
+                    onDelete={deleteComment}
+                    onOptimisticDelete={deleteOptimisticComment}
+                  />
+                </div>
+              )}
+              <TimeAgo date={comment.created_at.toString()} />
+            </div>
+          </div>
+          <p className="text-neutral-700 dark:text-white mt-3 leading-relaxed pl-2">
+            {comment.payload}
+          </p>
         </div>
       ))}
     </div>

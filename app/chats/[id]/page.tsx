@@ -48,7 +48,7 @@ export default async function ChatRoom({ params }: { params: { id: string } }) {
 
   return (
     <div className="mt-14">
-      <BackButton className="bg-neutral-900 border-b border-neutral-800" />
+      <BackButton className="bg-opacity-0" />
       <ChatMessagesList
         productChatRoomId={chatRoomId}
         userId={session.id!}

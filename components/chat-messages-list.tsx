@@ -30,6 +30,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import UserAvatar from "./user-avatar";
 import TimeAgo from "./time-ago";
 import Image from "next/image";
+import { formatToWon } from "@/lib/utils";
 
 interface IChatMessageListProps {
   initialMessages: InitialChatMessages;
@@ -40,6 +41,10 @@ interface IChatMessageListProps {
   product: {
     title: string;
     images: { url: string }[];
+    price: number;
+    game_type: string;
+    purchase_userId: number | null;
+    reservation_userId: number | null;
   };
 }
 
@@ -148,25 +153,46 @@ export default function ChatMessagesList({
   }, [messages, scrollToBottom]);
 
   return (
-    <div className="flex flex-col h-[95vh]">
-      <div className="relative p-4 border-b dark:border-neutral-800">
-        <div className="flex items-center gap-3">
-          <div className="relative size-10">
+    <div className="flex flex-col h-[95vh] bg-neutral-50/5 dark:bg-background-dark/30">
+      <div className="relative p-4 backdrop-blur-sm bg-white/10 dark:bg-background-dark/50 border-b border-neutral-200/20 dark:border-primary-dark/30">
+        <div className="flex items-center gap-4">
+          <div className="relative size-16 flex-shrink-0 rounded-lg overflow-hidden border border-neutral-200/20 dark:border-primary-dark/30">
             <Image
               src={`${product.images[0]?.url}/avatar`}
               alt={product.title}
               fill
-              className="object-cover rounded-md"
+              className="object-cover"
             />
           </div>
-          <h2 className="font-medium">{product.title}</h2>
+          <div className="flex flex-col gap-2 min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-1 text-xs bg-primary/10 text-primary dark:bg-primary-light/10 dark:text-primary-light rounded-full">
+                🎲 {product.game_type}
+              </span>
+              {product.purchase_userId ? (
+                <span className="px-2 py-1 text-xs bg-neutral-500 text-white rounded-full">
+                  ⚓ 판매완료
+                </span>
+              ) : product.reservation_userId ? (
+                <span className="px-2 py-1 text-xs bg-green-500 text-white rounded-full">
+                  🛞 예약중
+                </span>
+              ) : null}
+            </div>
+            <h2 className="font-medium text-primary dark:text-secondary-light truncate">
+              {product.title}
+            </h2>
+            <p className="text-sm font-medium text-accent dark:text-accent-light">
+              💰 {formatToWon(product.price)}원
+            </p>
+          </div>
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto p-5 space-y-5 scrollbar">
+      <div className="flex-1 overflow-y-auto p-5 space-y-5 scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-primary-dark/30">
         {messages.map((message) => (
           <div
             key={message.id}
-            className={`flex gap-2 items-start ${
+            className={`flex gap-3 items-start ${
               message.userId === userId ? "justify-end" : ""
             }`}
           >
@@ -174,26 +200,47 @@ export default function ChatMessagesList({
               <UserAvatar
                 avatar={message.user.avatar}
                 username={message.user.username}
-                size="md"
+                size="sm"
               />
             )}
             <div
-              className={`flex flex-col gap-1 ${
-                message.userId === userId ? "items-end" : ""
+              className={`flex flex-col gap-1.5 max-w-[80%] ${
+                message.userId === userId ? "items-end" : "items-start mt-6"
               }`}
             >
-              <span
-                className={`${
-                  message.userId === userId ? "bg-indigo-500" : "bg-neutral-500"
-                } p-2.5 rounded-md`}
-              >
-                {message.payload}
-              </span>
               <div
-                className={`flex ${
-                  message.userId === userId
-                    ? "items-center justify-end gap-2 "
-                    : ""
+                className={`relative group ${
+                  message.userId === userId ? "flex flex-row-reverse" : ""
+                }`}
+              >
+                <span
+                  className={`
+                    p-3 rounded-2xl break-words
+                    ${
+                      message.userId === userId
+                        ? "bg-primary dark:bg-primary-dark text-white rounded-tr-none"
+                        : "bg-neutral-400 dark:bg-white/20 text-neutral-800 dark:text-white rounded-tl-none"
+                    }
+                    border border-neutral-200/20 dark:border-primary-dark/30
+                    backdrop-blur-sm
+                    animate-fadeIn
+                    w-full
+                  `}
+                >
+                  {message.payload}
+                </span>
+                <div
+                  className={`absolute -z-10 size-3 rounded-full blur-sm opacity-30
+                    ${
+                      message.userId === userId
+                        ? "bg-primary/50 dark:bg-primary-dark/50 -right-4"
+                        : "bg-neutral-200/ dark:bg-white/ -left-4"
+                    } top-2`}
+                />
+              </div>
+              <div
+                className={`flex text-xs text-neutral-500 dark:text-white gap-2 ${
+                  message.userId === userId ? "flex-row-reverse" : "mt-2"
                 }`}
               >
                 <span className="text-xs">

@@ -35,41 +35,61 @@ export default function ChatRoomList({
   return (
     <Link
       href={`/chats/${initialRoom.id}`}
-      className="w-full px-10 py-4 transition-colors cursor-pointer hover:bg-opacity-40 border-b border-neutral-300 dark:border-neutral-600 hover:bg-indigo-400 hover:border-indigo-500 hover:scale-[1.02] rounded-xl"
+      className="w-full transition-all duration-300 cursor-pointer group
+        bg-white/80 dark:bg-background-dark/80 
+        hover:bg-white dark:hover:bg-background-dark
+        hover:scale-[1.02] hover:shadow-xl
+        border-2 border-neutral-200/50 dark:border-primary-dark/50
+        hover:border-primary/50 dark:hover:border-primary-light/50
+        p-4 rounded-lg"
     >
-      <div className="flex items-center justify-center w-full rounded-xl">
-        <div className="flex justify-between w-full rounded-xl">
-          <div className="flex items-center justify-center gap-4">
-            <div className="relative size-14">
-              <Image
-                src={`${initialRoom.product.images[0]?.url}/avatar`}
-                fill
-                className="object-cover"
-                alt={initialRoom.product.title}
-              />
-            </div>
-            <div className="flex flex-col gap-1">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full gap-4">
+        <div className="flex items-center gap-4">
+          <div
+            className="relative size-14 flex-shrink-0 rounded-lg overflow-hidden
+            ring-2 ring-neutral-200/50 dark:ring-primary-dark/50
+            group-hover:ring-primary/50 dark:group-hover:ring-primary-light/50
+            group-hover:shadow-lg
+            transition-all duration-300"
+          >
+            <Image
+              src={`${initialRoom.product.images[0]?.url}/avatar`}
+              fill
+              className="object-cover transition-transform duration-300 group-hover:scale-110"
+              alt={initialRoom.product.title}
+            />
+          </div>
+          <div className="flex flex-col gap-2 min-w-0">
+            <div className="flex items-center gap-2">
               <UserAvatar
                 avatar={initialRoom.users[0].avatar}
                 username={initialRoom.users[0].username}
                 size="md"
                 disabled={true}
               />
-              <div>
-                <span className="text-neutral-400 text-md">
-                  {initialRoom.messages[0]?.payload ?? null}
-                </span>
-              </div>
             </div>
           </div>
-          <div className="flex items-center justify-center gap-3">
-            {unreadCount > 0 && (
-              <div className="flex items-center justify-center size-5 bg-red-500 rounded-full">
-                <span className="text-white text-sm">{unreadCount}</span>
-              </div>
-            )}
-            <TimeAgo date={initialRoom.messages[0]?.created_at.toString()} />
-          </div>
+        </div>
+        <p
+          className="text-neutral-600 dark:text-neutral-400 line-clamp-2 sm:line-clamp-1 pl-16 sm:pl-0
+          group-hover:text-primary dark:group-hover:text-primary-light 
+          transition-colors duration-300"
+        >
+          {initialRoom.messages[0]?.payload ?? "새로운 대화를 시작해보세요"}
+        </p>
+        <div className="flex sm:flex-col items-center sm:items-end gap-2 ml-auto">
+          <TimeAgo date={initialRoom.messages[0]?.created_at.toString()} />
+          {unreadCount > 0 && (
+            <div
+              className="flex items-center justify-center size-5 
+              bg-rose-500 dark:bg-rose-600
+              group-hover:bg-rose-600 dark:group-hover:bg-rose-500
+              group-hover:scale-110 group-hover:shadow-lg
+              transition-all duration-300 rounded-full"
+            >
+              <span className="text-white text-xs">{unreadCount}</span>
+            </div>
+          )}
         </div>
       </div>
     </Link>

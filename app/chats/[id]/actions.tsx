@@ -10,6 +10,7 @@ Date        Author   Status    Description
 2024.11.21  임도헌   Modified  Chatroom을 productChatRoom으로 변경
 2024.12.12  임도헌   Modified  message모델을 productMessage로 변경
 2024.12.22  임도헌   Modified  채팅 메시지 웹 푸시 기능 추가
+2024.12.26  임도헌   Modified  채팅방 제품 정보 추가
 */
 
 "use server";
@@ -64,15 +65,42 @@ export const getRoom = async (id: string) => {
           id: true,
           title: true,
           price: true,
+          game_type: true,
           images: {
             where: { order: 0 },
             select: { url: true },
             take: 1,
           },
+          purchase_userId: true,
+          reservation_userId: true,
+          category: {
+            select: {
+              name: true,
+              icon: true,
+              parent: {
+                select: {
+                  name: true,
+                  icon: true,
+                },
+              },
+            },
+          },
+          min_players: true,
+          max_players: true,
+          play_time: true,
+          condition: true,
+          completeness: true,
+          has_manual: true,
+          search_tags: {
+            select: {
+              name: true,
+            },
+          },
         },
       },
     },
   });
+
   if (room) {
     const session = await getSession();
     const canSee = Boolean(room.users.find((user) => user.id === session.id!));

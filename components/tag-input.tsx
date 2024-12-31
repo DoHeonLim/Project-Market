@@ -10,21 +10,33 @@ Date        Author   Status    Description
 "use client";
 
 import { XMarkIcon } from "@heroicons/react/24/solid";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface TagInputProps {
   onTagsChange: (tags: string[]) => void;
   errors?: string[];
   maxTags?: number;
+  defaultTags?: string[];
 }
 
 export default function TagInput({
   onTagsChange,
   errors = [],
   maxTags = 5,
+  defaultTags = [],
 }: TagInputProps) {
   const [tagInput, setTagInput] = useState("");
-  const [tags, setTags] = useState<string[]>([]);
+  const [tags, setTags] = useState<string[]>(defaultTags);
+
+  useEffect(() => {
+    setTags(defaultTags);
+  }, [defaultTags]);
+
+  useEffect(() => {
+    if (defaultTags.length > 0) {
+      onTagsChange(defaultTags);
+    }
+  }, [defaultTags, onTagsChange]);
 
   const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" || e.key === ",") {

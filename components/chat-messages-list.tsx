@@ -15,6 +15,7 @@
  2024.12.12  임도헌   Modified  스타일 변경
  2024.12.19  임도헌   Modified  supabase 클라이언트 코드 lib로 이동
  2024.12.22  임도헌   Modified  메시지 저장 코드 변경(실시간 통신)
+ 2024.12.30  임도헌   Modified  스크롤 버그 수정
  */
 "use client";
 
@@ -141,15 +142,22 @@ export default function ChatMessagesList({
   }, [productChatRoomId, userId]);
 
   const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    requestAnimationFrame(() => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "end",
+        });
+      }
+    });
   }, []);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [scrollToBottom]);
+    const timer = setTimeout(() => {
+      scrollToBottom();
+    }, 100);
 
-  useEffect(() => {
-    scrollToBottom();
+    return () => clearTimeout(timer);
   }, [messages, scrollToBottom]);
 
   return (
@@ -188,74 +196,76 @@ export default function ChatMessagesList({
           </div>
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto p-5 space-y-5 scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-primary-dark/30">
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex gap-3 items-start ${
-              message.userId === userId ? "justify-end" : ""
-            }`}
-          >
-            {message.userId === userId ? null : (
-              <UserAvatar
-                avatar={message.user.avatar}
-                username={message.user.username}
-                size="sm"
-              />
-            )}
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-5 space-y-5">
+          {messages.map((message, index) => (
             <div
-              className={`flex flex-col gap-1.5 max-w-[80%] ${
-                message.userId === userId ? "items-end" : "items-start mt-6"
+              key={message.id}
+              ref={index === messages.length - 1 ? messagesEndRef : undefined}
+              className={`flex gap-3 items-start ${
+                message.userId === userId ? "justify-end" : ""
               }`}
             >
-              <div
-                className={`relative group ${
-                  message.userId === userId ? "flex flex-row-reverse" : ""
-                }`}
-              >
-                <span
-                  className={`
-                    p-3 rounded-2xl break-words
-                    ${
-                      message.userId === userId
-                        ? "bg-primary dark:bg-primary-dark text-white rounded-tr-none"
-                        : "bg-neutral-400 dark:bg-white/20 text-neutral-800 dark:text-white rounded-tl-none"
-                    }
-                    border border-neutral-200/20 dark:border-primary-dark/30
-                    backdrop-blur-sm
-                    animate-fadeIn
-                    w-full
-                  `}
-                >
-                  {message.payload}
-                </span>
-                <div
-                  className={`absolute -z-10 size-3 rounded-full blur-sm opacity-30
-                    ${
-                      message.userId === userId
-                        ? "bg-primary/50 dark:bg-primary-dark/50 -right-4"
-                        : "bg-neutral-200/ dark:bg-white/ -left-4"
-                    } top-2`}
+              {message.userId === userId ? null : (
+                <UserAvatar
+                  avatar={message.user.avatar}
+                  username={message.user.username}
+                  size="sm"
                 />
-              </div>
+              )}
               <div
-                className={`flex text-xs text-neutral-500 dark:text-white gap-2 ${
-                  message.userId === userId ? "flex-row-reverse" : "mt-2"
+                className={`flex flex-col gap-1.5 max-w-[80%] ${
+                  message.userId === userId ? "items-end" : "items-start mt-6"
                 }`}
               >
-                <span className="text-xs">
-                  {message.userId !== userId
-                    ? null
-                    : message.isRead === false
-                    ? "안 읽음"
-                    : "읽음"}
-                </span>
-                <TimeAgo date={message.created_at.toString()} />
+                <div
+                  className={`relative group ${
+                    message.userId === userId ? "flex flex-row-reverse" : ""
+                  }`}
+                >
+                  <span
+                    className={`
+                      p-3 rounded-2xl break-words
+                      ${
+                        message.userId === userId
+                          ? "bg-primary dark:bg-primary-dark text-white rounded-tr-none"
+                          : "bg-neutral-400 dark:bg-white/20 text-neutral-800 dark:text-white rounded-tl-none"
+                      }
+                      border border-neutral-200/20 dark:border-primary-dark/30
+                      backdrop-blur-sm
+                      animate-fadeIn
+                      w-full
+                    `}
+                  >
+                    {message.payload}
+                  </span>
+                  <div
+                    className={`absolute -z-10 size-3 rounded-full blur-sm opacity-30
+                      ${
+                        message.userId === userId
+                          ? "bg-primary/50 dark:bg-primary-dark/50 -right-4"
+                          : "bg-neutral-200/ dark:bg-white/ -left-4"
+                      } top-2`}
+                  />
+                </div>
+                <div
+                  className={`flex text-xs text-neutral-500 dark:text-white gap-2 ${
+                    message.userId === userId ? "flex-row-reverse" : "mt-2"
+                  }`}
+                >
+                  <span className="text-xs">
+                    {message.userId !== userId
+                      ? null
+                      : message.isRead === false
+                      ? "안 읽음"
+                      : "읽음"}
+                  </span>
+                  <TimeAgo date={message.created_at.toString()} />
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-        <div ref={messagesEndRef} />
+          ))}
+        </div>
       </div>
       <div className="p-4">
         <form className="relative flex items-center" onSubmit={onSubmit}>

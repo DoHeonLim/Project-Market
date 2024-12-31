@@ -9,6 +9,7 @@ Date        Author   Status    Description
 2024.11.30  임도헌   Modified  나의 판매 제품 리스트 컴포넌트
 2024.12.03  임도헌   Modified  purchase_at을 purchased_at으로 변경
 2024.12.12  임도헌   Modified  photo속성에서 images로 변경
+2024.12.24  임도헌   Modified  다크모드 적용
 */
 "use client";
 
@@ -75,37 +76,38 @@ export default function MySalesProductList({
 
   return (
     <div className="w-full flex flex-col gap-6">
-      <h1 className="text-2xl flex justify-center items-center mt-2">
+      <h1 className="text-2xl font-semibold text-center text-primary dark:text-primary-light">
         판매 제품
       </h1>
+
       {/* 탭 메뉴 */}
       <div className="flex justify-center space-x-4 mb-4">
         <button
           onClick={() => setActiveTab("selling")}
-          className={`px-4 py-2 rounded ${
+          className={`px-6 py-2.5 rounded-lg font-medium transition-colors ${
             activeTab === "selling"
-              ? "bg-blue-500 text-white"
-              : "bg-gray-200 text-gray-700"
+              ? "bg-primary text-white dark:bg-primary-light"
+              : "bg-neutral-100 hover:bg-neutral-200 text-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:text-neutral-300"
           }`}
         >
           판매 중 ({sellingProducts.length})
         </button>
         <button
           onClick={() => setActiveTab("reserved")}
-          className={`px-4 py-2 rounded ${
+          className={`px-6 py-2.5 rounded-lg font-medium transition-colors ${
             activeTab === "reserved"
-              ? "bg-blue-500 text-white"
-              : "bg-gray-200 text-gray-700"
+              ? "bg-primary text-white dark:bg-primary-light"
+              : "bg-neutral-100 hover:bg-neutral-200 text-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:text-neutral-300"
           }`}
         >
           예약 중 ({reservedProducts.length})
         </button>
         <button
           onClick={() => setActiveTab("sold")}
-          className={`px-4 py-2 rounded ${
+          className={`px-6 py-2.5 rounded-lg font-medium transition-colors ${
             activeTab === "sold"
-              ? "bg-blue-500 text-white"
-              : "bg-gray-200 text-gray-700"
+              ? "bg-primary text-white dark:bg-primary-light"
+              : "bg-neutral-100 hover:bg-neutral-200 text-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:text-neutral-300"
           }`}
         >
           판매 완료 ({soldProducts.length})
@@ -115,20 +117,24 @@ export default function MySalesProductList({
       {/* 제품 리스트 */}
       <div className="flex flex-col gap-6">
         {currentProducts.length === 0 ? (
-          <p className="text-center text-gray-500">
-            {activeTab === "selling" && "판매 중인 제품이 없습니다."}
-            {activeTab === "reserved" && "예약 중인 제품이 없습니다."}
-            {activeTab === "sold" && "판매 완료된 제품이 없습니다."}
-          </p>
+          <div className="text-center py-8">
+            <p className="text-neutral-500 dark:text-neutral-400">
+              {activeTab === "selling" && "판매 중인 제품이 없습니다."}
+              {activeTab === "reserved" && "예약 중인 제품이 없습니다."}
+              {activeTab === "sold" && "판매 완료된 제품이 없습니다."}
+            </p>
+          </div>
         ) : (
-          currentProducts.map((product) => (
-            <MySalesProductItem
-              key={product.id}
-              product={product}
-              type={activeTab}
-              userId={userId}
-            />
-          ))
+          <div className="space-y-4">
+            {currentProducts.map((product) => (
+              <MySalesProductItem
+                key={product.id}
+                product={product}
+                type={activeTab}
+                userId={userId}
+              />
+            ))}
+          </div>
         )}
       </div>
     </div>

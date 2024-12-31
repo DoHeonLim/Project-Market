@@ -23,7 +23,7 @@ export default async function MyPurchasesPage() {
     getPurchasedProducts,
     ["purchased-product-list"],
     {
-      tags: ["purchased-product-list"],
+      tags: ["purchased-product-list", "selling-product-list"],
     }
   );
   const purchasedProducts = await getCachedPurchasedProducts(session.id!);

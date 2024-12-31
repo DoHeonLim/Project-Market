@@ -13,6 +13,8 @@ Date        Author   Status    Description
 2024.12.12  임도헌   Modified  photo속성에서 images로 변경
 2024.12.12  임도헌   Modified  제품 상태 변경 시간 표시 변경
 2024.12.22  임도헌   Modified  오타 수정
+2024.12.24  임도헌   Modified  다크모드 적용
+2024.12.29  임도헌   Modified  나의 구매 제품 아이템 컴포넌트 스타일 수정
 */
 
 "use client";
@@ -94,43 +96,45 @@ export default function MyPurchasesProductItem({ product }: ProductItemProps) {
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="bg-white dark:bg-neutral-800 rounded-xl p-6 transition-all">
       <Link
         href={`/products/${product.id}`}
-        className="flex gap-5 transition-colors hover:bg-neutral-600 rounded-xl"
+        className="flex gap-5 transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-700/50 rounded-lg p-2 -m-2"
       >
-        <div className="relative overflow-hidden rounded-md size-28">
+        <div className="relative overflow-hidden rounded-lg size-28 border border-neutral-200 dark:border-neutral-700">
           <Image
             fill
             src={`${product.images[0]?.url}/avatar`}
             sizes="(max-width: 768px) 112px, 112px"
-            className="object-cover"
+            className="object-cover hover:scale-110 transition-transform duration-200"
             alt={product.title}
           />
         </div>
-        <div className="flex flex-col gap-1 *:text-white">
-          <span className="text-lg">{product.title}</span>
-          <span className="text-sm text-neutral-500">
+        <div className="flex flex-col gap-2">
+          <span className="text-lg font-medium text-neutral-900 dark:text-white">
+            {product.title}
+          </span>
+          <span className="text-sm text-neutral-500 dark:text-neutral-400">
             판매 날짜 : <TimeAgo date={product.purchased_at!.toString()} />
           </span>
-          <span className="text-lg font-semibold">
+          <span className="text-lg font-semibold text-primary dark:text-primary-light">
             {formatToWon(product.price)}원
           </span>
         </div>
       </Link>
 
-      <div className="flex justify-center gap-8">
+      <div className="flex justify-center gap-4 mt-6">
         {buyerReviews.length > 0 ? (
           <button
             onClick={() => setIsBuyerReviewModalOpen(true)}
-            className="px-4 py-2 font-semibold transition-colors bg-blue-600 rounded-md hover:bg-blue-400"
+            className="btn-primary flex-1 max-w-[200px] py-2.5"
           >
             내가 쓴 리뷰 보기
           </button>
         ) : (
           <button
             onClick={() => setIsReviewModalOpen(true)}
-            className="px-5 py-2.5 font-semibold bg-indigo-600 rounded-md hover:bg-indigo-400 transition-colors"
+            className="btn-primary flex-1 max-w-[200px] py-2.5"
           >
             거래 후기 보내기
           </button>
@@ -138,20 +142,24 @@ export default function MyPurchasesProductItem({ product }: ProductItemProps) {
 
         <button
           onClick={() => setIsSellerReviewModalOpen(true)}
-          className="px-4 py-2 font-semibold transition-colors bg-green-600 rounded-md hover:bg-green-400"
+          className="btn-primary flex-1 max-w-[200px] py-2.5"
         >
           {product.user.username} 님의 리뷰 보기
         </button>
       </div>
 
       {error && (
-        <div className="p-4 text-white bg-red-500 rounded-md">{error}</div>
+        <div className="mt-4 p-4 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg">
+          {error}
+        </div>
       )}
 
       {isLoading && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="p-4 text-white bg-neutral-800 rounded-md">
-            리뷰를 등록하는 중...
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="p-4 bg-white dark:bg-neutral-800 rounded-lg shadow-xl">
+            <span className="text-neutral-900 dark:text-white">
+              리뷰를 등록하는 중...
+            </span>
           </div>
         </div>
       )}

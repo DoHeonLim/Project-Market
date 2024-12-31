@@ -8,6 +8,7 @@ Date        Author   Status    Description
 2024.12.06  임도헌   Created
 2024.12.06  임도헌   Modified  유저 리뷰 컴포넌트 추가
 2024.12.07  임도헌   Modified  프로필 이미지 컴포넌트 분리
+2024.12.29  임도헌   Modified  리뷰 컴포넌트 스타일 수정
 */
 
 import UserAvatar from "./user-avatar";
@@ -28,22 +29,24 @@ interface IReviewItemProps {
 
 export default function ReviewItem({ review }: IReviewItemProps) {
   return (
-    <div className="border-b pb-4 mb-4">
-      <div className="flex items-center space-x-4">
-        <div className="flex items-center gap-3 p-5">
+    <div className="border-b dark:border-neutral-700 pb-4 mb-4 last:border-b-0 last:mb-0 last:pb-0">
+      <div className="flex flex-col sm:flex-row gap-4">
+        {/* 유저 정보 섹션 */}
+        <div className="flex items-center gap-3">
           <UserAvatar
             avatar={review.user.avatar}
             username={review.user.username}
             size="md"
           />
-        </div>
-        <div>
-          <div className="flex items-center">
+          {/* 별점 */}
+          <div className="flex items-center gap-1">
             {[1, 2, 3, 4, 5].map((star) => (
               <svg
                 key={star}
-                className={`w-5 h-5 ${
-                  review.rate >= star ? "text-yellow-400" : "text-gray-300"
+                className={`w-4 h-4 sm:w-5 sm:h-5 ${
+                  review.rate >= star
+                    ? "text-yellow-400"
+                    : "text-gray-300 dark:text-neutral-600"
                 }`}
                 fill="currentColor"
                 viewBox="0 0 20 20"
@@ -53,7 +56,14 @@ export default function ReviewItem({ review }: IReviewItemProps) {
             ))}
           </div>
         </div>
-        <p>{review.payload}</p>
+
+        {/* 리뷰 내용 섹션 */}
+        <div className="flex-1 space-y-2 flex items-center sm:justify-start pl-2 sm:pl-0 ">
+          {/* 리뷰 텍스트 */}
+          <p className="text-sm sm:text-base text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap break-words">
+            {review.payload}
+          </p>
+        </div>
       </div>
     </div>
   );

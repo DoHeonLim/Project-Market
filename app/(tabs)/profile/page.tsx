@@ -29,16 +29,18 @@ export default async function ProfilePage() {
   const averageRating = await getUserAverageRating(user.id);
 
   return (
-    <div className="relative min-h-screen dark:bg-neutral-900 bg-white transition-colors duration-200">
-      <div className="absolute top-4 right-4 z-50">
-        <ThemeToggle />
+    <div className="min-h-screen bg-gradient-to-b from-background to-background/95 dark:from-background-dark dark:to-background-dark/95 transition-colors duration-200">
+      <div className="mx-auto px-4 py-8">
+        <div className="flex justify-end mb-4">
+          <ThemeToggle />
+        </div>
+        <MyProfile
+          user={user}
+          initialReviews={initialReviews}
+          averageRating={averageRating}
+          logOut={logOut}
+        />
       </div>
-      <MyProfile
-        user={user}
-        initialReviews={initialReviews}
-        averageRating={averageRating}
-        logOut={logOut}
-      />
     </div>
   );
 }

@@ -1,16 +1,17 @@
 /**
-File Name : components/my-salse-product-item
-Description : 나의 판매 제품 상세 컴포넌트
+File Name : components/user-profile
+Description : 다른 유저 프로필 컴포넌트
 Author : 임도헌
 
 History
 Date        Author   Status    Description
 2024.12.07  임도헌   Created   
-2024.12.07  임도헌   Modified  유저 프로필 페이지 추가
+2024.12.07  임도헌   Modified  다른 유저 프로필 페이지 추가
 2024.12.07  임도헌   Modified  무한 스크롤 추가
 2024.12.07  임도헌   Modified  평균 평점 및 갯수 로직 수정
 2024.12.12  임도헌   Modified  photo속성에서 images로 변경
 2024.12.22  임도헌   Modified  제품 모델 변경에 따른 제품 타입 변경
+2024.12.29  임도헌   Modified  다른 유저 프로필 컴포넌트 스타일 수정
 */
 "use client";
 
@@ -164,94 +165,99 @@ export default function UserProfile({
   }, [user.id, activeTab, currentPage, isLoading, isLastPage]);
 
   return (
-    <div className="flex flex-col items-center gap-4">
-      <span className="text-2xl font-semibold">{user.username}님의 프로필</span>
-
-      <div className="flex gap-10 rounded-xl w-full py-10">
-        <div className="w-full md:flex-row md:mr-10 flex flex-col justify-around items-center space-y-6">
-          <div className="md:flex-row flex flex-col items-center justify-center w-full gap-6">
-            {user.avatar !== null ? (
+    <div className="flex flex-col items-center gap-6 mx-auto p-4">
+      {/* 프로필 헤더 */}
+      <div className="w-full bg-white dark:bg-neutral-800 rounded-xl p-8">
+        <div className="flex flex-col md:flex-row items-center gap-8">
+          {/* 프로필 이미지 */}
+          <div className="relative size-40 md:size-52">
+            {user.avatar ? (
               <Image
-                width={200}
-                height={200}
                 src={`${user.avatar}/avatar`}
                 alt={user.username}
-                className="rounded-full w-52 h-52 object-cover"
+                fill
+                className="rounded-full object-cover"
               />
             ) : (
-              <UserIcon className="w-52 h-52 text-gray-300" />
+              <UserIcon className="size-full text-gray-300 dark:text-neutral-600" />
             )}
-            <div className="flex flex-col items-center md:items-start justify-center gap-2">
-              <span className="text-lg">{user.username}</span>
-              <span className="text-sm text-gray-400">
-                가입일: {new Date(user.created_at).toLocaleDateString()}
-              </span>
-              <div className="flex justify-center items-center">
-                <UserRating
-                  rating={averageRating?.average}
-                  totalReviews={averageRating?.total}
-                  size="md"
-                />
-              </div>
+          </div>
+
+          {/* 유저 정보 */}
+          <div className="flex flex-col items-center md:items-start gap-4">
+            <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">
+              {user.username}님의 프로필
+            </h1>
+            <span className="text-sm text-neutral-500 dark:text-neutral-400">
+              가입일: {new Date(user.created_at).toLocaleDateString()}
+            </span>
+            <div className="flex items-center gap-2">
+              <UserRating
+                rating={averageRating?.average}
+                totalReviews={averageRating?.total}
+                size="md"
+              />
             </div>
           </div>
         </div>
       </div>
 
-      {/* 리뷰 모달 버튼 */}
-      <div>
-        <button
-          onClick={() => setIsReviewModalOpen(true)}
-          className="w-full px-4 py-3 bg-indigo-600 rounded-md hover:bg-indigo-400 transition-colors"
-        >
-          전체 후기 보기
-        </button>
-      </div>
+      {/* 리뷰 버튼 */}
+      <button
+        onClick={() => setIsReviewModalOpen(true)}
+        className="w-full max-w-md px-6 py-3 bg-primary hover:bg-primary-dark 
+          dark:bg-primary-light dark:hover:bg-primary
+          text-white rounded-xl transition-colors"
+      >
+        전체 후기 보기
+      </button>
 
       {/* 판매 제품 탭 */}
-      <div className="w-full max-w-5xl mt-8">
+      <div className="w-full bg-white dark:bg-neutral-800 rounded-xl p-6">
         <div className="flex justify-center gap-4 mb-6">
           <button
             onClick={() => setActiveTab("selling")}
-            className={`px-4 py-2 rounded-md transition-colors ${
+            className={`px-6 py-2.5 rounded-lg transition-colors ${
               activeTab === "selling"
-                ? "bg-indigo-600"
-                : "bg-neutral-600 hover:bg-neutral-500"
+                ? "bg-primary dark:bg-primary-light text-white"
+                : "bg-neutral-100 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-600"
             }`}
           >
             판매 중
           </button>
           <button
             onClick={() => setActiveTab("sold")}
-            className={`px-4 py-2 rounded-md transition-colors ${
+            className={`px-6 py-2.5 rounded-lg transition-colors ${
               activeTab === "sold"
-                ? "bg-indigo-600"
-                : "bg-neutral-600 hover:bg-neutral-500"
+                ? "bg-primary dark:bg-primary-light text-white"
+                : "bg-neutral-100 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-600"
             }`}
           >
             판매 완료
           </button>
         </div>
 
-        <div className="flex flex-col gap-4">
-          {currentProducts.map((product) => (
-            <ListProduct key={product.id} {...product} />
-          ))}
+        {/* 제품 리스트 */}
+        <div className="space-y-4">
+          {currentProducts.length === 0 ? (
+            <div className="py-12 text-center">
+              <p className="text-neutral-500 dark:text-neutral-400">
+                {activeTab === "selling"
+                  ? "판매 중인 제품이 없습니다."
+                  : "판매 완료한 제품이 없습니다."}
+              </p>
+            </div>
+          ) : (
+            <>
+              {currentProducts.map((product) => (
+                <ListProduct key={product.id} {...product} />
+              ))}
+              {isLoading && <ProductsSkeleton />}
+              {/* 무한 스크롤 트리거 */}
+              {!isLastPage && <div ref={trigger} className="h-4 my-4" />}
+            </>
+          )}
         </div>
-
-        {!isLastPage && (
-          <div ref={trigger} className="h-4 my-4">
-            {isLoading && <ProductsSkeleton />}
-          </div>
-        )}
-
-        {isLastPage && currentProducts.length === 0 && (
-          <div className="text-center text-gray-400 my-8">
-            {activeTab === "selling"
-              ? "판매 중인 제품이 없습니다."
-              : "판매 완료된 제품이 없습니다."}
-          </div>
-        )}
       </div>
 
       {/* 리뷰 모달 */}

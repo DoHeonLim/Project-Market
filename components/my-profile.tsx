@@ -18,7 +18,7 @@ Date        Author   Status    Description
 
 import { useState } from "react";
 import Link from "next/link";
-import PasswordChangeModal from "./password-change-modal";
+import PasswordChangeModal from "./modals/password-change-modal";
 import ProfileReviewsModal from "./modals/profile-reviews-modal";
 import UserRating from "./user-rating";
 import UserAvatar from "./user-avatar";
@@ -105,7 +105,7 @@ export default function MyProfile({
             onClick={() => setIsPasswordModalOpen(true)}
             className="btn-primary w-full md:w-1/2 text-center text-lg py-2.5 whitespace-nowrap"
           >
-            비밀번호 수정
+            비밀 항해 코드 수정
           </button>
         )}
       </div>
@@ -129,19 +129,20 @@ export default function MyProfile({
         <div className="text-lg font-semibold mb-4 dark:text-white">
           거래 정보
         </div>
-        <div className="flex flex-col md:flex-row gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Link
             href="/profile/my-sales"
-            className="btn-primary w-full text-center text-lg py-2.5"
+            className="card bg-primary hover:bg-primary-dark dark:bg-primary-light dark:hover:bg-primary p-6 transition-all group"
           >
-            판매 제품
+            <h3 className="text-xl font-semibold mb-3 text-white">판매 제품</h3>
+            <p className="text-white/90">내가 판매중인 제품을 확인해보세요</p>
           </Link>
-
           <Link
             href="/profile/my-purchases"
-            className="btn-primary w-full text-center text-lg py-2.5"
+            className="card bg-primary hover:bg-primary-dark dark:bg-primary-light dark:hover:bg-primary p-6 transition-all group"
           >
-            구매 제품
+            <h3 className="text-xl font-semibold mb-3 text-white">구매 제품</h3>
+            <p className="text-white/90">내가 구매한 제품을 확인해보세요</p>
           </Link>
         </div>
       </div>

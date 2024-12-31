@@ -237,17 +237,32 @@ export default function ProfileEditForm({ user }: IuserProps) {
       </span>
       <form action={onValid} className="flex flex-col p-5">
         <label htmlFor="username" className="my-2">
-          유저명
+          선원 닉네임
         </label>
         <Input
           id="username"
           type="text"
           required
-          placeholder="유저명(3~10자 사이로 입력해주세요)"
+          placeholder="선원 닉네임"
           {...register("username")}
           errors={[errors.username?.message ?? ""]}
           minLength={3}
           maxLength={10}
+          icon={
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          }
         />
         {isGithubIdAndEmail && (
           <span className="text-lg text-rose-500 my-2">
@@ -256,27 +271,57 @@ export default function ProfileEditForm({ user }: IuserProps) {
         )}
 
         <label htmlFor="email" className="my-2">
-          이메일
+          선원 이메일
         </label>
         <Input
           id="email"
           type="email"
-          placeholder={"이메일(example@email.com)"}
+          placeholder={"선원 이메일"}
           {...register("email")}
           errors={[errors.email?.message ?? ""]}
+          icon={
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+              />
+            </svg>
+          }
         />
         {isGithubIdAndEmail && (
           <>
             <label htmlFor="password" className="my-2">
-              비밀번호
+              비밀 항해 코드
             </label>
             <div className="relative">
               <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
-                placeholder="비밀번호는 소문자, 대문자, 숫자, 특수문자를 포함해야 합니다."
+                placeholder="소문자, 대문자, 숫자, 특수문자를 포함해야 합니다."
                 {...register("password")}
                 errors={[errors.password?.message ?? ""]}
+                icon={
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
+                    />
+                  </svg>
+                }
               />
               <button
                 type="button"
@@ -292,15 +337,30 @@ export default function ProfileEditForm({ user }: IuserProps) {
             </div>
 
             <label htmlFor="confirmPassword" className="my-2">
-              비밀번호 확인
+              비밀 항해 코드 확인
             </label>
             <div className="relative">
               <Input
                 id="confirmPassword"
                 type={showConfirmPassword ? "text" : "password"}
-                placeholder="비밀번호는 소문자, 대문자, 숫자, 특수문자를 포함해야 합니다."
+                placeholder="비밀 항해 코드 확인"
                 {...register("confirmPassword")}
                 errors={[errors.confirmPassword?.message ?? ""]}
+                icon={
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                    />
+                  </svg>
+                }
               />
               <button
                 type="button"
@@ -326,9 +386,24 @@ export default function ProfileEditForm({ user }: IuserProps) {
         <Input
           id="phone"
           type="text"
-          placeholder="전화 번호(국가/지역번호 포함) 821012345678"
+          placeholder="선원 연락처(phone) 821012345678"
           {...register("phone")}
           errors={[errors.phone?.message ?? ""]}
+          icon={
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+              />
+            </svg>
+          }
         />
         <div className="flex justify-center">
           <label
@@ -368,7 +443,7 @@ export default function ProfileEditForm({ user }: IuserProps) {
             초기화
           </button>
           <Link
-            className="flex items-center justify-center flex-1 h-10 font-semibold text-white transition-colors bg-indigo-300 rounded-md px-auto hover:bg-indigo-400"
+            className="flex items-center justify-center flex-1 h-10 font-semibold text-white transition-colors bg-rose-500 hover:bg-rose-600 dark:bg-rose-700 dark:hover:bg-rose-600 rounded-md px-auto"
             href="/profile"
           >
             뒤로가기

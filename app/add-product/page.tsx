@@ -13,14 +13,14 @@ Date        Author   Status    Description
 2024.12.12  임도헌   Modified  products/add 에서 add-product로 이동
 2024.12.16  임도헌   Modified  제품 업로드를 보드게임 형식으로 변경
 2024.12.18  임도헌   Modified  태그 입력 컴포넌트로 분리
-
+2024.12.31  임도헌   Modified  태그 입력 컴포넌트 수정
 */
 "use client";
 
 import Button from "@/components/button";
 import Input from "@/components/input";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { getUploadUrl, uploadProduct } from "./action";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -171,6 +171,13 @@ export default function AddProduct() {
     setValue("completeness", "구성품전체");
     setValue("has_manual", true);
   };
+
+  const handleTagsChange = useCallback(
+    (tags: string[]) => {
+      setValue("tags", tags);
+    },
+    [setValue]
+  );
 
   return (
     <div className="min-h-screen dark:bg-neutral-900 bg-white p-4">
@@ -330,7 +337,7 @@ export default function AddProduct() {
         </div>
 
         <TagInput
-          onTagsChange={(tags) => setValue("tags", tags)}
+          onTagsChange={handleTagsChange}
           errors={[errors.tags?.message ?? ""]}
           maxTags={5}
         />

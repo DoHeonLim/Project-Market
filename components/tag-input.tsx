@@ -6,6 +6,8 @@ Author : 임도헌
 History
 Date        Author   Status    Description
 2024.12.18  임도헌   Created
+2024.12.31  임도헌   Modified  태그 입력 컴포넌트 수정
+2025.01.02  임도헌   Modified  defaultTags 예외처리 추가
 */
 "use client";
 
@@ -29,11 +31,8 @@ export default function TagInput({
   const [tags, setTags] = useState<string[]>(defaultTags);
 
   useEffect(() => {
-    setTags(defaultTags);
-  }, [defaultTags]);
-
-  useEffect(() => {
     if (defaultTags.length > 0) {
+      setTags(defaultTags);
       onTagsChange(defaultTags);
     }
   }, [defaultTags, onTagsChange]);

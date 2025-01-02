@@ -35,7 +35,10 @@ export async function POST(req: Request) {
     // Prisma를 사용하여 구독 정보 저장
     await db.pushSubscription.upsert({
       where: {
-        endpoint: subscription.endpoint,
+        endpoint_userId: {
+          endpoint: subscription.endpoint,
+          userId,
+        },
       },
       update: {
         p256dh: subscription.keys.p256dh,
@@ -56,7 +59,7 @@ export async function POST(req: Request) {
     // 알림 설정도 함께 생성/업데이트
     await db.notificationPreferences.upsert({
       where: {
-        userId: session?.id,
+        userId,
       },
       update: {
         pushEnabled: true,

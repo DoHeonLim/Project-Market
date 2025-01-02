@@ -7,6 +7,7 @@ History
 Date        Author   Status    Description
 2024.12.20  임도헌   Created
 2024.12.20  임도헌   Modified  푸시 알림 커스텀 훅 추가
+2024.12.31  임도헌   Modified  푸시 알림 코드 리팩토링
 */
 "use client";
 
@@ -31,58 +32,105 @@ export function usePushNotification() {
   const [serviceWorkerRegistration, setServiceWorkerRegistration] =
     useState<ServiceWorkerRegistration | null>(null);
 
+  // 초기 지원 여부 설정
   useEffect(() => {
-    // Private 모드 감지
-    const detectPrivateMode = () => {
-      try {
-        localStorage.setItem("test", "test");
-        localStorage.removeItem("test");
-        setIsPrivateMode(false);
-      } catch (event) {
-        setIsPrivateMode(true);
-        console.error("Private browsing mode detected", event);
-      }
-    };
+    const supported = checkSupport();
+    setIsSupported(supported);
+  }, []);
 
-    // 브라우저 지원 여부 확인
-    const checkSupport = () => {
-      try {
-        const supported =
-          "serviceWorker" in navigator &&
-          "PushManager" in window &&
-          "Notification" in window;
-        console.log("Push API supported:", supported);
-        setIsSupported(supported);
-        return supported;
-      } catch (error) {
-        console.error("Support check failed:", error);
-        setIsSupported(false);
-        return false;
-      }
-    };
+  // 구독 상태 확인
+  useEffect(() => {
+    if (!isSupported) return;
 
+    let mounted = true;
+    const controller = new AbortController();
     // 현재 구독 상태 확인
     const checkSubscription = async () => {
-      if (!checkSupport()) return;
-
       try {
-        await detectPrivateMode();
-        const registration = await registerServiceWorker();
+        // Private 모드 감지
+        try {
+          localStorage.setItem("test", "test");
+          localStorage.removeItem("test");
+          if (mounted) setIsPrivateMode(false);
+        } catch (event) {
+          console.log("Private browsing mode detected", event);
+          if (mounted) setIsPrivateMode(true);
+          return;
+        }
+
+        const registration = await navigator.serviceWorker.ready;
+        if (!mounted) return;
+
         if (registration) {
           setServiceWorkerRegistration(registration);
           const subscription = await registration.pushManager.getSubscription();
-          setIsSubscribed(!!subscription);
+
+          if (!mounted) return;
+          // 서버 측 검증 로직 추가
           if (subscription) {
-            setSubscription(subscription.toJSON() as PushSubscriptionData);
+            try {
+              // 서버에서 실제 구독 상태 확인
+              const response = await fetch("/api/push/check-subscription", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ endpoint: subscription.endpoint }),
+                signal: controller.signal,
+              });
+
+              if (!mounted) return;
+
+              if (response.ok) {
+                const { isValid } = await response.json();
+                if (!mounted) return;
+
+                setIsSubscribed(isValid);
+                if (isValid) {
+                  setSubscription(
+                    subscription.toJSON() as PushSubscriptionData
+                  );
+                } else {
+                  // 유효하지 않은 구독은 제거
+                  await subscription.unsubscribe();
+                }
+              }
+            } catch (error) {
+              if (!mounted) return;
+              console.error("Subscription validation failed:", error);
+              setIsSubscribed(false);
+            }
+          } else {
+            if (mounted) setIsSubscribed(false);
           }
         }
       } catch (error) {
+        if (!mounted) return;
         console.error("Failed to check push subscription:", error);
+        setIsSubscribed(false);
       }
     };
 
     checkSubscription();
-  }, []);
+
+    return () => {
+      mounted = false;
+      controller.abort(); // 진행 중인 fetch 요청 취소
+    };
+  }, [isSupported]);
+
+  // 브라우저 지원 여부 확인
+  const checkSupport = () => {
+    try {
+      const supported =
+        "serviceWorker" in navigator &&
+        "PushManager" in window &&
+        "Notification" in window;
+      console.log("Push API supported:", supported);
+      return supported;
+    } catch (error) {
+      console.error("Support check failed:", error);
+      return false;
+    }
+  };
 
   // 서비스 워커 등록
   const registerServiceWorker = async () => {

@@ -25,8 +25,7 @@ export async function POST(req: Request) {
     // 먼저 구독 정보가 있는지 확인
     const subscription = await db.pushSubscription.findFirst({
       where: {
-        userId: session.id,
-        endpoint: endpoint,
+        AND: [{ endpoint }, { userId: session.id }],
       },
     });
 

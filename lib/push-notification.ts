@@ -7,12 +7,13 @@
  * Date        Author   Status    Description
  * 2024.12.20  임도헌   Created
  * 2024.12.22  임도헌   Modified  푸시 알림 라이브러리 추가
+ * 2025.01.12  임도헌   Modified  푸시 알림 이미지 추가
  */
 
 import webPush from "web-push";
 import db from "@/lib/db";
 
-type NotificationType = "CHAT" | "TRADE" | "REVIEW" | "SYSTEM | BADGE";
+type NotificationType = "CHAT" | "TRADE" | "REVIEW" | "SYSTEM" | "BADGE";
 
 interface SendNotificationProps {
   targetUserId: number;
@@ -20,6 +21,7 @@ interface SendNotificationProps {
   message: string;
   url?: string;
   type: NotificationType;
+  image?: string;
 }
 
 export async function sendPushNotification({
@@ -28,6 +30,7 @@ export async function sendPushNotification({
   message,
   url,
   type,
+  image,
 }: SendNotificationProps) {
   try {
     // 유저의 활성화된 푸시 구독 정보 가져오기
@@ -66,6 +69,7 @@ export async function sendPushNotification({
               body: message,
               link: url,
               type,
+              image,
             })
           );
         } catch (error: any) {

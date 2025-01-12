@@ -12,6 +12,8 @@ Date        Author   Status    Description
 2024.12.04  임도헌   Modified  예약 유저 정보 추가
 2024.12.12  임도헌   Modified  제품 대표 사진 하나 들고오기
 2024.12.21  임도헌   Modified  푸시 알림 기능 추가
+2024.12.30  임도헌   Modified  뱃지(First Deal) 체크 기능 추가
+2025.01.12  임도헌   Modified  푸시 알림 이미지 링크 변경
 */
 "use server";
 
@@ -20,6 +22,7 @@ import getSession from "@/lib/session";
 import { revalidateTag } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import { sendPushNotification } from "@/lib/push-notification";
+import { checkFirstDealBadge } from "@/lib/check-badge-conditions";
 
 export const getSellingProducts = async (userId: number) => {
   const SellingProduct = await db.product.findMany({
@@ -135,7 +138,7 @@ export const updateProductStatus = async (
               body: `${product.title} 상품이 예약되었습니다.`,
               type: "TRADE",
               link: `/products/${productId}`,
-              image: product.images[0]?.url,
+              image: `${product.images[0]?.url}/public`,
             },
           });
 
@@ -152,6 +155,7 @@ export const updateProductStatus = async (
               message: notification.body,
               url: notification.link || "",
               type: "TRADE",
+              image: `${notification.image}/public` || "",
             }),
           ]);
         }
@@ -196,6 +200,12 @@ export const updateProductStatus = async (
           },
         });
 
+        // 판매자와 구매자 모두 첫 거래 뱃지 체크
+        await Promise.all([
+          checkFirstDealBadge(reservationInfo.user.id),
+          checkFirstDealBadge(reservationInfo.reservation_userId),
+        ]);
+
         // 판매 완료 알림 생성
         const [sellerNotification, buyerNotification] = await Promise.all([
           // 판매자에게 알림
@@ -206,7 +216,7 @@ export const updateProductStatus = async (
               body: `${reservationInfo.title} 상품이 판매되었습니다.`,
               type: "TRADE",
               link: `/products/${productId}`,
-              image: reservationInfo.images[0]?.url,
+              image: `${reservationInfo.images[0]?.url}/public`,
             },
           }),
           // 구매자에게 알림
@@ -217,7 +227,7 @@ export const updateProductStatus = async (
               body: `${reservationInfo.title} 상품의 구매가 완료되었습니다. 리뷰를 작성해주세요.`,
               type: "TRADE",
               link: `/profile/my-purchases`,
-              image: reservationInfo.images[0]?.url,
+              image: `${reservationInfo.images[0]?.url}/public`,
             },
           }),
         ]);
@@ -240,6 +250,7 @@ export const updateProductStatus = async (
             message: sellerNotification.body,
             url: sellerNotification.link || "",
             type: "TRADE",
+            image: sellerNotification.image || "",
           }),
           sendPushNotification({
             targetUserId: reservationInfo.reservation_userId,
@@ -247,6 +258,7 @@ export const updateProductStatus = async (
             message: buyerNotification.body,
             url: buyerNotification.link || "",
             type: "TRADE",
+            image: buyerNotification.image || "",
           }),
         ]);
       }

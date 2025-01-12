@@ -12,6 +12,7 @@ Date        Author   Status    Description
 2024.11.28  임도헌   Mdofieid  클라이언트 코드 분리
 2024.12.07  임도헌   Modified  리뷰 초깃값 이름 변경(initialReviews)
 2024.12.16  임도헌   Modified  테마 변경 버튼 추가
+2024.12.24  임도헌   Modified  뱃지 데이터 추가
 */
 
 import MyProfile from "@/components/my-profile";
@@ -20,6 +21,8 @@ import {
   getInitialUserReviews,
   logOut,
   getUserAverageRating,
+  getAllBadges,
+  getUserBadges,
 } from "./actions";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 
@@ -27,6 +30,8 @@ export default async function ProfilePage() {
   const user = await getUser();
   const initialReviews = await getInitialUserReviews(user.id);
   const averageRating = await getUserAverageRating(user.id);
+  const badges = await getAllBadges();
+  const userBadges = await getUserBadges(user.id);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-background/95 dark:from-background-dark dark:to-background-dark/95 transition-colors duration-200">
@@ -39,6 +44,8 @@ export default async function ProfilePage() {
           initialReviews={initialReviews}
           averageRating={averageRating}
           logOut={logOut}
+          badges={badges}
+          userBadges={userBadges}
         />
       </div>
     </div>

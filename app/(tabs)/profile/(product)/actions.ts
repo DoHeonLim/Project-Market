@@ -7,6 +7,7 @@ History
 Date        Author   Status    Description
 2024.12.23  임도헌   Created
 2024.12.23  임도헌   Modified  리뷰 생성, 삭제 추가
+2025.01.12  임도헌   Modified  푸시 알림 이미지 링크 변경
 */
 "use server";
 
@@ -86,7 +87,7 @@ export const createReview = async (
           }"`,
           type: "REVIEW",
           link: notificationData.link,
-          image: review.product.images[0]?.url,
+          image: `${review.product.images[0]?.url}/public`,
         },
       });
 
@@ -102,6 +103,7 @@ export const createReview = async (
           message: notification.body,
           url: notification.link || "",
           type: "REVIEW",
+          image: notification.image || "",
         }),
       ]);
     }

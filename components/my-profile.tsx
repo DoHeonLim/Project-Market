@@ -23,6 +23,9 @@ import ProfileReviewsModal from "./modals/profile-reviews-modal";
 import UserRating from "./user-rating";
 import UserAvatar from "./user-avatar";
 import { PushNotificationToggle } from "./push-notification-toggle";
+import ProfileBadgesModal from "./modals/profile-badges-modal";
+import Image from "next/image";
+import { getBadgeKoreanName } from "@/lib/utils";
 
 type User = {
   id: number;
@@ -44,20 +47,33 @@ type Review = {
   };
 };
 
+type Badge = {
+  id: number;
+  name: string;
+  icon: string;
+  description: string;
+};
+
 type ProfileProps = {
   user: User;
   initialReviews: Review[];
   averageRating: { average: number; total: number } | null;
   logOut: () => Promise<void>;
+  badges: Badge[];
+  userBadges: Badge[];
 };
+
 export default function MyProfile({
   user,
   initialReviews,
   averageRating,
   logOut,
+  badges,
+  userBadges,
 }: ProfileProps) {
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [isBadgeModalOpen, setIsBadgeModalOpen] = useState(false);
 
   return (
     <div className="flex flex-col items-center gap-4">
@@ -168,6 +184,42 @@ export default function MyProfile({
         </div>
       </div>
 
+      <div className="w-full max-w-md">
+        <div className="flex items-center justify-between mb-4">
+          <div className="text-lg font-semibold dark:text-white">
+            획득한 뱃지
+          </div>
+        </div>
+
+        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-neutral-700">
+          {userBadges.slice(0, 5).map((badge) => (
+            <div
+              key={badge.id}
+              className="flex flex-col items-center p-3 min-w-[80px] rounded-lg bg-primary/5 dark:bg-primary-light/5 border border-primary/30 dark:border-primary-light/30"
+            >
+              <div className={`relative w-12 h-12 mb-2`}>
+                <Image
+                  src={`${badge.icon}/public`}
+                  alt={getBadgeKoreanName(badge.name)}
+                  fill
+                  className="object-contain transition-opacity"
+                  sizes="(max-width: 48px) 100vw, 48px"
+                />
+              </div>
+              <span className="text-xs text-center">
+                {getBadgeKoreanName(badge.name)}
+              </span>
+            </div>
+          ))}
+        </div>
+        <button
+          onClick={() => setIsBadgeModalOpen(true)}
+          className="btn-primary w-full text-lg py-2.5"
+        >
+          전체 뱃지 보기
+        </button>
+      </div>
+
       <form action={logOut} className="w-full max-w-md mt-4">
         <button
           type="submit"
@@ -186,6 +238,12 @@ export default function MyProfile({
       <PasswordChangeModal
         isOpen={isPasswordModalOpen}
         onClose={() => setIsPasswordModalOpen(false)}
+      />
+      <ProfileBadgesModal
+        isOpen={isBadgeModalOpen}
+        closeModal={() => setIsBadgeModalOpen(false)}
+        badges={badges}
+        userBadges={userBadges}
       />
     </div>
   );

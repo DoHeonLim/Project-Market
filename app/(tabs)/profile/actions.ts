@@ -212,3 +212,44 @@ export const getUserAverageRating = async (userId?: number) => {
     total: totalReviews,
   };
 };
+
+// 전체 뱃지 목록 가져오기
+export async function getAllBadges() {
+  try {
+    const badges = await db.badge.findMany({
+      select: {
+        id: true,
+        name: true,
+        icon: true,
+        description: true,
+      },
+    });
+    return badges;
+  } catch (error) {
+    console.error("뱃지 목록 조회 중 오류:", error);
+    return [];
+  }
+}
+
+// 사용자가 획득한 뱃지 목록 가져오기
+export async function getUserBadges(userId: number) {
+  try {
+    const userBadges = await db.user.findUnique({
+      where: { id: userId },
+      select: {
+        badges: {
+          select: {
+            id: true,
+            name: true,
+            icon: true,
+            description: true,
+          },
+        },
+      },
+    });
+    return userBadges?.badges || [];
+  } catch (error) {
+    console.error("사용자 뱃지 조회 중 오류:", error);
+    return [];
+  }
+}

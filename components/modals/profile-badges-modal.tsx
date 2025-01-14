@@ -8,6 +8,9 @@ Date        Author   Status    Description
 2024.12.31  임도헌   Created
 2024.12.31  임도헌   Modified  유저뱃지 모달 추가
 2025.01.12  임도헌   Modified  툴팁 위치 변경, 주석 추가
+2025.01.14  임도헌   Modified  useRole 접근성 기능 개선(tooltip 명시, 뱃지 아이템에 aria-describedby 추가, 툴팁에 role="tooltip" 및 aria-hidden 추가, 툴팁에 고유 id 추가)
+2025.01.14  임도헌   Modified  useHover로 부드러운 애니메이션 적용
+2025.01.14  임도헌   Modified  useDismiss로 툴팁의 닫힘 동작 케이스별로 제어
 */
 "use client";
 
@@ -62,9 +65,18 @@ function BadgeItem({ badge, isEarned }: { badge: Badge; isEarned: boolean }) {
   // 인터랙션 설정
   const hover = useHover(context, {
     move: false, // 마우스 이동 시 반응하지 않음
+    delay: { open: 100, close: 200 },
+    restMs: 40,
   });
-  const dismiss = useDismiss(context); // 외부 클릭시 닫기
-  const role = useRole(context); // 접근성 역할 설정
+  const dismiss = useDismiss(context, {
+    escapeKey: true, // ESC 키로 닫기
+    outsidePress: true, // 외부 클릭으로 닫기
+    referencePress: false, // 뱃지 클릭으로는 닫지 않음
+    ancestorScroll: true, // 스크롤 시 닫기
+  });
+  const role = useRole(context, {
+    role: "tooltip", // 명시적으로 tooltip 역할 지정
+  });
   // 인터랙션 props 결합
   const { getReferenceProps, getFloatingProps } = useInteractions([
     hover,
@@ -78,6 +90,7 @@ function BadgeItem({ badge, isEarned }: { badge: Badge; isEarned: boolean }) {
       <div
         ref={refs.setReference} // 툴팁의 기준점 설정
         {...getReferenceProps()} // 인터랙션 props 적용
+        aria-describedby={isOpen ? "badge-tooltip" : undefined} //아래 badge-tooltip id와 연결시킨다.
         className={`flex flex-col items-center justify-center p-4 rounded-lg border transition-all
           ${
             isEarned
@@ -114,6 +127,9 @@ function BadgeItem({ badge, isEarned }: { badge: Badge; isEarned: boolean }) {
         <div
           ref={refs.setFloating} // 툴팁 요소 참조
           {...getFloatingProps()} // 툴팁 인터랙션 props
+          id="badge-tooltip"
+          role="tooltip"
+          aria-hidden={!isOpen}
           style={floatingStyles} // 위치 스타일
           className="z-50 max-w-xs bg-neutral-900 dark:bg-neutral-800 text-white p-2 rounded-lg text-sm"
         >

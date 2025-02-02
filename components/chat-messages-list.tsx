@@ -16,6 +16,7 @@
  2024.12.19  임도헌   Modified  supabase 클라이언트 코드 lib로 이동
  2024.12.22  임도헌   Modified  메시지 저장 코드 변경(실시간 통신)
  2024.12.30  임도헌   Modified  스크롤 버그 수정
+ 2025.02.02  임도헌   Modified  신속한 교신병 뱃지 체크 추가(checkQuickResponseBadge)
  */
 "use client";
 
@@ -32,6 +33,7 @@ import UserAvatar from "./user-avatar";
 import TimeAgo from "./time-ago";
 import Image from "next/image";
 import { formatToWon } from "@/lib/utils";
+import { checkQuickResponseBadge } from "@/lib/check-badge-conditions";
 
 interface IChatMessageListProps {
   initialMessages: InitialChatMessages;
@@ -63,6 +65,8 @@ export default function ChatMessagesList({
   const [error, setError] = useState<string | null>(null);
   const channel = useRef<RealtimeChannel>();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messageCountRef = useRef(initialMessages.length); //메시지 갯수 추적
+  const hasCheckedBadgeRef = useRef(false); //뱃지 체크 여부 추적
 
   const onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const {
@@ -70,6 +74,20 @@ export default function ChatMessagesList({
     } = event;
     setMessage(value);
   };
+
+  // 메시지 카운트가 100개 이상일 때만 뱃지 체크를 수행하는 함수
+  const checkBadgeIfMessageCount100 = useCallback(async () => {
+    if (messageCountRef.current >= 100 && !hasCheckedBadgeRef.current) {
+      hasCheckedBadgeRef.current = true;
+      await checkQuickResponseBadge(userId);
+    }
+  }, [userId]);
+
+  // 컴포넌트 마운트 시 한 번만 체크
+  useEffect(() => {
+    checkBadgeIfMessageCount100();
+  }, [checkBadgeIfMessageCount100]);
+
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (isSubmitting || !message.trim()) return;
@@ -89,30 +107,32 @@ export default function ChatMessagesList({
       },
     };
 
-    setMessages((prevMsgs) => [...prevMsgs, newMessage]);
-    setMessage("");
-
     try {
-      channel.current?.send({
-        type: "broadcast",
-        event: "message",
-        payload: {
-          ...newMessage,
-          productChatRoomId,
-        },
-      });
+      await Promise.all([
+        channel.current?.send({
+          type: "broadcast",
+          event: "message",
+          payload: {
+            ...newMessage,
+            productChatRoomId,
+          },
+        }),
+        saveMessage(message, productChatRoomId),
+      ]);
 
-      await saveMessage(message, productChatRoomId);
+      setMessages((prev) => [...prev, newMessage]);
+      messageCountRef.current++;
+      setMessage("");
+
+      await checkBadgeIfMessageCount100();
     } catch (error) {
-      setMessages((prevMsgs) =>
-        prevMsgs.filter((msg) => msg.id !== newMessage.id)
-      );
       setError("메시지 전송에 실패했습니다. 다시 시도해주세요.");
       console.error("메시지 전송 실패:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
+
   useEffect(() => {
     const client = supabase;
     channel.current = client.channel(`room-${productChatRoomId}`);
@@ -123,6 +143,9 @@ export default function ChatMessagesList({
             (msg) => msg.id === payload.payload.id
           );
           if (isDuplicate) return prevMsgs;
+
+          messageCountRef.current++;
+          checkBadgeIfMessageCount100();
           return [...prevMsgs, payload.payload];
         });
 
@@ -139,7 +162,7 @@ export default function ChatMessagesList({
     return () => {
       channel.current?.unsubscribe();
     };
-  }, [productChatRoomId, userId]);
+  }, [productChatRoomId, userId, checkBadgeIfMessageCount100]);
 
   const scrollToBottom = useCallback(() => {
     requestAnimationFrame(() => {

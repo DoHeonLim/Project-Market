@@ -11,6 +11,7 @@ Date        Author   Status    Description
 2024.12.12  임도헌   Modified  message모델을 productMessage로 변경
 2024.12.22  임도헌   Modified  채팅 메시지 웹 푸시 기능 추가
 2024.12.26  임도헌   Modified  채팅방 제품 정보 추가
+2025.01.12  임도헌   Modified  푸시 알림 시 채팅 유저 이미지 추가
 */
 
 "use server";
@@ -179,6 +180,7 @@ export const saveMessage = async (
         id: true,
         username: true,
         notification_preferences: true,
+        avatar: true,
       },
     });
 
@@ -195,6 +197,7 @@ export const saveMessage = async (
           )}${payload.length > 20 ? "..." : ""}`,
           type: "CHAT",
           link: `/chats/${productChatRoomId}`,
+          image: receiver.avatar ? `${receiver.avatar}/public` : "",
           isPushSent: false,
         },
       });

@@ -14,6 +14,8 @@ Date        Author   Status    Description
 2024.12.21  임도헌   Modified  푸시 알림 기능 추가
 2024.12.30  임도헌   Modified  뱃지(First Deal) 체크 기능 추가
 2025.01.12  임도헌   Modified  푸시 알림 이미지 링크 변경
+2025.02.02  임도헌   Modified  First Deal 뱃지 체크 기능 개선(뱃지 체크 중복 방지)
+2025.02.02  임도헌   Modified  PowerSeller 뱃지 체크 기능 추가(10번째 판매시 체크)
 */
 "use server";
 
@@ -22,7 +24,10 @@ import getSession from "@/lib/session";
 import { revalidateTag } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import { sendPushNotification } from "@/lib/push-notification";
-import { checkFirstDealBadge } from "@/lib/check-badge-conditions";
+import {
+  checkFirstDealBadge,
+  checkPowerSellerBadge,
+} from "@/lib/check-badge-conditions";
 
 export const getSellingProducts = async (userId: number) => {
   const SellingProduct = await db.product.findMany({
@@ -166,18 +171,29 @@ export const updateProductStatus = async (
     }
     // 판매 완료로 변경한 경우
     else if (status === "sold") {
-      // 예약중인 유저의 아이디 들고온다.
+      // 예약중인 유저와 판매자의 정보를 들고온다.
       const reservationInfo = await db.product.findUnique({
         where: {
           id: productId,
         },
         select: {
-          reservation_userId: true,
+          reservation_userId: true, // 구매자 아이디
           title: true,
           user: {
+            // 판매자 정보
             select: {
               id: true,
               username: true,
+              badges: {
+                select: {
+                  name: true,
+                },
+                where: {
+                  name: {
+                    in: ["FIRST_DEAL", "POWER_SELLER"], // 필요한 뱃지만 조회
+                  },
+                },
+              },
             },
           },
           images: {
@@ -188,8 +204,21 @@ export const updateProductStatus = async (
           },
         },
       });
+
       // 예약 중인 유저의 아이디가 있을 시 판매된 시간과 예약 중인 유저를 판매한 유저 아이디로 넣는다.
       if (reservationInfo?.reservation_userId) {
+        // 구매자의 뱃지 정보 조회
+        const buyerBadges = await db.user.findUnique({
+          where: { id: reservationInfo.reservation_userId },
+          select: {
+            badges: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        });
+
         product = await db.product.update({
           where: {
             id: productId,
@@ -200,13 +229,43 @@ export const updateProductStatus = async (
           },
         });
 
-        // 판매자와 구매자 모두 첫 거래 뱃지 체크
-        await Promise.all([
-          checkFirstDealBadge(reservationInfo.user.id),
-          checkFirstDealBadge(reservationInfo.reservation_userId),
-        ]);
+        // 판매자와 구매자가 FIRST_DEAL 뱃지를 가지고 있는지 확인
+        const sellerHasFirstDeal = reservationInfo.user.badges.some(
+          (badge) => badge.name === "FIRST_DEAL"
+        );
+        const buyerHasFirstDeal = buyerBadges?.badges.some(
+          (badge) => badge.name === "FIRST_DEAL"
+        );
 
-        // 판매 완료 알림 생성
+        // 판매자의 거래 횟수를 먼저 체크
+        const sellerTradeCount = await db.product.count({
+          where: {
+            userId: reservationInfo.user.id,
+            purchase_userId: { not: null },
+          },
+        });
+
+        // 뱃지가 없는 사용자에 대해서만 체크 수행
+        const badgeChecks = [];
+        if (!sellerHasFirstDeal) {
+          badgeChecks.push(checkFirstDealBadge(reservationInfo.user.id));
+        }
+        if (!buyerHasFirstDeal) {
+          badgeChecks.push(
+            checkFirstDealBadge(reservationInfo.reservation_userId)
+          );
+        }
+
+        // POWER_SELLER 뱃지는 10회 이상 거래시에만 체크
+        const sellerHasPowerSeller = reservationInfo.user.badges.some(
+          (badge) => badge.name === "POWER_SELLER"
+        );
+        if (!sellerHasPowerSeller && sellerTradeCount >= 9) {
+          // 현재 거래가 10번째가 되는 경우
+          badgeChecks.push(checkPowerSellerBadge(reservationInfo.user.id));
+        }
+
+        // 뱃지 체크와 알림 생성을 동시에 처리
         const [sellerNotification, buyerNotification] = await Promise.all([
           // 판매자에게 알림
           db.notification.create({
@@ -230,6 +289,8 @@ export const updateProductStatus = async (
               image: `${reservationInfo.images[0]?.url}/public`,
             },
           }),
+          // 필요한 경우에만 뱃지 체크 수행
+          ...badgeChecks,
         ]);
 
         // 실시간 알림 전송

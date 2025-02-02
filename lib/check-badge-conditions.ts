@@ -117,7 +117,6 @@ async function awardBadge(userId: number, badgeName: string) {
  * - 조건: 첫 거래 완료 (판매 또는 구매)
  * - 호출 시점:
  *   1. 제품 거래가 완료될 때
- *   2. 구매자가 구매 확정할 때
  */
 export const checkFirstDealBadge = async (userId: number) => {
   try {
@@ -171,7 +170,7 @@ export const checkPowerSellerBadge = async (userId: number) => {
 /**
  * 신속한 교신병 뱃지 체크 함수
  * - 조건:
- *   1. 채 메시지 100개 이상
+ *   1. 채팅 메시지 100개 이상
  *   2. 채팅 응답률 90% 이상
  *   3. 평균 응답 시간 30분 이내
  * - 호출 시점:
@@ -199,7 +198,6 @@ export const checkQuickResponseBadge = async (userId: number) => {
  * - 조건: 첫 게시글 작성
  * - 호출 시점:
  *   1. 게시글 작성 완료 시
- *   2. 정기적인 뱃지 체크 시 (30일 기준 체크 필요)
  */
 export const checkFirstPostBadge = async (userId: number) => {
   try {
@@ -220,7 +218,6 @@ export const checkFirstPostBadge = async (userId: number) => {
  * - 호출 시점:
  *   1. 게시글 작성 시
  *   2. 게시글에 좋아요가 추가될 때
- *   3. 정기적인 뱃지 체크 시 (30일 기준 체크 필요)
  */
 export const checkPopularWriterBadge = async (userId: number) => {
   try {
@@ -248,7 +245,6 @@ export const checkPopularWriterBadge = async (userId: number) => {
  *   2. 규칙/후기 게시글 댓글 비율 30% 이상
  * - 호출 시점:
  *   1. 댓글 작성 시
- *   2. 정기적인 뱃지 체크 시 (30일 기준 체크 필요)
  */
 export const checkActiveCommenterBadge = async (userId: number) => {
   try {
@@ -314,8 +310,8 @@ export const checkRuleSageBadge = async (userId: number) => {
  *   1. 10개 이상의 서로 다른 게임 거래
  *   2. 3개 이상의 서로 다른 카테고리
  * - 호출 시점:
- *   1. 거래 완료 시
- *   2. 제품 등록 시
+ *   1. 거래 완료 시 (조건 1)
+ *   2. 제품 등록 시 (조건 2)
  */
 export const checkGameCollectorBadge = async (userId: number) => {
   try {
@@ -324,7 +320,7 @@ export const checkGameCollectorBadge = async (userId: number) => {
         OR: [{ userId }, { purchase_userId: userId }],
       },
       include: { category: true },
-      distinct: ["title"],
+      distinct: ["title"], //FIX요망. title로는 중복되는 게임 명 구분이 불가능 할 것으로 보임(product 테이블에 game_name 추가 필요)
     });
 
     const uniqueCategories = new Set(trades.map((trade) => trade.categoryId));
@@ -342,8 +338,8 @@ export const checkGameCollectorBadge = async (userId: number) => {
  *   1. 특정 카테고리에서 15회 이상 거래
  *   2. 해당 카테고리 평점 4.5 이상
  * - 호출 시점:
- *   1. 거래 완료 시
- *   2. 평가 등록 시
+ *   1. 거래 완료 시(조건 1)
+ *   2. 평가 등록 시(조건 2)
  */
 export const checkGenreMasterBadge = async (userId: number) => {
   try {
@@ -383,11 +379,11 @@ export const checkGenreMasterBadge = async (userId: number) => {
  * - 조건:
  *   1. 5가지 이상의 게임 타입 거래
  *   2. 항해 일지 게시글 10개 이상
- *   3. 커뮤니티 평점 4.5 이상
+ *   3. 커뮤니티 평점 4.5 이상(calculateCommunityRating 함수로 계산)
  * - 호출 시점:
- *   1. 거래 완료 시
- *   2. 후기 작성 시
- *   3. 평가 등록 시
+ *   1. 거래 완료 시(조건 1)
+ *   2. 후기(항해 일지/LOG) 작성 시(조건 2)
+ *   3. 평가 등록 시(조건 3) - 이 부분은 다시 생각해봐야 할듯??
  */
 export const checkBoardExplorerBadge = async (userId: number) => {
   try {
@@ -422,7 +418,7 @@ export const checkBoardExplorerBadge = async (userId: number) => {
  * - 조건: 이메일과 전화번호 모두 인증 완료
  * - 호출 시점:
  *   1. 이메일 인증 완료 시
- *   2. 전화번호 인증 완료 시
+ *   2. 전화번호 인증 완료 시(Twillo를 사용 중인데 다른 방안 확인해보기)
  */
 export const checkVerifiedSailorBadge = async (userId: number) => {
   try {
@@ -446,9 +442,8 @@ export const checkVerifiedSailorBadge = async (userId: number) => {
  *   2. 평균 평점 4.8 이상
  * - 설명: 정직한 거래로 높은 신뢰도를 쌓은 상인
  * - 호출 시점:
- *   1. 거래 완료 시
- *   2. 평가 등록 시
- *   3. 정기적인 뱃지 체크 시
+ *   1. 거래 완료 시(조건 1)
+ *   2. 평가 등록 시(조건 2)
  */
 export const checkFairTraderBadge = async (userId: number) => {
   try {
@@ -475,7 +470,7 @@ export const checkFairTraderBadge = async (userId: number) => {
 };
 
 /**
- * 구성품 관리자뱃지 체크 함수
+ * 구성품 관리자뱃지 체크 함수 - 전체 코드 수정해야됨 (condition기준으로 코드 작성했음, completeness기준으로 다시 변경해야됨)
  * - 조건:
  *   1. 5회 이상 거래 완료
  *   2. 80% 이상의 거래가 '최상' 또는 '완벽' 상태
@@ -551,7 +546,7 @@ export const checkEarlySailorBadge = async (userId: number) => {
 
 /**
  * 항구 축제 뱃지 체크 함수
- * - 조건: 최근 30일 내
+ * - 조건: 최근 30일 내 (vercel의 cron을 사용해야 되나?)
  *   1. 게시글 3개 이상
  *   2. 댓글 10개 이상
  *   3. 거래 1회 이상

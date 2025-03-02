@@ -26,6 +26,7 @@ import { supabase } from "@/lib/supabase";
 import { sendPushNotification } from "@/lib/push-notification";
 import {
   checkFirstDealBadge,
+  checkPortFestivalBadge,
   checkPowerSellerBadge,
 } from "@/lib/check-badge-conditions";
 
@@ -291,6 +292,9 @@ export const updateProductStatus = async (
           }),
           // 필요한 경우에만 뱃지 체크 수행
           ...badgeChecks,
+          // 판매자와 구매자 모두에 대해 Port Festival 뱃지 체크
+          checkPortFestivalBadge(reservationInfo.user.id),
+          checkPortFestivalBadge(reservationInfo.reservation_userId),
         ]);
 
         // 실시간 알림 전송

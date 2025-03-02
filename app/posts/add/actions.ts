@@ -8,6 +8,7 @@ Date        Author   Status    Description
 2024.11.23  임도헌   Created
 2024.11.23  임도헌   Modified  동네생활 게시글 생성 코드 추가
 2024.12.10  임도헌   Modified  이미지 여러개 업로드 코드 추가
+2025.03.02  임도헌   Mdofied   게시글 작성시 게시글 추가 관련 뱃지 체크 추가
 */
 "use server";
 
@@ -15,6 +16,7 @@ import db from "@/lib/db";
 import getSession from "@/lib/session";
 import { revalidatePath } from "next/cache";
 import { postSchema } from "./schema";
+import { badgeChecks, checkRuleSageBadge } from "@/lib/check-badge-conditions";
 
 export const uploadPost = async (formData: FormData) => {
   const session = await getSession();
@@ -93,6 +95,13 @@ export const uploadPost = async (formData: FormData) => {
 
       return post; // 생성된 게시글 반환
     });
+
+    // 게시글 생성 후 뱃지 체크 수행
+    await badgeChecks.onPostCreate(session.id);
+    await badgeChecks.onEventParticipation(session.id);
+
+    // 만약 category가 MAP일 경우에만 RULE_SAGE 뱃지 체크 수행
+    if (results.data.category === "MAP") await checkRuleSageBadge(session.id);
 
     revalidatePath("/posts");
     return { success: true, postId: post.id }; // 게시글 ID 반환

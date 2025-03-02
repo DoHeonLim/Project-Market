@@ -8,6 +8,7 @@ Date        Author   Status    Description
 2024.12.23  임도헌   Created
 2024.12.24  임도헌   Modified  뱃지 체크 조건 함수 추가
 2025.01.12  임도헌   Modified  뱃지 획득시 이미지 보이게 변경
+2025.03.02  임도헌   Modified  checkRuleSageBadge를 onPostCreate에서 제거
 */
 
 import db from "@/lib/db";
@@ -278,7 +279,7 @@ export const checkActiveCommenterBadge = async (userId: number) => {
  * 규칙의 현자 뱃지 체크 함수
  * - 조건:
  *   1. 규칙 설명 게시글 10개 이상
- *   2. 총 조회수 500회 이상
+ *   2. 규칙 설명 게시글의 총 조회수 500회 이상
  * - 호출 시점:
  *   1. 규칙 설명 게시글 작성 시
  *   2. 게시글 조회수 업데이트 시
@@ -612,7 +613,6 @@ export const badgeChecks = {
     await Promise.all([
       checkFirstPostBadge(userId),
       checkPopularWriterBadge(userId),
-      checkRuleSageBadge(userId),
       checkPortFestivalBadge(userId),
     ]);
   },

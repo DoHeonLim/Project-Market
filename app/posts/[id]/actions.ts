@@ -10,10 +10,15 @@
  2024.11.05  임도헌   Modified  댓글 생성 기능 추가
  2024.11.06  임도헌   Modified  댓글 삭제 기능 추가
  2024.12.12  임도헌   Modified  like모델을 postLike로 변경
+ 2025.03.02  임도헌   Modified  좋아요 버튼 클릭 시 인기 항해사 뱃지 조건 체크
  */
 "use server";
 
 import { DeleteResponse } from "@/components/comment-delete-button";
+import {
+  badgeChecks,
+  checkPopularWriterBadge,
+} from "@/lib/check-badge-conditions";
 import db from "@/lib/db";
 import getSession from "@/lib/session";
 import { revalidateTag } from "next/cache";
@@ -23,12 +28,25 @@ import { z } from "zod";
 export const likePost = async (postId: number) => {
   try {
     const session = await getSession();
+
+    // 게시글 작성자 ID 조회
+    const post = await db.post.findUnique({
+      where: { id: postId },
+      select: { userId: true },
+    });
+
+    if (!post) return;
+
     await db.postLike.create({
       data: {
         postId,
         userId: session.id!,
       },
     });
+
+    // 게시글 작성자의 인기 항해사(PopularWriter) 뱃지 체크
+    await checkPopularWriterBadge(post.userId);
+
     revalidateTag(`like-status-${postId}`);
   } catch (e) {
     console.log(e);
@@ -70,9 +88,11 @@ export const createComment = async (_: any, FormData: FormData) => {
   };
   const session = await getSession();
   const results = commentSchema.safeParse(data);
+
   if (!results.success) {
     return results.error.flatten();
   } else {
+    // 댓글 생성성
     await db.comment.create({
       data: {
         payload: results.data.payload,
@@ -80,6 +100,11 @@ export const createComment = async (_: any, FormData: FormData) => {
         userId: session.id!,
       },
     });
+
+    // 댓글 작성자의 뱃지 체크
+    await badgeChecks.onCommentCreate(session.id!);
+    await badgeChecks.onEventParticipation(session.id!);
+
     revalidateTag(`comments-${results.data.postId}`);
   }
 };

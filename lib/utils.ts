@@ -10,6 +10,7 @@ Date        Author   Status    Description
 2024.11.23  임도헌   Modified   시간 포맷 수정(일,주,달 기준)
 2024.12.11  임도헌   Modified   시간 포맷 수정(한국 시간대 기준)
 2024.12.23  임도헌   Modified   뱃지 관련 함수 추가
+2025.03.29  임도헌   Modified   커뮤니티 기여도 함수명 및 로직 변경(isPopularity)
 */
 
 import db from "./db";
@@ -229,12 +230,10 @@ export async function calculateCategoryRating(
   return Number(averageRating.toFixed(1));
 }
 
-// 커뮤니티 기여도 평점 계산 함수
+// 커뮤니티 인기도 계산 함수
 // - 보물지도(MAP)와 항해일지(LOG) 카테고리의 게시글만 평가
-// - 좋아요, 댓글, 조회수를 가중치를 적용하여 계산
-export async function calculateCommunityRating(
-  userId: number
-): Promise<number> {
+// - 댓글 20개, 좋아요 50개 이상일 경우 1 리턴 아니면 0리턴
+export async function isPopularity(userId: number): Promise<number> {
   const posts = await db.post.findMany({
     where: {
       userId,
@@ -249,18 +248,25 @@ export async function calculateCommunityRating(
     },
   });
 
+  // 게시글 없으면 0리턴
   if (posts.length === 0) return 0;
 
-  const rating =
-    posts.reduce((sum, post) => {
-      const postScore =
-        post.post_likes.length * 0.5 + // 좋아요 가중치
-        post.comments.length * 0.3 + // 댓글 가중치
-        post.views * 0.01; // 조회수 가중치
-      return sum + postScore;
-    }, 0) / posts.length;
+  // 모든 게시글의 좋아요와 댓글 수 합산
+  const totalLikes = posts.reduce(
+    (sum, post) => sum + post.post_likes.length,
+    0
+  );
+  const totalComments = posts.reduce(
+    (sum, post) => sum + post.comments.length,
+    0
+  );
 
-  return Math.min(rating, 5); // 최대 5점으로 제한
+  // 댓글 20개, 좋아요 50개 이상일 경우 1 리턴, 아니면 0 리턴
+  if (totalComments >= 20 && totalLikes >= 50) {
+    return 1;
+  } else {
+    return 0;
+  }
 }
 
 // 뱃지 한글 이름 가져오기

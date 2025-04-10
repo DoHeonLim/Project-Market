@@ -10,13 +10,15 @@
  2024.11.05  임도헌   Modified  댓글 생성 기능 추가
  2024.11.06  임도헌   Modified  댓글 삭제 기능 추가
  2024.12.12  임도헌   Modified  like모델을 postLike로 변경
- 2025.03.02  임도헌   Modified  좋아요 버튼 클릭 시 인기 항해사 뱃지 조건 체크
+ 2025.03.02  임도헌   Modified  좋아요 버튼 클릭 시 인기 항해사(PopularWriter) 뱃지 조건 체크
+ 2025.03.29  임도헌   Modified  보드게임 탐험가(BoardExplorer) 뱃지 초건 체크크
  */
 "use server";
 
 import { DeleteResponse } from "@/components/comment-delete-button";
 import {
   badgeChecks,
+  checkBoardExplorerBadge,
   checkPopularWriterBadge,
 } from "@/lib/check-badge-conditions";
 import db from "@/lib/db";
@@ -44,8 +46,10 @@ export const likePost = async (postId: number) => {
       },
     });
 
-    // 게시글 작성자의 인기 항해사(PopularWriter) 뱃지 체크
+    // 게시글 작성자의 인기 항해사(PopularWriter)뱃지 체크
     await checkPopularWriterBadge(post.userId);
+    // 게시글 작성자의 보드게임 탐험가(BoardExplorer)뱃지 체크
+    await checkBoardExplorerBadge(post.userId);
 
     revalidateTag(`like-status-${postId}`);
   } catch (e) {
@@ -104,6 +108,14 @@ export const createComment = async (_: any, FormData: FormData) => {
     // 댓글 작성자의 뱃지 체크
     await badgeChecks.onCommentCreate(session.id!);
     await badgeChecks.onEventParticipation(session.id!);
+
+    // 현재 게시글의 작성자 ID 가져오기
+    const post = await db.post.findUnique({
+      where: { id: results.data.postId },
+      select: { userId: true },
+    });
+    // 게시글 작성자의 뱃지 체크
+    await checkBoardExplorerBadge(post!.userId);
 
     revalidateTag(`comments-${results.data.postId}`);
   }

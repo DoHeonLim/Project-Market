@@ -9,6 +9,8 @@ Date        Author   Status    Description
 2024.12.23  임도헌   Modified  리뷰 생성, 삭제 추가
 2025.01.12  임도헌   Modified  푸시 알림 이미지 링크 변경
 2025.02.02  임도헌   Modified  PowerSeller 뱃지 체크 기능 추가(리뷰 추가할 때 체크)
+2025.03.30  임도헌   Modified  GenreMaster 뱃지 체크 기능 추가
+2025.04.10  임도헌   Modified  FairTrader 뱃지 체크 기능 추가
 */
 "use server";
 
@@ -16,7 +18,11 @@ import db from "@/lib/db";
 import { sendPushNotification } from "@/lib/push-notification";
 import { supabase } from "@/lib/supabase";
 import { revalidateTag } from "next/cache";
-import { checkPowerSellerBadge } from "@/lib/check-badge-conditions";
+import {
+  checkPowerSellerBadge,
+  checkGenreMasterBadge,
+  checkFairTraderBadge,
+} from "@/lib/check-badge-conditions";
 
 // 통합된 리뷰 생성 함수
 export const createReview = async (
@@ -44,7 +50,9 @@ export const createReview = async (
               select: {
                 badges: {
                   where: {
-                    name: "POWER_SELLER",
+                    name: {
+                      in: ["POWER_SELLER", "GENRE_MASTER", "FAIR_TRADER"],
+                    },
                   },
                   select: {
                     name: true,
@@ -68,9 +76,47 @@ export const createReview = async (
       },
     });
 
-    // 구매자의 리뷰이고, 판매자가 아직 POWER_SELLER 뱃지가 없는 경우에만 체크
-    if (type === "buyer" && !review.product.user.badges.length) {
-      await checkPowerSellerBadge(review.product.userId);
+    // 구매자의 리뷰인 경우 판매자의 뱃지 체크
+    if (type === "buyer") {
+      const sellerBadges = review.product.user.badges.map((b) => b.name);
+
+      // POWER_SELLER 뱃지가 없는 경우에만 체크
+      if (!sellerBadges.includes("POWER_SELLER")) {
+        await checkPowerSellerBadge(review.product.userId);
+      }
+
+      // GENRE_MASTER 뱃지가 없는 경우에만 체크
+      if (!sellerBadges.includes("GENRE_MASTER")) {
+        await checkGenreMasterBadge(review.product.userId);
+      }
+
+      // FAIR_TRADER 뱃지가 없는 경우에만 체크
+      if (!sellerBadges.includes("FAIR_TRADER")) {
+        await checkFairTraderBadge(review.product.userId);
+      }
+    }
+
+    // 판매자의 리뷰인 경우 구매자의 뱃지 체크
+    if (type === "seller" && review.product.purchase_userId) {
+      // 구매자의 뱃지 정보 조회
+      const buyer = await db.user.findUnique({
+        where: { id: review.product.purchase_userId },
+        select: {
+          badges: {
+            where: {
+              name: "GENRE_MASTER",
+            },
+            select: {
+              name: true,
+            },
+          },
+        },
+      });
+
+      // GENRE_MASTER 뱃지가 없는 경우에만 체크
+      if (!buyer?.badges.length) {
+        await checkGenreMasterBadge(review.product.purchase_userId);
+      }
     }
 
     // 알림을 받을 사용자 ID와 링크 설정

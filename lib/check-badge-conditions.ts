@@ -9,6 +9,8 @@ Date        Author   Status    Description
 2024.12.24  임도헌   Modified  뱃지 체크 조건 함수 추가
 2025.01.12  임도헌   Modified  뱃지 획득시 이미지 보이게 변경
 2025.03.02  임도헌   Modified  checkRuleSageBadge를 onPostCreate에서 제거
+2025.03.29  임도헌   Modified  checkBoardExplorer함수 로직 변경
+2025.04.10  임도헌   Modified  인증된 선원 뱃지 간소화화
 */
 
 import db from "@/lib/db";
@@ -16,8 +18,8 @@ import {
   calculateAverageRating,
   calculateCategoryRating,
   calculateChatResponseRate,
-  calculateCommunityRating,
   getBadgeKoreanName,
+  isPopularity,
 } from "./utils";
 import { supabase } from "./supabase";
 import { sendPushNotification } from "./push-notification";
@@ -336,28 +338,43 @@ export const checkGameCollectorBadge = async (userId: number) => {
 /**
  * 장르의 항해사 뱃지 체크 함수
  * - 조건:
- *   1. 특정 카테고리에서 15회 이상 거래
+ *   1. 특정 카테고리에서 15회 이상 구매 또는 거래
  *   2. 해당 카테고리 평점 4.5 이상
  * - 호출 시점:
  *   1. 거래 완료 시(조건 1)
  *   2. 평가 등록 시(조건 2)
+ *
+ *   2025-03-29 : 코드 수정(오류 Fix)
+ *
+ *  현재 trades를 불러 올 때 판매 완료된 제품만 카운트 해야되는데 판매되지 않은 제품도 포함되어 있음.
+ *  userId와 purchase_userId가 not null인 제품을 가져와야 됨.
  */
 export const checkGenreMasterBadge = async (userId: number) => {
   try {
+    // 사용자가 판매자이고 판매가 완료된 제품 또는 구매자인 제품 조회
     const trades = await db.product.findMany({
       where: {
-        OR: [{ userId }, { purchase_userId: userId }],
+        OR: [
+          {
+            userId,
+            purchase_userId: { not: null }, // 판매가 완료된 제품만
+          },
+          { purchase_userId: userId }, // 사용자가 구매한 제품
+        ],
       },
       include: { category: true },
     });
 
+    // 카테고리별 거래 횟수 계산
     const categoryCounts = trades.reduce((acc, trade) => {
       const categoryId = trade.categoryId;
       acc[categoryId] = (acc[categoryId] || 0) + 1;
       return acc;
     }, {} as { [key: number]: number });
 
+    // 각 카테고리별로 조건 체크
     for (const [categoryIdStr, count] of Object.entries(categoryCounts)) {
+      // 특정 카테고리에서 15회 이상 거래한 경우
       if (count >= 15) {
         const categoryId = Number(categoryIdStr);
         const categoryRating = await calculateCategoryRating(
@@ -379,33 +396,45 @@ export const checkGenreMasterBadge = async (userId: number) => {
  * 보드게임 탐험가 뱃지 체크 함수
  * - 조건:
  *   1. 5가지 이상의 게임 타입 거래
- *   2. 항해 일지 게시글 10개 이상
- *   3. 커뮤니티 평점 4.5 이상(calculateCommunityRating 함수로 계산)
+ *   2. 보물지도(공략), 항해 일지(후기) 게시글 10개 이상
+ *   3. 커뮤니티 인기도 체크(댓글 20개 AND 좋아요 50개)
  * - 호출 시점:
  *   1. 거래 완료 시(조건 1)
- *   2. 후기(항해 일지/LOG) 작성 시(조건 2)
- *   3. 평가 등록 시(조건 3) - 이 부분은 다시 생각해봐야 할듯??
+ *   2. 후기(보물지도/MAP 및 항해 일지/LOG) 작성 시(조건 2)
+ *   3. 평가 등록 시(조건 3) - 좋아요, 댓글
  */
 export const checkBoardExplorerBadge = async (userId: number) => {
   try {
-    const [trades, reviews, communityRating] = await Promise.all([
+    const [trades, reviews, isPopularityUser] = await Promise.all([
+      // 유저가 거래한 제품
       db.product.findMany({
         where: {
-          OR: [{ userId }, { purchase_userId: userId }],
+          OR: [
+            {
+              userId,
+              purchase_userId: { not: null }, // 판매가 완료된 제품만
+            },
+            { purchase_userId: userId }, // 사용자가 구매한 제품
+          ],
         },
         select: { game_type: true },
       }),
+      // 게시글 수
       db.post.count({
         where: {
           userId,
-          category: "LOG",
+          OR: [
+            { category: "MAP" }, // 보물지도 (규칙 설명/공략)
+            { category: "LOG" }, // 항해 일지 (게임 후기/리뷰)
+          ],
         },
       }),
-      calculateCommunityRating(userId),
+      // 활동성 평가
+      isPopularity(userId),
     ]);
 
     const gameTypes = new Set(trades.map((trade) => trade.game_type));
-    if (gameTypes.size >= 5 && reviews >= 10 && communityRating >= 4.5) {
+    if (gameTypes.size >= 5 && reviews >= 10 && isPopularityUser == 1) {
       await awardBadge(userId, "BOARD_EXPLORER");
     }
   } catch (error) {
@@ -416,21 +445,14 @@ export const checkBoardExplorerBadge = async (userId: number) => {
 // 4. 신뢰도 뱃지들
 /**
  * 인증된 선원 뱃지 체크 함수
- * - 조건: 이메일과 전화번호 모두 인증 완료
+ * - 조건: 전화번호가 인증 됐을 때때
  * - 호출 시점:
- *   1. 이메일 인증 완료 시
- *   2. 전화번호 인증 완료 시(Twillo를 사용 중인데 다른 방안 확인해보기)
+ *   1. 전화번호 인증 완료 시
+ * 전화번호 인증이 된 순간 함수를 불러와서 바로 뱃지 부여
  */
 export const checkVerifiedSailorBadge = async (userId: number) => {
   try {
-    const user = await db.user.findUnique({
-      where: { id: userId },
-      select: { email: true, phone: true },
-    });
-
-    if (user?.email && user?.phone) {
-      await awardBadge(userId, "VERIFIED_SAILOR");
-    }
+    await awardBadge(userId, "VERIFIED_SAILOR");
   } catch (error) {
     console.error("VERIFIED_SAILOR 뱃지 체크 중 오류:", error);
   }
@@ -453,8 +475,11 @@ export const checkFairTraderBadge = async (userId: number) => {
       db.product.count({
         where: {
           OR: [
-            { userId, purchase_userId: { not: null } },
-            { purchase_userId: userId },
+            {
+              userId,
+              purchase_userId: { not: null }, // 판매가 완료된 제품만
+            },
+            { purchase_userId: userId }, // 사용자가 구매한 제품
           ],
         },
       }),
@@ -622,6 +647,7 @@ export const badgeChecks = {
     await Promise.all([
       checkActiveCommenterBadge(userId),
       checkPortFestivalBadge(userId),
+      checkBoardExplorerBadge(userId),
     ]);
   },
 
@@ -635,7 +661,6 @@ export const badgeChecks = {
     await Promise.all([
       checkGameCollectorBadge(userId),
       checkGenreMasterBadge(userId),
-      checkBoardExplorerBadge(userId),
     ]);
   },
 

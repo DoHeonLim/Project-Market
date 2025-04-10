@@ -16,6 +16,10 @@ Date        Author   Status    Description
 2025.01.12  임도헌   Modified  푸시 알림 이미지 링크 변경
 2025.02.02  임도헌   Modified  First Deal 뱃지 체크 기능 개선(뱃지 체크 중복 방지)
 2025.02.02  임도헌   Modified  PowerSeller 뱃지 체크 기능 추가(10번째 판매시 체크)
+2025.03.02  임도헌   Modified  Port Festival 뱃지 체크 기능 추가
+2025.03.29  임도헌   Modified  GenreMaster 뱃지 체크 기능 추가
+2025.03.29  임도헌   Modified  BoardExplorer 뱃지 체크 기능 추가
+2025.04.10  임도헌   Modified  FairTrader 뱃지 체크 기능 추가
 */
 "use server";
 
@@ -25,7 +29,10 @@ import { revalidateTag } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import { sendPushNotification } from "@/lib/push-notification";
 import {
+  checkBoardExplorerBadge,
+  checkFairTraderBadge,
   checkFirstDealBadge,
+  checkGenreMasterBadge,
   checkPortFestivalBadge,
   checkPowerSellerBadge,
 } from "@/lib/check-badge-conditions";
@@ -191,7 +198,12 @@ export const updateProductStatus = async (
                 },
                 where: {
                   name: {
-                    in: ["FIRST_DEAL", "POWER_SELLER"], // 필요한 뱃지만 조회
+                    in: [
+                      "FIRST_DEAL",
+                      "POWER_SELLER",
+                      "FAIR_TRADER",
+                      "GENRE_MASTER",
+                    ], // 필요한 뱃지만 조회
                   },
                 },
               },
@@ -257,13 +269,24 @@ export const updateProductStatus = async (
           );
         }
 
-        // POWER_SELLER 뱃지는 10회 이상 거래시에만 체크
-        const sellerHasPowerSeller = reservationInfo.user.badges.some(
-          (badge) => badge.name === "POWER_SELLER"
+        // badge 여부
+        const sellerHasBadge = reservationInfo.user.badges.some(
+          (badge) =>
+            badge.name === "POWER_SELLER" || "FAIR_TRADER" || "GENRE_MASTER"
         );
-        if (!sellerHasPowerSeller && sellerTradeCount >= 9) {
+        if (!sellerHasBadge && sellerTradeCount >= 4) {
+          // 현재 거래가 5번째가 되는 경우
+          badgeChecks.push(checkFairTraderBadge(reservationInfo.user.id));
+        } else if (!sellerHasBadge && sellerTradeCount >= 9) {
           // 현재 거래가 10번째가 되는 경우
           badgeChecks.push(checkPowerSellerBadge(reservationInfo.user.id));
+        } else if (!sellerHasBadge && sellerTradeCount >= 14) {
+          // 현재 거래가 15번째가 되는 경우부터 GenreMaster뱃지 체크 시작
+          // 각각 판매자 및 구매자 둘다 체크한다.
+          badgeChecks.push(checkGenreMasterBadge(reservationInfo.user.id));
+          badgeChecks.push(
+            checkGenreMasterBadge(reservationInfo.reservation_userId)
+          );
         }
 
         // 뱃지 체크와 알림 생성을 동시에 처리
@@ -295,6 +318,8 @@ export const updateProductStatus = async (
           // 판매자와 구매자 모두에 대해 Port Festival 뱃지 체크
           checkPortFestivalBadge(reservationInfo.user.id),
           checkPortFestivalBadge(reservationInfo.reservation_userId),
+          checkBoardExplorerBadge(reservationInfo.user.id),
+          checkBoardExplorerBadge(reservationInfo.reservation_userId),
         ]);
 
         // 실시간 알림 전송

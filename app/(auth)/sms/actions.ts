@@ -8,16 +8,18 @@ Date        Author   Status    Description
 2024.10.04  임도헌   Created
 2024.10.04  임도헌   Modified  폼 제출 및 검증 기능 추가
 2024.10.11  임도헌   Modified  인증 번호 검증 때 전화번호까지 검증
+2025.04.05  임도헌   Modified  twillo에서 CoolSMS로 변경
 */
 "use server";
 
-// import twilio from "twilio";
 import crypto from "crypto";
 import { z } from "zod";
 import validator from "validator";
 import { redirect } from "next/navigation";
 import db from "@/lib/db";
 import getSession from "@/lib/session";
+import coolsms from "coolsms-node-sdk";
+import { checkVerifiedSailorBadge } from "@/lib/check-badge-conditions";
 
 interface IActionState {
   token: boolean;
@@ -84,6 +86,28 @@ const tokenSchema = z.coerce
     "인증번호와 휴대폰 번호가 매치되지 않습니다."
   );
 
+const sendSMS = async (phone: string, token: string) => {
+  const apiKey = process.env.COOLSMS_API_KEY!;
+  const apiSecret = process.env.COOLSMS_API_SECRET!;
+  const sender = process.env.COOLSMS_SENDER_NUMBER!;
+
+  // CoolSMS객체 만든다.
+  const messageService = new coolsms(apiKey, apiSecret);
+
+  try {
+    await messageService.sendOne({
+      to: phone, // 수신자
+      from: sender, // 발신자
+      text: `당신의 BoardPort 인증 번호는 ${token}입니다.`, // 메시지
+      type: "SMS", // 메세지의 타입 SMS(단문)
+      autoTypeDetect: false, // 메시지 자동 감지 여부
+    });
+  } catch (error) {
+    console.error("SMS 전송 실패:", error);
+    throw new Error("SMS 전송에 실패했습니다.");
+  }
+};
+
 export const smsLogin = async (prevState: IActionState, formData: FormData) => {
   const phone = formData.get("phone");
   const token = formData.get("token");
@@ -121,15 +145,9 @@ export const smsLogin = async (prevState: IActionState, formData: FormData) => {
           },
         },
       });
-      // const client = twilio(
-      //   process.env.TWILIO_ACCOUNT_SID,
-      //   process.env.TWILIO_AUTH_TOKEN
-      // );
-      // await client.messages.create({
-      //   body: `당신의 Bubble-Market 인증 번호는 ${token}입니다.`,
-      //   from: process.env.TWILIO_PHONE_NUMBER!,
-      //   to: process.env.MY_PHONE_NUMBER!,
-      // });
+
+      await sendSMS(result.data, token);
+
       return {
         token: true,
         phone: result.data,
@@ -175,6 +193,8 @@ export const smsLogin = async (prevState: IActionState, formData: FormData) => {
         },
       });
 
+      // VERIFIED_SAILOR 뱃지 부여
+      await checkVerifiedSailorBadge(token.userId);
       redirect("/profile");
     }
   }

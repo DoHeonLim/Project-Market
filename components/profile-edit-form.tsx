@@ -11,6 +11,7 @@ Date        Author   Status    Description
 2024.11.27  임도헌   Modified  checkDuplicates 유저 이름, 이메일 검증 코드 추가
 2024.11.28  임도헌   Modified  스키마 위치 변경
 2024.12.12  임도헌   Modified  스타일 수정
+2025.04.10  임도헌   Modified  전화번호 인증 기능 추가
 */
 
 "use client";
@@ -32,6 +33,8 @@ import {
   getExistingUserEmail,
   getExistingUsername,
   getUploadUrl,
+  sendPhoneVerification,
+  verifyPhoneToken,
 } from "@/app/(tabs)/profile/edit/actions";
 
 interface IuserProps {
@@ -49,8 +52,8 @@ interface IuserProps {
 }
 
 export default function ProfileEditForm({ user }: IuserProps) {
-  // github 아이디 및 이메일 존재 여부
-  const isGithubIdAndEmail = !!user.github_id && !!!user.email;
+  // 소셜 로그인 여부
+  const isSocialLogin = (!!user.github_id && !!!user.email) || (!!user.phone && !!!user.email);
 
   // 패스워드 입력 시 보이게 하는 토글 버튼
   const [showPassword, setShowPassword] = useState(false);
@@ -65,15 +68,23 @@ export default function ProfileEditForm({ user }: IuserProps) {
   // 기존 이미지 경로 관리
   const [currentPhoto, setCurrentPhoto] = useState(user.avatar);
 
+  // 전화번호 인증 관련 상태
+  const [phoneVerificationSent, setPhoneVerificationSent] = useState(false);
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [phoneToken, setPhoneToken] = useState("");
+  const [phoneVerificationError, setPhoneVerificationError] = useState("");
+  const [originalPhone] = useState(user.phone || "");
+
   //react hook form 사용
   const {
     register,
     handleSubmit,
     setValue,
     setError,
+    watch,
     formState: { errors },
   } = useForm<ProfileEditType>({
-    resolver: zodResolver(profileEditSchema(isGithubIdAndEmail)),
+    resolver: zodResolver(profileEditSchema(isSocialLogin)),
     // 초깃값 세팅
     defaultValues: {
       username: user.username,
@@ -82,6 +93,21 @@ export default function ProfileEditForm({ user }: IuserProps) {
       avatar: user.avatar,
     },
   });
+
+  // 전화번호 입력값 감시
+  const phoneValue = watch("phone");
+
+  // 전화번호가 변경되었는지 확인
+  useEffect(() => {
+    if (phoneValue !== originalPhone) {
+      setPhoneVerified(false);
+      setPhoneVerificationSent(false);
+    } else {
+      setPhoneVerified(true);
+      setPhoneVerificationSent(false);
+    }
+  }, [phoneValue, originalPhone]);
+
   // 유저의 프로필 사진이 존재할 경우 프로필 사진 url 세팅
   useEffect(() => {
     if (user.avatar) {
@@ -148,6 +174,48 @@ export default function ProfileEditForm({ user }: IuserProps) {
     }
   };
 
+  // 전화번호 인증 코드 전송
+  const handleSendVerification = async () => {
+    if (!phoneValue) {
+      setPhoneVerificationError("전화번호를 입력해주세요.");
+      return;
+    }
+
+    try {
+      const result = await sendPhoneVerification(phoneValue);
+      if (result.success) {
+        setPhoneVerificationSent(true);
+        setPhoneVerificationError("");
+      } else {
+        setPhoneVerificationError(
+          result.error || "인증 코드 전송에 실패했습니다."
+        );
+      }
+    } catch {
+      setPhoneVerificationError("인증 코드 전송 중 오류가 발생했습니다.");
+    }
+  };
+
+  // 전화번호 인증 코드 확인
+  const handleVerifyToken = async () => {
+    if (!phoneToken) {
+      setPhoneVerificationError("인증 코드를 입력해주세요.");
+      return;
+    }
+
+    try {
+      const result = await verifyPhoneToken(phoneValue || "", phoneToken);
+      if (result.success) {
+        setPhoneVerified(true);
+        setPhoneVerificationError("");
+      } else {
+        setPhoneVerificationError(result.error || "인증에 실패했습니다.");
+      }
+    } catch {
+      setPhoneVerificationError("인증 중 오류가 발생했습니다.");
+    }
+  };
+
   // username과 email 중복 체크 함수
   const checkDuplicates = async (
     data: ProfileEditType,
@@ -180,6 +248,15 @@ export default function ProfileEditForm({ user }: IuserProps) {
   };
 
   const onSubmit = handleSubmit(async (data: ProfileEditType) => {
+    // 전화번호가 변경되었는데 인증이 되지 않은 경우
+    if (data.phone && data.phone !== originalPhone && !phoneVerified) {
+      setError("phone", {
+        type: "manual",
+        message: "전화번호 인증이 필요합니다.",
+      });
+      return;
+    }
+
     const duplicateErrors = await checkDuplicates(data, user.id);
 
     if (duplicateErrors && Object.keys(duplicateErrors).length > 0) {
@@ -218,7 +295,7 @@ export default function ProfileEditForm({ user }: IuserProps) {
     formData.append("email", data.email ?? "");
     formData.append("phone", data.phone ?? "");
     formData.append("avatar", data.avatar ?? "");
-    if (isGithubIdAndEmail && !(user.email && user.password)) {
+    if (isSocialLogin && !(user.email && user.password)) {
       formData.append("password", data.password ?? "");
       formData.append("confirmPassword", data.confirmPassword ?? "");
     }
@@ -264,9 +341,10 @@ export default function ProfileEditForm({ user }: IuserProps) {
             </svg>
           }
         />
-        {isGithubIdAndEmail && (
+        {isSocialLogin && (
           <span className="text-lg text-rose-500 my-2">
-            GitHub 연동 유저는 초기에 이메일과 패스워드 설정을 완료해야 됩니다.
+            소셜 또는 SMS 연동 유저는 초기에 이메일과 패스워드 설정을 완료해야
+            됩니다.
           </span>
         )}
 
@@ -295,7 +373,7 @@ export default function ProfileEditForm({ user }: IuserProps) {
             </svg>
           }
         />
-        {isGithubIdAndEmail && (
+        {isSocialLogin && (
           <>
             <label htmlFor="password" className="my-2">
               비밀 항해 코드
@@ -377,34 +455,74 @@ export default function ProfileEditForm({ user }: IuserProps) {
           </>
         )}
 
-        <span className="flex justify-center font-semibold text-md">
+        <span className="flex justify-center font-semibold text-md mt-4">
           선택사항
         </span>
         <label htmlFor="phone" className="my-2">
           전화번호 (선택사항)
         </label>
-        <Input
-          id="phone"
-          type="text"
-          placeholder="선원 연락처(phone) 821012345678"
-          {...register("phone")}
-          errors={[errors.phone?.message ?? ""]}
-          icon={
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+        <div className="flex flex-col">
+          <div className="flex gap-2 items-center">
+            <Input
+              id="phone"
+              type="text"
+              className="gap-0"
+              placeholder="선원 연락처(phone) 01012345678"
+              {...register("phone")}
+              errors={[errors.phone?.message ?? ""]}
+              icon={
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                  />
+                </svg>
+              }
+            />
+            {phoneValue && phoneValue !== originalPhone && !phoneVerified && (
+              <button
+                type="button"
+                onClick={handleSendVerification}
+                className="w-1/3 px-4 py-2 text-xs text-white bg-blue-500 rounded-md hover:bg-blue-600"
+              >
+                💫 등대 신호 보내기
+              </button>
+            )}
+          </div>
+
+          {phoneVerificationSent && !phoneVerified && (
+            <div className="flex items-center gap-2 mt-4">
+              <Input
+                type="text"
+                placeholder="인증번호 6자리 입력"
+                value={phoneToken}
+                onChange={(e) => setPhoneToken(e.target.value)}
+                errors={[phoneVerificationError]}
               />
-            </svg>
-          }
-        />
+              <button
+                type="button"
+                onClick={handleVerifyToken}
+                className="w-1/3 px-4 py-2 text-white text-xs bg-green-500 rounded-md hover:bg-green-600"
+              >
+                🔍 신호 확인
+              </button>
+            </div>
+          )}
+
+          {phoneVerified && (
+            <div className="text-green-500 text-sm">
+              ✓ 전화번호가 인증되었습니다.
+            </div>
+          )}
+        </div>
+
         <div className="flex justify-center">
           <label
             htmlFor="photo"

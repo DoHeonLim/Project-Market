@@ -11,6 +11,7 @@ Date        Author   Status    Description
 2024.11.11  임도헌   Modified  forwardRef를 사용하는 코드 추가
 2024.12.15  임도헌   Modified  textarea 지원 추가
 2024.12.24  임도헌   Modified  icon prop 추가
+2025.04.10  임도헌   Modified  gap-0으로 변경
 */
 
 /**
@@ -65,7 +66,7 @@ const _Input = (
   }
 
   return (
-    <div className="flex flex-col gap-2 w-full">
+    <div className="flex flex-col gap-0 w-full">
       <div className="relative">
         {icon && (
           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text/50 dark:text-text-dark/50">

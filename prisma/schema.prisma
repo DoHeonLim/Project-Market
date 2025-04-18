@@ -34,6 +34,8 @@
 // 2024.12.23  임도헌   Modified   Badge 모델 수정(일대일 관계 -> 다대다 관계)
 // 2024.12.31  임도헌   Modified   User 모델 수정(last_badge_check 추가)
 // 2024.12.31  임도헌   Modified   PushSubscription 제약조건 추가
+// 2025.04.18  임도헌   Modified   User 모델에 이메일 인증 여부 추가
+// 2025.04.18  임도헌   Modified   EmailToken 모델 추가
 
 generator client {
   provider = "prisma-client-js"
@@ -49,6 +51,7 @@ model User {
   id                   Int               @id @default(autoincrement())
   username             String            @unique //유저 이름
   email                String?           @unique //유저 이메일
+  emailVerified        Boolean           @default(false) // 이메일 인증 여부
   password             String? //유저 비밀번호
   phone                String?           @unique //유저 전화번호
   github_id            String?           @unique //유저 깃허브 아이디
@@ -75,6 +78,7 @@ model User {
   push_subscriptions       PushSubscription[] //유저가 푸시 구독
   notification_preferences NotificationPreferences? //유저가 알림 설정
   search_histories         SearchHistory[] //유저가 검색한 기록
+  EmailToken               EmailToken[]
 
   @@index([username]) // 사용자명 검색용
 }
@@ -114,6 +118,20 @@ model SMSToken {
   updated_at DateTime @updatedAt //SMS 인증 업데이트 시간
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade) //SMS 인증 유저
   userId     Int
+}
+
+// EMAIL 인증 모델
+model EmailToken {
+  id        String   @id @default(cuid())
+  token     String   @unique // EMAIL 인증 토큰
+  email     String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  expiresAt DateTime // 토큰 만료 시간
+
+  @@index([userId])
 }
 
 // 제품 모델
@@ -172,20 +190,6 @@ model Category {
 
   @@index([parentId]) // 부모 카테고리 조회
 }
-
-//  productStatus = {
-//   condition: {
-//     LIKE_NEW: "새제품급 (미개봉/1회미만)",
-//     EXCELLENT: "거의새것 (1-3회사용)",
-//     GOOD: "사용감있음 (4-10회사용)",
-//     FAIR: "많이사용됨 (10회이상)"
-//   },
-//   completeness: {
-//     COMPLETE: "구성품전체 (전체구성품 보유)",
-//     PARTIAL: "부품일부없음 (일부 구성품 누락)",
-//     REPLACED: "호환품포함 (대체구성품 포함)"
-//   }
-// };
 
 // 제품 이미지 모델
 model ProductImage {

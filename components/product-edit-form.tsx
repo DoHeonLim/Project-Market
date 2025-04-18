@@ -12,6 +12,7 @@ Date        Author   Status    Description
 2024.12.12  임도헌   Modified  제품 편집 폼 액션 코드 추가(여러 이미지 업로드)
 2024.12.12  임도헌   Modified  폼 제출 후 모달에서 수정했는지 상세 페이지에서 수정했는지 확인 후 페이지 이동 로직 수정
 2024.12.29  임도헌   Modified  보트포트 형식에 맞게 제품 수정 폼 변경
+2025.04.18  읻모헌   Modified  타입 상수 constants로 이동
 */
 "use client";
 
@@ -37,7 +38,7 @@ import {
   COMPLETENESS_TYPES,
   CONDITION_TYPES,
   GAME_TYPES,
-} from "@/app/add-product/schema";
+} from "@/lib/constants";
 
 interface IEditFormProps {
   product: {
@@ -46,12 +47,12 @@ interface IEditFormProps {
     images: { url: string; order: number }[];
     description: string;
     price: number;
-    game_type: "보드게임" | "TRPG" | "카드게임";
+    game_type: "BOARD_GAME" | "TRPG" | "CARD_GAME";
     min_players: number;
     max_players: number;
     play_time: string;
-    condition: "새제품급" | "거의새것" | "사용감있음" | "많이사용됨";
-    completeness: "구성품전체" | "부품일부없음" | "호환품포함";
+    condition: "NEW" | "LIKE_NEW" | "GOOD" | "USED";
+    completeness: "PERFECT" | "USED" | "REPLACEMENT" | "INCOMPLETE";
     has_manual: boolean;
     categoryId: number;
     search_tags: { name: string }[];
@@ -74,6 +75,7 @@ export default function EditForm({ product, categories }: IEditFormProps) {
     watch,
     formState: { errors },
     getValues,
+    reset,
   } = useForm<ProductEditType>({
     resolver: zodResolver(productEditSchema),
     defaultValues: {
@@ -139,6 +141,33 @@ export default function EditForm({ product, categories }: IEditFormProps) {
 
   // 카테고리 선택값 감시
   const selectedCategoryId = watch("categoryId");
+
+  // 모든 폼 필드를 리셋하는 함수 추가
+  const resetForm = () => {
+    // 이미지 리셋
+    resetImages();
+
+    // 폼 초기화 - 모든 필드를 초기값으로 리셋
+    reset({
+      id: product.id,
+      title: "",
+      price: 0,
+      description: "",
+      photos: [],
+      game_type: "BOARD_GAME",
+      min_players: 1,
+      max_players: 4,
+      play_time: "30분",
+      condition: "NEW",
+      completeness: "PERFECT",
+      has_manual: true,
+      categoryId: 0,
+      tags: [],
+    });
+
+    // 카테고리 선택 상태도 리셋
+    setSelectedMainCategory(null);
+  };
 
   const onSubmit = handleSubmit(async (data: ProductEditType) => {
     if (files.length === 0 && previews.length === 0) {
@@ -393,14 +422,14 @@ export default function EditForm({ product, categories }: IEditFormProps) {
           defaultTags={product.search_tags.map((tag) => tag.name)}
         />
 
+        <Button
+          text={isUploading ? "수정 중..." : "수정하기"}
+          disabled={isUploading}
+        />
         <div className="flex gap-2">
-          <Button
-            text={isUploading ? "수정 중..." : "수정하기"}
-            disabled={isUploading}
-          />
           <button
             type="button"
-            onClick={resetImages}
+            onClick={resetForm}
             className="flex-1 h-10 font-semibold text-white transition-colors bg-red-500 rounded-md hover:bg-red-600"
           >
             초기화

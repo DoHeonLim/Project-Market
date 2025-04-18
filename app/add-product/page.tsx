@@ -14,6 +14,12 @@ Date        Author   Status    Description
 2024.12.16  임도헌   Modified  제품 업로드를 보드게임 형식으로 변경
 2024.12.18  임도헌   Modified  태그 입력 컴포넌트로 분리
 2024.12.31  임도헌   Modified  태그 입력 컴포넌트 수정
+2025.04.13  임도헌   Modified  completeness 필드를 영어로 변경
+2025.04.13  임도헌   Modified  condition 필드를 영어로 변경
+2025.04.13  임도헌   Modified  game_type 필드를 영어로 변경
+2025.04.18  임도헌   Modified  보드게임 최대 인원수 8명으로 변경
+2025.04.18  임도헌   Modified  기존 초기화 버튼은 이미지만 초기화 됬었음, 전체 초기화로 변경
+2025.04.18  임도헌   Modified  업로드 버튼 위치 변경
 */
 "use client";
 
@@ -24,19 +30,21 @@ import { useState, useEffect, useCallback } from "react";
 import { getUploadUrl, uploadProduct } from "./action";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  productSchema,
-  ProductType,
-  GAME_TYPES,
-  CONDITION_TYPES,
-  COMPLETENESS_TYPES,
-} from "./schema";
+import { productSchema, ProductType } from "./schema";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import ImageUploader from "@/components/image/image-uploader";
 import { useRouter } from "next/navigation";
 import Select from "@/components/select";
 import { Category } from "@prisma/client";
 import TagInput from "@/components/tag-input";
+import {
+  COMPLETENESS_DISPLAY,
+  COMPLETENESS_TYPES,
+  CONDITION_DISPLAY,
+  CONDITION_TYPES,
+  GAME_TYPE_DISPLAY,
+  GAME_TYPES,
+} from "@/lib/constants";
 
 export default function AddProduct() {
   const router = useRouter();
@@ -163,12 +171,12 @@ export default function AddProduct() {
     setValue("title", "");
     setValue("description", "");
     setValue("price", 0);
-    setValue("game_type", "보드게임");
+    setValue("game_type", "BOARD_GAME");
     setValue("min_players", 2);
     setValue("max_players", 4);
     setValue("play_time", "30-60분");
-    setValue("condition", "새제품급");
-    setValue("completeness", "구성품전체");
+    setValue("condition", "NEW");
+    setValue("completeness", "PERFECT");
     setValue("has_manual", true);
   };
 
@@ -217,7 +225,7 @@ export default function AddProduct() {
           >
             {GAME_TYPES.map((type) => (
               <option key={type} value={type}>
-                {type}
+                {GAME_TYPE_DISPLAY[type]}
               </option>
             ))}
           </Select>
@@ -243,6 +251,7 @@ export default function AddProduct() {
             type="number"
             required
             min={minPlayers}
+            max={8}
             {...register("max_players")}
             errors={[errors.max_players?.message ?? ""]}
           />
@@ -263,7 +272,7 @@ export default function AddProduct() {
           >
             {CONDITION_TYPES.map((type) => (
               <option key={type} value={type}>
-                {type}
+                {CONDITION_DISPLAY[type]}
               </option>
             ))}
           </Select>
@@ -275,7 +284,7 @@ export default function AddProduct() {
           >
             {COMPLETENESS_TYPES.map((type) => (
               <option key={type} value={type}>
-                {type}
+                {COMPLETENESS_DISPLAY[type]}
               </option>
             ))}
           </Select>
@@ -341,22 +350,21 @@ export default function AddProduct() {
           errors={[errors.tags?.message ?? ""]}
           maxTags={5}
         />
-
-        <div className="flex gap-2 mt-4">
-          <Button
-            text={isUploading ? "업로드 중..." : "등록하기"}
-            disabled={isUploading}
-          />
+        <Button
+          text={isUploading ? "업로드 중..." : "등록하기"}
+          disabled={isUploading}
+        />
+        <div className="flex gap-2">
           <button
             type="button"
             onClick={handleReset}
-            className="flex-1 py-3 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
+            className="flex-1 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
           >
             초기화
           </button>
           <Link
             href="/products"
-            className="flex-1 py-3 bg-neutral-500 text-white rounded-md hover:bg-neutral-600 transition-colors text-center"
+            className="flex-1 py-2 bg-neutral-500 text-white rounded-md hover:bg-neutral-600 transition-colors text-center"
           >
             취소
           </Link>

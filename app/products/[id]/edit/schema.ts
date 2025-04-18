@@ -9,6 +9,7 @@
  2024.11.12  임도헌   Modified  제품 수정 스키마 추가
  2024.12.12  임도헌   Modified  제품 스키마 에러 메시지 변경
  2024.12.29  임도헌   Modified  보트포트 형식에 맞게 제품 수정 폼 변경
+ 2025.04.18  읻모헌   Modified  enum을 전부 영어로 변경
  */
 
 import { z } from "zod";
@@ -29,7 +30,7 @@ export const productEditSchema = z.object({
       required_error: "최소 1개 이상의 사진을 넣어주세요.",
     })
   ),
-  game_type: z.enum(["보드게임", "TRPG", "카드게임"], {
+  game_type: z.enum(["BOARD_GAME", "TRPG", "CARD_GAME"], {
     required_error: "게임 종류를 선택해주세요.",
   }),
   min_players: z.coerce
@@ -43,10 +44,10 @@ export const productEditSchema = z.object({
   play_time: z.string({
     required_error: "플레이 시간을 입력해주세요.",
   }),
-  condition: z.enum(["새제품급", "거의새것", "사용감있음", "많이사용됨"], {
+  condition: z.enum(["NEW", "LIKE_NEW", "GOOD", "USED"], {
     required_error: "제품 상태를 선택해주세요.",
   }),
-  completeness: z.enum(["구성품전체", "부품일부없음", "호환품포함"], {
+  completeness: z.enum(["PERFECT", "USED", "REPLACEMENT", "INCOMPLETE"], {
     required_error: "구성품 상태를 선택해주세요.",
   }),
   has_manual: z.boolean({

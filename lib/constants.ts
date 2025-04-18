@@ -9,6 +9,7 @@ Date        Author   Status    Description
 2024.10.04  임도헌   Modified  패스워드 관련 상수 추가
 2024.10.17  임도헌   Modified  이미지 최대 크기 상수 추가
 2024.12.10  임도헌   Modified  이미지 스켈레톤 상수 추가
+2025.04.13  임도헌   Modified  제품 관련 상수 추가
 */
 
 // 패스워드 최소 값
@@ -31,7 +32,7 @@ export const BLUR_DATA_URL =
 
 // 게시글 카테고리
 export const POST_CATEGORY = {
-  Free: "⛵ 자유", // 자유
+  FREE: "⛵ 자유", // 자유
   CREW: "🏴‍☠️ 모험대원 모집", // 게임 모임/파티 모집
   LOG: "📜 항해 일지", // 게임 후기/리뷰
   MAP: "🗺️ 보물지도", // 게임 규칙/공략
@@ -49,3 +50,34 @@ export type FilterState = {
 
 // 게시글 카테고리 타입
 export type PostCategory = keyof typeof POST_CATEGORY;
+
+// 제품 관련 상수
+export const GAME_TYPES = ["BOARD_GAME", "TRPG", "CARD_GAME"] as const;
+export const CONDITION_TYPES = ["NEW", "LIKE_NEW", "GOOD", "USED"] as const;
+export const COMPLETENESS_TYPES = [
+  "PERFECT",
+  "USED",
+  "REPLACEMENT",
+  "INCOMPLETE",
+] as const;
+
+// 한글 표시를 위한 매핑
+export const GAME_TYPE_DISPLAY = {
+  BOARD_GAME: "보드게임",
+  TRPG: "TRPG",
+  CARD_GAME: "카드게임",
+} as const;
+
+export const CONDITION_DISPLAY = {
+  NEW: "새제품급",
+  LIKE_NEW: "거의새것",
+  GOOD: "사용감있음",
+  USED: "많이사용됨",
+} as const;
+
+export const COMPLETENESS_DISPLAY = {
+  PERFECT: "완벽",
+  USED: "사용감 있음",
+  REPLACEMENT: "대체 부품",
+  INCOMPLETE: "부품 누락",
+} as const;

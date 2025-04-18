@@ -20,6 +20,7 @@ Date        Author   Status    Description
 2025.03.29  임도헌   Modified  GenreMaster 뱃지 체크 기능 추가
 2025.03.29  임도헌   Modified  BoardExplorer 뱃지 체크 기능 추가
 2025.04.10  임도헌   Modified  FairTrader 뱃지 체크 기능 추가
+2025.04.13  임도헌   Modified  QualityMaster 뱃지 체크 기능 추가
 */
 "use server";
 
@@ -35,6 +36,7 @@ import {
   checkGenreMasterBadge,
   checkPortFestivalBadge,
   checkPowerSellerBadge,
+  checkQualityMasterBadge,
 } from "@/lib/check-badge-conditions";
 
 export const getSellingProducts = async (userId: number) => {
@@ -203,6 +205,7 @@ export const updateProductStatus = async (
                       "POWER_SELLER",
                       "FAIR_TRADER",
                       "GENRE_MASTER",
+                      "QUALITY_MASTER",
                     ], // 필요한 뱃지만 조회
                   },
                 },
@@ -277,6 +280,7 @@ export const updateProductStatus = async (
         if (!sellerHasBadge && sellerTradeCount >= 4) {
           // 현재 거래가 5번째가 되는 경우
           badgeChecks.push(checkFairTraderBadge(reservationInfo.user.id));
+          badgeChecks.push(checkQualityMasterBadge(reservationInfo.user.id));
         } else if (!sellerHasBadge && sellerTradeCount >= 9) {
           // 현재 거래가 10번째가 되는 경우
           badgeChecks.push(checkPowerSellerBadge(reservationInfo.user.id));

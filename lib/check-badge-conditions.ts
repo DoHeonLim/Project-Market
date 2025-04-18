@@ -10,7 +10,8 @@ Date        Author   Status    Description
 2025.01.12  임도헌   Modified  뱃지 획득시 이미지 보이게 변경
 2025.03.02  임도헌   Modified  checkRuleSageBadge를 onPostCreate에서 제거
 2025.03.29  임도헌   Modified  checkBoardExplorer함수 로직 변경
-2025.04.10  임도헌   Modified  인증된 선원 뱃지 간소화화
+2025.04.10  임도헌   Modified  인증된 선원 뱃지 간소화
+2025.04.13  임도헌   Modified  구성품 관리자를 품질의 달인으로 변경, 조건 수정
 */
 
 import db from "@/lib/db";
@@ -496,15 +497,15 @@ export const checkFairTraderBadge = async (userId: number) => {
 };
 
 /**
- * 구성품 관리자뱃지 체크 함수 - 전체 코드 수정해야됨 (condition기준으로 코드 작성했음, completeness기준으로 다시 변경해야됨)
+ *  품질의 달인 체크 함수
  * - 조건:
- *   1. 5회 이상 거래 완료
- *   2. 80% 이상의 거래가 '최상' 또는 '완벽' 상태
+ *   1. 5회 이상 판매 완료
+ *   2. 80% 이상의 거래가 '새제품급' 또는 '거의 새것' 상태 (제품 상태)
+ *   3. 80% 이상의 거래가 '완벽' 상태 (구성품 상태)
  * - 호출 시점:
  *   1. 거래 완료 시
- *   2. 제품 상태 업데이트 시
  */
-export const checkComponentKeeperBadge = async (userId: number) => {
+export const checkQualityMasterBadge = async (userId: number) => {
   try {
     const products = await db.product.findMany({
       where: {
@@ -520,17 +521,16 @@ export const checkComponentKeeperBadge = async (userId: number) => {
     if (products.length >= 5) {
       const qualityProducts = products.filter(
         (product) =>
-          (product.condition === "LIKE_NEW" ||
-            product.condition === "EXCELLENT") &&
+          (product.condition === "NEW" || product.condition === "LIKE_NEW") &&
           product.completeness === "COMPLETE"
       );
 
       if (qualityProducts.length / products.length >= 0.8) {
-        await awardBadge(userId, "COMPONENT_KEEPER");
+        await awardBadge(userId, "QUALITY_MASTER");
       }
     }
   } catch (error) {
-    console.error("COMPONENT_KEEPER 뱃지 체크 중 오류:", error);
+    console.error("QUALITY_MASTER 뱃지 체크 중 오류:", error);
   }
 };
 
@@ -628,7 +628,7 @@ export const badgeChecks = {
       checkPowerSellerBadge(userId),
       checkGameCollectorBadge(userId),
       checkGenreMasterBadge(userId),
-      checkComponentKeeperBadge(userId),
+      checkQualityMasterBadge(userId),
       checkFairTraderBadge(userId),
     ]);
   },
@@ -692,7 +692,7 @@ export async function checkAllBadges(userId: number) {
     checkGenreMasterBadge(userId),
     checkBoardExplorerBadge(userId),
     checkVerifiedSailorBadge(userId),
-    checkComponentKeeperBadge(userId),
+    checkQualityMasterBadge(userId),
     checkFairTraderBadge(userId),
     checkEarlySailorBadge(userId),
     checkPortFestivalBadge(userId),

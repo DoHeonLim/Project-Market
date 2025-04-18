@@ -17,6 +17,7 @@
  2024.12.22  임도헌   Modified  메시지 저장 코드 변경(실시간 통신)
  2024.12.30  임도헌   Modified  스크롤 버그 수정
  2025.02.02  임도헌   Modified  신속한 교신병 뱃지 체크 추가(checkQuickResponseBadge)
+ 2025.04.18  임도헌   Modified  checkQuickResponseBadge를 server action으로 변경하고 불러오게 변경
  */
 "use client";
 
@@ -24,6 +25,7 @@ import {
   InitialChatMessages,
   saveMessage,
   readMessageUpdate,
+  checkQuickResponseBadgeAction,
 } from "@/app/chats/[id]/actions";
 import { PaperAirplaneIcon } from "@heroicons/react/24/solid";
 import { supabase } from "@/lib/supabase";
@@ -33,7 +35,6 @@ import UserAvatar from "./user-avatar";
 import TimeAgo from "./time-ago";
 import Image from "next/image";
 import { formatToWon } from "@/lib/utils";
-import { checkQuickResponseBadge } from "@/lib/check-badge-conditions";
 
 interface IChatMessageListProps {
   initialMessages: InitialChatMessages;
@@ -79,7 +80,7 @@ export default function ChatMessagesList({
   const checkBadgeIfMessageCount100 = useCallback(async () => {
     if (messageCountRef.current >= 100 && !hasCheckedBadgeRef.current) {
       hasCheckedBadgeRef.current = true;
-      await checkQuickResponseBadge(userId);
+      await checkQuickResponseBadgeAction(userId);
     }
   }, [userId]);
 
@@ -280,8 +281,8 @@ export default function ChatMessagesList({
                     {message.userId !== userId
                       ? null
                       : message.isRead === false
-                      ? "안 읽음"
-                      : "읽음"}
+                        ? "안 읽음"
+                        : "읽음"}
                   </span>
                   <TimeAgo date={message.created_at.toString()} />
                 </div>

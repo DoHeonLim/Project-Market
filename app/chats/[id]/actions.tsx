@@ -12,6 +12,7 @@ Date        Author   Status    Description
 2024.12.22  임도헌   Modified  채팅 메시지 웹 푸시 기능 추가
 2024.12.26  임도헌   Modified  채팅방 제품 정보 추가
 2025.01.12  임도헌   Modified  푸시 알림 시 채팅 유저 이미지 추가
+2025.04.18  임도헌   Modified  checkQuickResponseBadge함수를 서버 액션으로 처리리
 */
 
 "use server";
@@ -21,6 +22,7 @@ import getSession from "@/lib/session";
 import { revalidateTag } from "next/cache";
 import { sendPushNotification } from "@/lib/push-notification";
 import { supabase } from "@/lib/supabase";
+import { checkQuickResponseBadge } from "@/lib/check-badge-conditions";
 
 export interface ChatMessage {
   id: number;
@@ -267,3 +269,20 @@ export const readMessageUpdate = async (
   revalidateTag("chatroom-list");
   return updateMessage;
 };
+
+/**
+ * web-push 라이브러리는 Node.js 환경에서만 동작
+ * chat-messages-list는 클라이언트 컴포넌트인데 여기서 checkQuickResponseBadge함수를 직접 호출
+ * checkQuickResponseBadge 함수는 내부적으로 sendPushNotification을 호출하는데 이 함수는 web-push 라이브러리를 사용
+ * 클라이언트 컴포넌트에서 web-push 라이브러리를 사용하므로 에러가 생김
+ * 이 때문에 server action으로 분리해서 사용하는 방식으로 해결
+ **/
+export async function checkQuickResponseBadgeAction(userId: number) {
+  try {
+    await checkQuickResponseBadge(userId);
+    return { success: true };
+  } catch (error) {
+    console.error("뱃지 체크 중 오류:", error);
+    return { success: false, error: "뱃지 체크 중 오류가 발생했습니다." };
+  }
+}

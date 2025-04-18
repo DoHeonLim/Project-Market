@@ -7,6 +7,7 @@ History
 Date        Author   Status    Description
 2024.12.17  임도헌   Created
 2024.12.17  임도헌   Modified  카테고리 드롭다운 컴포넌트 생성(카테고리 검색 기능 추가)
+2025.04.18  임도헌   Modified  드롭다운 색 수정
 */
 "use client";
 
@@ -85,7 +86,7 @@ export default function ProductCategoryDropdown({
                   <button
                     key={type.id}
                     onClick={() => handleGameTypeClick(type.name)}
-                    className="w-full flex items-center px-2 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-neutral-700 rounded"
+                    className="w-full flex items-center px-2 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-neutral-700 rounded transition-colors"
                   >
                     {type.icon} <span className="ml-2">{type.name}</span>
                   </button>
@@ -104,7 +105,7 @@ export default function ProductCategoryDropdown({
                     <button
                       key={category.id}
                       onClick={() => handleCategoryClick(category.id)}
-                      className="w-full flex items-center px-2 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100/50 dark:hover:bg-neutral-800/50 rounded transition-colors"
+                      className="w-full flex items-center px-2 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-neutral-700 rounded transition-colors"
                     >
                       {category.icon}{" "}
                       <span className="ml-2">{category.name}</span>

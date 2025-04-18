@@ -11,6 +11,7 @@ Date        Author   Status    Description
 2024.12.19  임도헌   Modified  보드게임 형식으로 수정
 2024.12.19  임도헌   Modified  타입 정의 추가
 2024.12.29  임도헌   Modified  보트포트 형식에 맞게 제품 수정 폼 변경
+2025.04.18  임도헌   Modified  삭제하기 버튼 마진 삭제
 */
 
 import { notFound, redirect } from "next/navigation";
@@ -59,7 +60,7 @@ export default async function EditPage({ params }: { params: { id: string } }) {
       <ProductEditForm product={product} categories={categories} />
       <form
         action={handleDeleteProduct}
-        className="flex items-center justify-center mt-4"
+        className="flex items-center justify-center"
       >
         <button className="bg-rose-700 hover:bg-rose-500 text-[10px] w-full mx-5 py-3 rounded-md text-white font-semibold sm:text-sm md:text-md">
           삭제하기

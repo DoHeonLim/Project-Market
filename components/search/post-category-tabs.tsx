@@ -8,6 +8,7 @@ Date        Author   Status    Description
 2024.12.19  임도헌   Created
 2024.12.19  임도헌   Modified  게시글 카테고리 탭 컴포넌트 생성
 2024.12.20  임도헌   Modified  게시글 카테고리 탭 컴포넌트 다크모드 추가
+2025.04.18  임도헌   Modified  통일감 주기 위해서 refs 대문자로 변경
 */
 "use client";
 
@@ -23,7 +24,7 @@ interface IPostCategoryTabsProps {
 
 // 카테고리 설명
 const CATEGORY_DESCRIPTIONS = {
-  Free: "자유롭게 이야기를 나눌 수 있는 공간입니다",
+  FREE: "자유롭게 이야기를 나눌 수 있는 공간입니다",
   CREW: "함께 보드게임을 즐길 모험대원을 모집하는 공간입니다",
   LOG: "보드게임 플레이 후기와 리뷰를 공유하는 공간입니다",
   MAP: "보드게임의 규칙과 공략을 공유하는 공간입니다",
@@ -49,11 +50,11 @@ export default function PostCategoryTabs({
    * 3. flip({ padding: 8 }): 공간이 부족하면 반대 방향으로 전환 (8픽셀 여백 유지)
    */
   const tooltipRefs = {
-    all: useFloating({
+    ALL: useFloating({
       placement: "bottom",
       middleware: [offset(8), shift({ padding: 8 }), flip({ padding: 8 })],
     }),
-    Free: useFloating({
+    FREE: useFloating({
       placement: "bottom",
       middleware: [offset(8), shift({ padding: 8 }), flip({ padding: 8 })],
     }),
@@ -105,9 +106,9 @@ export default function PostCategoryTabs({
           className="flex gap-2 overflow-x-hidden scroll-smooth items-center h-10"
         >
           <div
-            ref={tooltipRefs.all.refs.setReference} // 툴팁의 기준점이 될 요소 지정
+            ref={tooltipRefs.ALL.refs.setReference} // 툴팁의 기준점이 될 요소 지정
             className="relative flex-shrink-0"
-            onMouseEnter={() => setActiveTooltip("all")}
+            onMouseEnter={() => setActiveTooltip("ALL")}
             onMouseLeave={() => setActiveTooltip(null)}
           >
             <Link
@@ -122,7 +123,7 @@ export default function PostCategoryTabs({
             </Link>
           </div>
 
-          {activeTooltip === "all" && (
+          {activeTooltip === "ALL" && (
             <div
               /**
                * tooltipRefs.all.refs.setFloating: 실제 툴팁 요소를 지정
@@ -135,9 +136,9 @@ export default function PostCategoryTabs({
                * - 스크롤에 관계없이 뷰포트를 기준으로 고정 위치 지정
                * - 스크롤 시에도 참조 요소를 따라다니도록 함
                */
-              ref={tooltipRefs.all.refs.setFloating}
+              ref={tooltipRefs.ALL.refs.setFloating}
               style={{
-                ...tooltipRefs.all.floatingStyles,
+                ...tooltipRefs.ALL.floatingStyles,
                 position: "fixed",
                 zIndex: 9999,
               }}

@@ -9,6 +9,7 @@ Date        Author   Status    Description
 2024.12.17  임도헌   Modified  검색 바 컴포넌트 생성
 2024.12.23  임도헌   Modified  검색 바 컴포넌트 다크모드 추가
 2024.12.29  임도헌   Modified  검색후 섹션 컴포넌트 닫히게 변경
+2025.04.18  임도헌   Modified  검색바 마진 수정
 */
 "use client";
 
@@ -71,7 +72,7 @@ export default function SearchBar({
   return (
     <form
       onSubmit={handleSearch}
-      className={`relative flex-1 ${className}`}
+      className={`relative flex-1 mx-4 ${className}`}
       onClick={onClick}
     >
       <input

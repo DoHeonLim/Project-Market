@@ -10,6 +10,7 @@ Date        Author   Status    Description
 2024.12.10  임도헌   Modified  게시글에 이미지 업로드 추가(이미지 여러개)
 2024.12.10  임도헌   Modified  이미지 업로드 로딩 상태 추가
 2024.12.18  임도헌   Modified  항해일지 추가 페이지로 변경(동네생활 -> 항해일지)
+2025.04.18  임도헌   Modified  초기화, 뒤로가기 버튼 색 변경
 */
 "use client";
 
@@ -170,13 +171,13 @@ export default function AddPost() {
           <button
             type="reset"
             onClick={reset}
-            className="flex-1 h-10 font-semibold text-white transition-colors bg-indigo-300 rounded-md hover:bg-indigo-400"
+            className="flex-1 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
           >
             초기화
           </button>
           <Link
             href="/posts"
-            className="flex-1 h-10 font-semibold text-white transition-colors bg-indigo-300 rounded-md hover:bg-indigo-400 flex items-center justify-center"
+            className="flex-1 py-2 bg-neutral-500 text-white rounded-md hover:bg-neutral-600 transition-colors text-center"
           >
             뒤로가기
           </Link>

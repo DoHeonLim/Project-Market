@@ -12,6 +12,7 @@ Date        Author   Status    Description
 2024.12.07  임도헌   Modified  프로필 이미지 컴포넌트 분리
 2024.12.17  임도헌   Modified  프로필 페이지 디자인 변경
 2024.12.20  임도헌   Modified  푸시 알림 토글 컴포넌트 추가
+2024.12.31  임도헌   Modified  이메일 인증 기능 추가
 */
 
 "use client";
@@ -24,6 +25,7 @@ import UserRating from "./user-rating";
 import UserAvatar from "./user-avatar";
 import { PushNotificationToggle } from "./push-notification-toggle";
 import ProfileBadgesModal from "./modals/profile-badges-modal";
+import EmailVerificationModal from "./modals/email-verification-modal";
 import Image from "next/image";
 import { getBadgeKoreanName } from "@/lib/utils";
 
@@ -33,6 +35,7 @@ type User = {
   avatar: string | null;
   email: string | null;
   created_at: Date;
+  emailVerified: boolean;
 };
 
 type Review = {
@@ -74,6 +77,8 @@ export default function MyProfile({
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isBadgeModalOpen, setIsBadgeModalOpen] = useState(false);
+  const [isEmailVerificationModalOpen, setIsEmailVerificationModalOpen] =
+    useState(false);
 
   return (
     <div className="flex flex-col items-center gap-4">
@@ -114,15 +119,25 @@ export default function MyProfile({
         >
           프로필 수정
         </Link>
-        {!user.email ? (
-          ""
-        ) : (
+        <button
+          onClick={() => setIsPasswordModalOpen(true)}
+          className="btn-primary w-full md:w-1/2 text-center text-lg py-2.5 whitespace-nowrap"
+        >
+          비밀 항해 코드 수정
+        </button>
+      </div>
+      <div className="flex flex-col md:flex-row items-center justify-center gap-6 w-full max-w-md">
+        {!user.emailVerified ? (
           <button
-            onClick={() => setIsPasswordModalOpen(true)}
+            onClick={() => setIsEmailVerificationModalOpen(true)}
             className="btn-primary w-full md:w-1/2 text-center text-lg py-2.5 whitespace-nowrap"
           >
-            비밀 항해 코드 수정
+            이메일 인증
           </button>
+        ) : (
+          <div className="w-full md:w-1/2 text-center text-lg py-2.5 whitespace-nowrap bg-gray-200 dark:bg-neutral-700 text-gray-500 dark:text-gray-400 rounded-lg">
+            이메일 인증됨
+          </div>
         )}
       </div>
 
@@ -244,6 +259,11 @@ export default function MyProfile({
         closeModal={() => setIsBadgeModalOpen(false)}
         badges={badges}
         userBadges={userBadges}
+      />
+      <EmailVerificationModal
+        isOpen={isEmailVerificationModalOpen}
+        onClose={() => setIsEmailVerificationModalOpen(false)}
+        email={user.email || ""}
       />
     </div>
   );

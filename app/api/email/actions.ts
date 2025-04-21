@@ -6,6 +6,8 @@ Author : 임도헌
 History
 Date        Author   Status    Description
 2025.04.13  임도헌   Created
+2025.04.21  임도헌   Modified  boardport.xyz 구입 후 resend로 전송 확인
+2025.04.21  임도헌   Modified  이메일 인증 성공 시 에러 발생 수정(redirect를 하지말고 성공 상태를 반환하도록 수정)
 */
 
 "use server";
@@ -13,7 +15,6 @@ Date        Author   Status    Description
 import crypto from "crypto";
 import { z } from "zod";
 import validator from "validator";
-import { redirect } from "next/navigation";
 import db from "@/lib/db";
 import { checkVerifiedSailorBadge } from "@/lib/check-badge-conditions";
 import { Resend } from "resend";
@@ -24,6 +25,7 @@ interface IActionState {
   error?: {
     formErrors?: string[];
   };
+  success?: boolean;
 }
 
 const handleGetToken = async () => {
@@ -88,7 +90,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 const sendEmail = async (email: string, token: string) => {
   try {
     await resend.emails.send({
-      from: "Board Port <noreply@boardport.com>",
+      from: "Board Port <noreply@boardport.xyz>",
       to: email,
       subject: "이메일 인증",
       html: `
@@ -212,7 +214,13 @@ export const verifyEmail = async (
 
       // VERIFIED_SAILOR 뱃지 부여
       await checkVerifiedSailorBadge(token.userId);
-      redirect("/profile");
+
+      // 리다이렉트 대신 성공 상태 반환
+      return {
+        token: true,
+        email: emailResult.data,
+        success: true,
+      };
     }
   }
 };

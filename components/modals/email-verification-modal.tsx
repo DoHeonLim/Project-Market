@@ -5,11 +5,9 @@ Author : 임도헌
 
 History
 Date        Author   Status    Description
-2024.12.31  임도헌   Created
-2024.12.31  임도헌   Modified  모달 디자인 수정
-2024.12.31  임도헌   Modified  toast를 sonner로 변경
-2024.12.31  임도헌   Modified  Button 컴포넌트 사용
-2024.12.31  임도헌   Modified  SMS 인증 로직 기반으로 수정
+2025.04.13  임도헌   Created
+2025.04.21  임도헌   Modified  성공상태를 감지하여 모달을 닫고 페이지를 새로고침하도록 수정
+2025.
 */
 
 "use client";
@@ -25,6 +23,7 @@ const initialState = {
   token: false,
   email: "",
   error: undefined,
+  success: false,
 };
 
 interface EmailVerificationModalProps {
@@ -63,6 +62,16 @@ export default function EmailVerificationModal({
       toast.error(state.error.formErrors?.[0] || "인증에 실패했습니다.");
     }
   }, [state.error]);
+
+  // email인증 성공 시 모달 닫고 새로 고침 하도록 수정
+  useEffect(() => {
+    if (state.success) {
+      toast.success("이메일 인증이 완료되었습니다.");
+      onClose();
+      // 페이지 새로고침
+      window.location.reload();
+    }
+  }, [state.success, onClose]);
 
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);

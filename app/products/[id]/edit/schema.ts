@@ -9,7 +9,8 @@
  2024.11.12  임도헌   Modified  제품 수정 스키마 추가
  2024.12.12  임도헌   Modified  제품 스키마 에러 메시지 변경
  2024.12.29  임도헌   Modified  보트포트 형식에 맞게 제품 수정 폼 변경
- 2025.04.18  읻모헌   Modified  enum을 전부 영어로 변경
+ 2025.04.18  임도헌   Modified  enum을 전부 영어로 변경
+ 2025.04.28  임도헌   Modified  tags 제약조건 완화
  */
 
 import { z } from "zod";
@@ -58,8 +59,8 @@ export const productEditSchema = z.object({
   }),
   tags: z
     .array(z.string())
-    .min(1, "최소 1개 이상의 태그를 입력해주세요.")
-    .max(5, "태그는 최대 5개까지 입력 가능합니다."),
+    .max(5, "태그는 최대 5개까지 입력 가능합니다.")
+    .default([]),
 });
 
 export type ProductEditType = z.infer<typeof productEditSchema>;

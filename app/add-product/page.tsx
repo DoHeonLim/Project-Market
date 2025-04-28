@@ -20,13 +20,14 @@ Date        Author   Status    Description
 2025.04.18  임도헌   Modified  보드게임 최대 인원수 8명으로 변경
 2025.04.18  임도헌   Modified  기존 초기화 버튼은 이미지만 초기화 됬었음, 전체 초기화로 변경
 2025.04.18  임도헌   Modified  업로드 버튼 위치 변경
+2025.04.28  임도헌   Modified  tag 초기화 로직 변경(setvalue에서 control과 reset사용)
 */
 "use client";
 
 import Button from "@/components/button";
 import Input from "@/components/input";
 import Link from "next/link";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { getUploadUrl, uploadProduct } from "./action";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -54,6 +55,7 @@ export default function AddProduct() {
     number | null
   >(null);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [resetSignal, setResetSignal] = useState(0);
 
   useEffect(() => {
     // 카테고리 목록 가져오기
@@ -76,6 +78,8 @@ export default function AddProduct() {
     handleSubmit,
     setValue,
     watch,
+    reset,
+    control,
     formState: { errors },
     getValues,
   } = useForm<ProductType>({
@@ -97,7 +101,7 @@ export default function AddProduct() {
     handleImageChange,
     handleDeleteImage,
     handleDragEnd,
-    reset: resetImages,
+    resetImage: resetImages,
   } = useImageUpload({ maxImages: 5, setValue, getValues });
 
   // 최소 인원이 최대 인원보다 크지 않도록 감시
@@ -166,26 +170,32 @@ export default function AddProduct() {
     }
   });
 
-  const handleReset = () => {
+  // 모든 폼 필드를 리셋하는 함수 추가
+  const resetForm = () => {
+    // 이미지 리셋
     resetImages();
-    setValue("title", "");
-    setValue("description", "");
-    setValue("price", 0);
-    setValue("game_type", "BOARD_GAME");
-    setValue("min_players", 2);
-    setValue("max_players", 4);
-    setValue("play_time", "30-60분");
-    setValue("condition", "NEW");
-    setValue("completeness", "PERFECT");
-    setValue("has_manual", true);
-  };
 
-  const handleTagsChange = useCallback(
-    (tags: string[]) => {
-      setValue("tags", tags);
-    },
-    [setValue]
-  );
+    // 폼 초기화 - 모든 필드를 초기값으로 리셋
+    reset({
+      title: "",
+      price: undefined,
+      description: "",
+      photos: [],
+      game_type: "BOARD_GAME",
+      min_players: 1,
+      max_players: 4,
+      play_time: "30분",
+      condition: "NEW",
+      completeness: "PERFECT",
+      has_manual: true,
+      categoryId: 0,
+      tags: [],
+    });
+
+    // 카테고리 선택 상태도 리셋
+    setSelectedMainCategory(null);
+    setResetSignal((prev) => prev + 1); // resetSignal 트리거
+  };
 
   return (
     <div className="min-h-screen dark:bg-neutral-900 bg-white p-4">
@@ -346,10 +356,12 @@ export default function AddProduct() {
         </div>
 
         <TagInput
-          onTagsChange={handleTagsChange}
-          errors={[errors.tags?.message ?? ""]}
+          name="tags"
+          control={control}
           maxTags={5}
+          resetSignal={resetSignal}
         />
+
         <Button
           text={isUploading ? "업로드 중..." : "등록하기"}
           disabled={isUploading}
@@ -357,8 +369,8 @@ export default function AddProduct() {
         <div className="flex gap-2">
           <button
             type="button"
-            onClick={handleReset}
-            className="flex-1 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
+            onClick={resetForm}
+            className="flex-1 h-10 font-semibold text-white transition-colors bg-red-500 rounded-md hover:bg-red-600"
           >
             초기화
           </button>

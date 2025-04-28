@@ -8,52 +8,52 @@ Date        Author   Status    Description
 2024.12.18  임도헌   Created
 2024.12.31  임도헌   Modified  태그 입력 컴포넌트 수정
 2025.01.02  임도헌   Modified  defaultTags 예외처리 추가
+2025.04.21  임도헌   Modified  useController 사용하는 방식으로 변경
 */
 "use client";
 
 import { XMarkIcon } from "@heroicons/react/24/solid";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Control, useController } from "react-hook-form";
 
 interface TagInputProps {
-  onTagsChange: (tags: string[]) => void;
-  errors?: string[];
+  name: string;
+  control: Control<any>;
   maxTags?: number;
-  defaultTags?: string[];
+  resetSignal?: number; // 추가
 }
 
 export default function TagInput({
-  onTagsChange,
-  errors = [],
+  name,
+  control,
   maxTags = 5,
-  defaultTags = [],
+  resetSignal, // 받기
 }: TagInputProps) {
+  const {
+    field: { value: tags = [], onChange },
+    fieldState: { error },
+  } = useController({ name, control });
+
   const [tagInput, setTagInput] = useState("");
-  const [tags, setTags] = useState<string[]>(defaultTags);
 
   useEffect(() => {
-    if (defaultTags.length > 0) {
-      setTags(defaultTags);
-      onTagsChange(defaultTags);
-    }
-  }, [defaultTags, onTagsChange]);
+    setTagInput(""); // resetSignal 변경되면 내부 인풋 초기화
+  }, [resetSignal]);
 
   const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" || e.key === ",") {
       e.preventDefault();
       const newTag = tagInput.trim();
       if (newTag && !tags.includes(newTag) && tags.length < maxTags) {
-        const newTags = [...tags, newTag];
-        setTags(newTags);
-        onTagsChange(newTags);
+        onChange([...tags, newTag]);
         setTagInput("");
       }
     }
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
-    const newTags = tags.filter((tag) => tag !== tagToRemove);
-    setTags(newTags);
-    onTagsChange(newTags);
+    const newTags = tags.filter((tag: string) => tag !== tagToRemove);
+    onChange(newTags);
   };
 
   return (
@@ -62,7 +62,7 @@ export default function TagInput({
         태그 (최대 {maxTags}개, 쉼표 또는 엔터로 구분)
       </label>
       <div className="flex flex-wrap gap-2 mb-2">
-        {tags.map((tag, index) => (
+        {tags.map((tag: string, index: number) => (
           <div
             key={index}
             className="flex items-center gap-1 px-2 py-1 bg-primary/10 rounded-full"
@@ -87,14 +87,7 @@ export default function TagInput({
         className="p-2 border rounded-md dark:bg-neutral-800 dark:border-neutral-700"
         disabled={tags.length >= maxTags}
       />
-      {errors.map(
-        (error, index) =>
-          error && (
-            <p key={index} className="text-sm text-red-500">
-              {error}
-            </p>
-          )
-      )}
+      {error && <p className="text-sm text-red-500">{error.message}</p>}
     </div>
   );
 }

@@ -14,13 +14,15 @@ Date        Author   Status    Description
 2024.12.10  임도헌   Modified  이미지 보기 기능 추가
 2024.12.12  임도헌   Modified  뒤로가기 버튼 추가
 2024.12.12  임도헌   Modified  게시글 생성 시간 표시 변경
+2025.04.21  임도헌   Modified  게시글 수정 버튼 추가
+2025.04.28  임도헌   Modified  뒤로가기 버튼 href 추가
 */
 
 import Comment from "@/components/comment";
 import PostLikeButton from "@/components/post-like-button";
 import db from "@/lib/db";
 import getSession from "@/lib/session";
-import { EyeIcon } from "@heroicons/react/24/solid";
+import { EyeIcon, PencilSquareIcon } from "@heroicons/react/24/solid";
 import { unstable_cache as nextCache } from "next/cache";
 import { notFound } from "next/navigation";
 import UserAvatar from "@/components/user-avatar";
@@ -180,7 +182,7 @@ export default async function PostDetail({
       {/* 헤더 영역 */}
       <div className="fixed top-0 left-0 right-0 z-10 bg-white dark:bg-neutral-900 border-b border-gray-200 dark:border-neutral-800">
         <div className="max-w-3xl mx-auto">
-          <BackButton className="p-4" />
+          <BackButton href="/posts" className="p-4" />
         </div>
       </div>
 
@@ -230,6 +232,15 @@ export default async function PostDetail({
         <div className="flex gap-4 pt-4 border-t border-neutral-200 dark:border-neutral-800 justify-between">
           <PostLikeButton isLiked={isLiked} likeCount={likeCount} postId={id} />
           <div className="flex items-center gap-4 text-sm text-neutral-500 dark:text-neutral-400">
+            {post.user.username === user.username && (
+              <Link
+                href={`/posts/${post.id}/edit`}
+                className="flex items-center px-2 py-1 gap-2 transition-colors rounded-md hover:bg-neutral-600 hover:text-white dark:hover:text-neutral-200 "
+              >
+                <PencilSquareIcon className="size-5" />
+                <span>수정하기</span>
+              </Link>
+            )}
             <div className="flex items-center gap-2">
               <EyeIcon className="size-5" />
               <span>{post.views}</span>

@@ -7,11 +7,13 @@ History
 Date        Author   Status    Description
 2024.12.10  임도헌   Created
 2024.12.10  임도헌   Modified  이미지 업로드 커스텀 훅 추가
+2025.04.28  임도헌   Modified  toast UI로 변경
 */
 import { useState } from "react";
 import type { DropResult } from "@hello-pangea/dnd";
 import { MAX_PHOTO_SIZE } from "@/lib/constants";
 import { UseFormGetValues, UseFormSetValue } from "react-hook-form";
+import { toast } from "sonner";
 
 interface UseImageUploadProps {
   maxImages?: number;
@@ -29,22 +31,31 @@ export function useImageUpload({
   const [previews, setPreviews] = useState<string[]>([]);
   const [files, setFiles] = useState<File[]>([]);
   const [isImageFormOpen, setIsImageFormOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleImageChange = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const { files: newFiles } = event.target;
     if (!newFiles) return;
+    
+    setIsUploading(true);
+    try {
 
     if (previews.length + newFiles.length > maxImages) {
-      alert(`이미지는 최대 ${maxImages}개까지만 업로드할 수 있습니다.`);
+      toast.error(`이미지는 최대 ${maxImages}개까지만 업로드할 수 있습니다.`);
       event.target.value = "";
       return;
     }
 
     for (const file of Array.from(newFiles)) {
+      if (!file.type.startsWith('image/')) {
+        toast.error('이미지 파일만 업로드할 수 있습니다.');
+        event.target.value = "";
+        return;
+      }
       if (file.size > maxSize) {
-        alert("이미지는 3MB 이하로 올려주세요.");
+        toast.error('이미지는 3MB 이하로 올려주세요.');
         event.target.value = "";
         return;
       }
@@ -58,6 +69,11 @@ export function useImageUpload({
     // 이미지 파일 세팅
     setFiles((prev) => [...prev, ...Array.from(newFiles)]);
     setValue("photos", [...(getValues("photos") || []), ...newPreviews]);
+    } catch (error) {
+      toast.error('이미지 업로드 중 오류가 발생했습니다.');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleDeleteImage = (index: number) => {
@@ -94,7 +110,7 @@ export function useImageUpload({
     setValue("photos", items);
   };
 
-  const reset = () => {
+  const resetImage = () => {
     setPreviews([]);
     setFiles([]);
     setValue("photos", []);
@@ -108,7 +124,8 @@ export function useImageUpload({
     handleImageChange,
     handleDeleteImage,
     handleDragEnd,
+    isUploading,
     setPreviews,
-    reset,
+    resetImage,
   };
 }

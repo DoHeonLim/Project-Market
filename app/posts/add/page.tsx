@@ -11,6 +11,8 @@ Date        Author   Status    Description
 2024.12.10  임도헌   Modified  이미지 업로드 로딩 상태 추가
 2024.12.18  임도헌   Modified  항해일지 추가 페이지로 변경(동네생활 -> 항해일지)
 2025.04.18  임도헌   Modified  초기화, 뒤로가기 버튼 색 변경
+2025.04.21  임도헌   Modified  게시글 reset 로직 변경
+2025.04.21  임도헌   Modified  tag 로직 변경
 */
 "use client";
 
@@ -33,13 +35,16 @@ import { POST_CATEGORY } from "@/lib/constants";
 export default function AddPost() {
   const router = useRouter();
   const [isUploading, setIsUploading] = useState(false); // 로딩 상태 추가
+  const [resetSignal, setResetSignal] = useState(0);
   // RHF 사용
   const {
     register,
     handleSubmit,
     setValue,
+    control,
     formState: { errors },
     getValues,
+    reset,
   } = useForm<PostType>({
     resolver: zodResolver(postSchema),
   });
@@ -52,8 +57,22 @@ export default function AddPost() {
     handleImageChange,
     handleDeleteImage,
     handleDragEnd,
-    reset,
+    resetImage: resetImages,
   } = useImageUpload({ maxImages: 5, setValue, getValues });
+
+  const resetForm = () => {
+    // 이미지 리셋
+    resetImages();
+    // 폼 초기화
+    reset({
+      title: "",
+      description: "",
+      category: "",
+      photos: [],
+      tags: [],
+    });
+    setResetSignal((prev) => prev + 1); // resetSignal 트리거
+  };
 
   const onSubmit = handleSubmit(async (data: PostType) => {
     setIsUploading(true); // 업로드 시작
@@ -147,9 +166,10 @@ export default function AddPost() {
 
         {/* 태그 입력 */}
         <TagInput
-          onTagsChange={(tags) => setValue("tags", tags)}
-          errors={[errors.tags?.message ?? ""]}
+          name="tags"
+          control={control}
           maxTags={5}
+          resetSignal={resetSignal}
         />
 
         {/* 이미지 업로드 */}
@@ -170,7 +190,7 @@ export default function AddPost() {
         <div className="flex gap-2">
           <button
             type="reset"
-            onClick={reset}
+            onClick={resetForm}
             className="flex-1 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
           >
             초기화

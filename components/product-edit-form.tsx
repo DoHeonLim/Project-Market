@@ -1,6 +1,6 @@
 /**
-File Name : components/edit-form
-Description : 편집 폼 컴포넌트
+File Name : components/product-edit-form
+Description : 제품 편집 폼 컴포넌트
 Author : 임도헌
 
 History
@@ -35,8 +35,11 @@ import { useRouter, usePathname } from "next/navigation";
 import { getUploadUrl } from "@/app/add-product/action";
 import { Category } from "@prisma/client";
 import {
+  COMPLETENESS_DISPLAY,
   COMPLETENESS_TYPES,
+  CONDITION_DISPLAY,
   CONDITION_TYPES,
+  GAME_TYPE_DISPLAY,
   GAME_TYPES,
 } from "@/lib/constants";
 
@@ -60,18 +63,23 @@ interface IEditFormProps {
   categories: Category[];
 }
 
-export default function EditForm({ product, categories }: IEditFormProps) {
+export default function ProductEditForm({
+  product,
+  categories,
+}: IEditFormProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [selectedMainCategory, setSelectedMainCategory] = useState<
     number | null
   >(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [resetSignal, setResetSignal] = useState(0);
 
   const {
     register,
     handleSubmit,
     setValue,
+    control,
     watch,
     formState: { errors },
     getValues,
@@ -106,7 +114,7 @@ export default function EditForm({ product, categories }: IEditFormProps) {
     handleDeleteImage,
     handleDragEnd,
     setPreviews,
-    reset: resetImages,
+    resetImage: resetImages,
   } = useImageUpload({ maxImages: 5, setValue, getValues });
 
   // 최소 인원이 최대 인원보다 크지 않도록 감시
@@ -151,7 +159,7 @@ export default function EditForm({ product, categories }: IEditFormProps) {
     reset({
       id: product.id,
       title: "",
-      price: 0,
+      price: NaN,
       description: "",
       photos: [],
       game_type: "BOARD_GAME",
@@ -167,6 +175,7 @@ export default function EditForm({ product, categories }: IEditFormProps) {
 
     // 카테고리 선택 상태도 리셋
     setSelectedMainCategory(null);
+    setResetSignal((prev) => prev + 1); // resetSignal 트리거
   };
 
   const onSubmit = handleSubmit(async (data: ProductEditType) => {
@@ -268,6 +277,7 @@ export default function EditForm({ product, categories }: IEditFormProps) {
             onDragEnd={handleDragEnd}
             isOpen={isImageFormOpen}
             onToggle={() => setIsImageFormOpen(!isImageFormOpen)}
+            isUploading={isUploading}
             optional={false}
           />
           {previews.length === 0 && (
@@ -292,7 +302,7 @@ export default function EditForm({ product, categories }: IEditFormProps) {
           >
             {GAME_TYPES.map((type) => (
               <option key={type} value={type}>
-                {type}
+                {GAME_TYPE_DISPLAY[type]}
               </option>
             ))}
           </Select>
@@ -338,7 +348,7 @@ export default function EditForm({ product, categories }: IEditFormProps) {
           >
             {CONDITION_TYPES.map((type) => (
               <option key={type} value={type}>
-                {type}
+                {CONDITION_DISPLAY[type]}
               </option>
             ))}
           </Select>
@@ -350,7 +360,7 @@ export default function EditForm({ product, categories }: IEditFormProps) {
           >
             {COMPLETENESS_TYPES.map((type) => (
               <option key={type} value={type}>
-                {type}
+                {COMPLETENESS_DISPLAY[type]}
               </option>
             ))}
           </Select>
@@ -415,12 +425,19 @@ export default function EditForm({ product, categories }: IEditFormProps) {
           className="p-2 input-primary min-h-[200px] resize-y"
         />
 
+        {/* 태그 입력 */}
         <TagInput
+          name="tags"
+          control={control}
+          maxTags={5}
+          resetSignal={resetSignal}
+        />
+        {/* <TagInput
           onTagsChange={(tags) => setValue("tags", tags)}
           errors={[errors.tags?.message ?? ""]}
           maxTags={5}
           defaultTags={product.search_tags.map((tag) => tag.name)}
-        />
+        /> */}
 
         <Button
           text={isUploading ? "수정 중..." : "수정하기"}

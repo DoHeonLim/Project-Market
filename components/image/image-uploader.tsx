@@ -7,6 +7,7 @@ History
 Date        Author   Status    Description
 2024.12.10  임도헌   Created
 2024.12.10  임도헌   Modified  이미지 업로드 컴포넌트 추가
+2025.04.28  임도헌   Modified  이미지 업로드 로딩 상태 추가
 */
 import {
   PhotoIcon,
@@ -23,6 +24,7 @@ interface ImageUploaderProps {
   isOpen: boolean;
   onToggle: () => void;
   maxImages?: number;
+  isUploading?: boolean;
   optional?: boolean;
 }
 
@@ -34,6 +36,7 @@ export default function ImageUploader({
   isOpen,
   onToggle,
   maxImages = 5,
+  isUploading = false,
   optional = true,
 }: ImageUploaderProps) {
   const handleImageClick = (e: React.MouseEvent<HTMLLabelElement>) => {
@@ -71,17 +74,26 @@ export default function ImageUploader({
               htmlFor={previews.length >= maxImages ? undefined : "photo"}
               onClick={handleImageClick}
               className={`flex flex-col items-center justify-center border-2 border-dashed rounded-md ${
-                previews.length >= maxImages
+                previews.length >= maxImages || isUploading
                   ? "cursor-not-allowed"
                   : "cursor-pointer"
-              } h-24 text-neutral-300 border-neutral-300 hover:border-neutral-400 hover:text-neutral-400 transition-colors`}
+              } h-24 text-neutral-300 border-neutral-300 hover:border-neutral-400 hover:text-neutral-400 transition-colors relative`}
             >
-              <PhotoIcon aria-label="photo_input" className="w-8 h-8" />
-              <div className="text-sm text-neutral-400">
-                {previews.length >= maxImages
-                  ? `이미지는 최대 ${maxImages}개까지 업로드할 수 있습니다`
-                  : "클릭하여 사진 추가"}
-              </div>
+              {isUploading ? (
+                <>
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-neutral-400"></div>
+                  <div className="text-sm text-neutral-400">이미지 업로드 중...</div>
+                </>
+              ) : (
+                <>
+                  <PhotoIcon aria-label="photo_input" className="w-8 h-8" />
+                  <div className="text-sm text-neutral-400">
+                    {previews.length >= maxImages
+                      ? `이미지는 최대 ${maxImages}개까지 업로드할 수 있습니다`
+                      : "클릭하여 사진 추가"}
+                  </div>
+                </>
+              )}
             </label>
 
             <input

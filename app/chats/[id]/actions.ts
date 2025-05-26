@@ -12,7 +12,9 @@ Date        Author   Status    Description
 2024.12.22  임도헌   Modified  채팅 메시지 웹 푸시 기능 추가
 2024.12.26  임도헌   Modified  채팅방 제품 정보 추가
 2025.01.12  임도헌   Modified  푸시 알림 시 채팅 유저 이미지 추가
-2025.04.18  임도헌   Modified  checkQuickResponseBadge함수를 서버 액션으로 처리리
+2025.04.18  임도헌   Modified  checkQuickResponseBadge함수를 서버 액션으로 처리
+2025.05.23  임도헌   Modified  카테고리 필드명 변경(name->kor_name)
+2025.05.26  임도헌   Modified  .tsx -> .ts로 변경
 */
 
 "use server";
@@ -78,11 +80,11 @@ export const getRoom = async (id: string) => {
           reservation_userId: true,
           category: {
             select: {
-              name: true,
+              kor_name: true,
               icon: true,
               parent: {
                 select: {
-                  name: true,
+                  kor_name: true,
                   icon: true,
                 },
               },

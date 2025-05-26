@@ -13,6 +13,7 @@
  2024.12.12  임도헌   Modified  채팅방 생성 시간 표시 변경
  2024.12.22  임도헌   Modified  채팅방 안 읽은 메시지 실시간 갱신
  2024.12.23  임도헌   Modified  채팅방 갱신 코드 chat-room-list-container.tsx로 이동
+  2025.05.10  임도헌   Modified  UI 개선
  */
 
 "use client";
@@ -36,61 +37,46 @@ export default function ChatRoomList({
     <Link
       href={`/chats/${initialRoom.id}`}
       className="w-full transition-all duration-300 cursor-pointer group
-        bg-white/80 dark:bg-background-dark/80 
-        hover:bg-white dark:hover:bg-background-dark
-        hover:scale-[1.02] hover:shadow-xl
-        border-2 border-neutral-200/50 dark:border-primary-dark/50
-        hover:border-primary/50 dark:hover:border-primary-light/50
-        p-4 rounded-lg"
+        bg-white dark:bg-neutral-900
+        hover:bg-neutral-100 dark:hover:bg-neutral-800
+        border border-neutral-200 dark:border-neutral-700
+        p-4 rounded-xl flex items-center gap-4 min-h-[72px]
+        shadow-sm hover:shadow-lg"
     >
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full gap-4">
-        <div className="flex items-center gap-4">
-          <div
-            className="relative size-14 flex-shrink-0 rounded-lg overflow-hidden
-            ring-2 ring-neutral-200/50 dark:ring-primary-dark/50
-            group-hover:ring-primary/50 dark:group-hover:ring-primary-light/50
-            group-hover:shadow-lg
-            transition-all duration-300"
-          >
-            <Image
-              src={`${initialRoom.product.images[0]?.url}/avatar`}
-              fill
-              className="object-cover transition-transform duration-300 group-hover:scale-110"
-              alt={initialRoom.product.title}
-            />
-          </div>
-          <div className="flex flex-col gap-2 min-w-0">
-            <div className="flex items-center gap-2">
-              <UserAvatar
-                avatar={initialRoom.users[0].avatar}
-                username={initialRoom.users[0].username}
-                size="md"
-                disabled={true}
-              />
-            </div>
-          </div>
+      {/* 썸네일 */}
+      <div className="relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-neutral-100 dark:bg-neutral-800">
+        <Image
+          src={`${initialRoom.product.images[0].url}/avatar`}
+          fill
+          className="object-cover transition-transform duration-300 group-hover:scale-110"
+          alt={initialRoom.product.title}
+        />
+      </div>
+      {/* 본문 정보 */}
+      <div className="flex-1 min-w-0 flex flex-col gap-1">
+        <div className="flex items-center gap-2">
+          <UserAvatar
+            avatar={initialRoom.users[0].avatar}
+            username={initialRoom.users[0].username}
+            size="md"
+            showUsername={true}
+            disabled={true}
+          />
         </div>
-        <p
-          className="text-neutral-600 dark:text-neutral-400 line-clamp-2 sm:line-clamp-1 pl-16 sm:pl-0
-          group-hover:text-primary dark:group-hover:text-primary-light 
-          transition-colors duration-300"
-        >
+        <div className="text-sm text-neutral-500 dark:text-neutral-400 truncate">
           {initialRoom.messages[0]?.payload ?? "새로운 대화를 시작해보세요"}
-        </p>
-        <div className="flex sm:flex-col items-center sm:items-end gap-2 ml-auto">
-          <TimeAgo date={initialRoom.messages[0]?.created_at.toString()} />
-          {unreadCount > 0 && (
-            <div
-              className="flex items-center justify-center size-5 
-              bg-rose-500 dark:bg-rose-600
-              group-hover:bg-rose-600 dark:group-hover:bg-rose-500
-              group-hover:scale-110 group-hover:shadow-lg
-              transition-all duration-300 rounded-full"
-            >
-              <span className="text-white text-xs">{unreadCount}</span>
-            </div>
-          )}
         </div>
+      </div>
+      {/* 우측 정보 */}
+      <div className="flex flex-col items-end gap-2 ml-2 min-w-[56px]">
+        <span className="text-xs text-neutral-400 dark:text-neutral-500 whitespace-nowrap">
+          <TimeAgo date={initialRoom.messages[0]?.created_at?.toString()} />
+        </span>
+        {unreadCount > 0 && (
+          <span className="bg-rose-500 dark:bg-rose-600 text-white text-xs font-bold rounded-full px-2 py-0.5 shadow-md">
+            {unreadCount}
+          </span>
+        )}
       </div>
     </Link>
   );

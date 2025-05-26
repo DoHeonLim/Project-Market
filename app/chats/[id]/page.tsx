@@ -11,6 +11,7 @@ Date        Author   Status    Description
 2024.11.21  임도헌   Modified  Chatroom을 productChatRoom으로 변경
 2024.12.12  임도헌   Modified  뒤로가기 버튼 추가
 2024.12.22  임도헌   Modified  채팅방에 어떤 제품인지 추가
+2025.05.01  임도헌   Modified  뒤로가기 버튼 삭제
 */
 
 // 해야될 것 만약 이미 해당 유저 두명이 존재하는 채팅방이 있다면 새로 방을 생성하지 않고
@@ -25,7 +26,6 @@ import {
   getUserProfile,
   readMessageUpdate,
 } from "./actions";
-import BackButton from "@/components/back-button";
 
 export default async function ChatRoom({ params }: { params: { id: string } }) {
   const chatRoomId = params.id;
@@ -47,8 +47,7 @@ export default async function ChatRoom({ params }: { params: { id: string } }) {
   await readMessageUpdate(chatRoomId, session.id!);
 
   return (
-    <div className="mt-14">
-      <BackButton className="bg-opacity-0" />
+    <>
       <ChatMessagesList
         productChatRoomId={chatRoomId}
         userId={session.id!}
@@ -57,6 +56,6 @@ export default async function ChatRoom({ params }: { params: { id: string } }) {
         initialMessages={initialMessages}
         product={room.product}
       />
-    </div>
+    </>
   );
 }

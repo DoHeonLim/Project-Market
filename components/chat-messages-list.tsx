@@ -18,6 +18,7 @@
  2024.12.30  임도헌   Modified  스크롤 버그 수정
  2025.02.02  임도헌   Modified  신속한 교신병 뱃지 체크 추가(checkQuickResponseBadge)
  2025.04.18  임도헌   Modified  checkQuickResponseBadge를 server action으로 변경하고 불러오게 변경
+ 2025.05.10  임도헌   Modified  UI 개선
  */
 "use client";
 
@@ -46,7 +47,6 @@ interface IChatMessageListProps {
     title: string;
     images: { url: string }[];
     price: number;
-    game_type: string;
     purchase_userId: number | null;
     reservation_userId: number | null;
   };
@@ -184,11 +184,39 @@ export default function ChatMessagesList({
     return () => clearTimeout(timer);
   }, [messages, scrollToBottom]);
 
+  // 상대방 정보 추출 (본인 제외)
+  const otherUser = messages.find((msg) => msg.userId !== userId)?.user;
+
   return (
-    <div className="flex flex-col h-[95vh] bg-neutral-50/5 dark:bg-background-dark/30">
-      <div className="relative p-4 backdrop-blur-sm bg-white/10 dark:bg-background-dark/50 border-b border-neutral-200/20 dark:border-primary-dark/30">
-        <div className="flex items-center gap-4">
-          <div className="relative size-16 flex-shrink-0 rounded-lg overflow-hidden border border-neutral-200/20 dark:border-primary-dark/30">
+    <div className="flex flex-col h-screen bg-neutral-50/5 dark:bg-background-dark/30">
+      {/* 상단바: 뒤로가기 + 유저 정보 + 제품 정보 */}
+      <div className="fixed left-1/2 -translate-x-1/2 w-full max-w-screen-sm z-50 bg-neutral-200 dark:bg-neutral-800 border-b border-neutral-200/20 dark:border-primary-dark/30 backdrop-blur-sm">
+        <div className="flex items-center gap-2 px-4 py-2 w-full flex-nowrap overflow-x-auto">
+          <button
+            onClick={() => window.history.back()}
+            className="text-neutral-500 hover:text-neutral-300 flex-shrink-0"
+            aria-label="뒤로가기"
+          >
+            <svg width="32" height="32" fill="none" viewBox="0 0 24 24">
+              <path
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+          </button>
+          {otherUser && (
+            <UserAvatar
+              avatar={otherUser.avatar}
+              username={otherUser.username}
+              size="md"
+              showUsername={true}
+              disabled={true}
+            />
+          )}
+          <div className="relative size-12 flex-shrink-0 rounded-lg overflow-hidden border border-neutral-200/20 dark:border-primary-dark/30">
             <Image
               src={`${product.images[0]?.url}/avatar`}
               alt={product.title}
@@ -196,31 +224,28 @@ export default function ChatMessagesList({
               className="object-cover"
             />
           </div>
-          <div className="flex flex-col gap-2 min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="px-2 py-1 text-xs bg-primary/10 text-primary dark:bg-primary-light/10 dark:text-primary-light rounded-full">
-                🎲 {product.game_type}
-              </span>
+          <div className="flex flex-col flex-1 min-w-0 gap-1">
+            <div className="flex justify-center items-center gap-2 flex-wrap min-w-0">
               {product.purchase_userId ? (
-                <span className="px-2 py-1 text-xs bg-neutral-500 text-white rounded-full">
+                <span className="px-2 py-1 text-xs bg-neutral-500 text-white rounded-full truncate">
                   ⚓ 판매완료
                 </span>
               ) : product.reservation_userId ? (
-                <span className="px-2 py-1 text-xs bg-green-500 text-white rounded-full">
+                <span className="px-2 py-1 text-xs bg-green-500 text-white rounded-full truncate">
                   🛞 예약중
                 </span>
               ) : null}
+              <span className="font-medium text-primary dark:text-secondary-light truncate text-sm sm:text-base">
+                {product.title}
+              </span>
+              <span className="text-xs sm:text-sm font-medium text-accent dark:text-accent-light truncate">
+                💰 {formatToWon(product.price)}원
+              </span>
             </div>
-            <h2 className="font-medium text-primary dark:text-secondary-light truncate">
-              {product.title}
-            </h2>
-            <p className="text-sm font-medium text-accent dark:text-accent-light">
-              💰 {formatToWon(product.price)}원
-            </p>
           </div>
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto mt-20">
         <div className="p-5 space-y-5">
           {messages.map((message, index) => (
             <div
@@ -235,6 +260,7 @@ export default function ChatMessagesList({
                   avatar={message.user.avatar}
                   username={message.user.username}
                   size="sm"
+                  showUsername={false}
                 />
               )}
               <div
@@ -249,7 +275,7 @@ export default function ChatMessagesList({
                 >
                   <span
                     className={`
-                      p-3 rounded-2xl break-words
+                      p-3 rounded-2xl break-all whitespace-pre-line
                       ${
                         message.userId === userId
                           ? "bg-primary dark:bg-primary-dark text-white rounded-tr-none"
@@ -291,8 +317,8 @@ export default function ChatMessagesList({
           ))}
         </div>
       </div>
-      <div className="p-4">
-        <form className="relative flex items-center" onSubmit={onSubmit}>
+      <div className="p-4 flex-shrink-0 w-full bg-transparent">
+        <form className="relative flex items-center w-full" onSubmit={onSubmit}>
           <input
             required
             onChange={onChange}

@@ -10,6 +10,7 @@ Date        Author   Status    Description
 2024.11.06  임도헌   Modified  useOptimistic기능으로 댓글 추가 구현
 2024.12.19  임도헌   Modified  댓글 폼 스타일 변경
 2024.12.29  임도헌   Modified  댓글 input에 text색 변경
+2025.05.08  임도헌   Modified  alert를 toast로 변경
 
 */
 "use client";
@@ -20,6 +21,7 @@ import { createComment } from "@/app/posts/[id]/actions";
 import Button from "./button";
 import { useRef } from "react";
 import { ICommentsProps } from "./comment";
+import { toast } from "sonner";
 
 export default function CommentForm({
   postId,
@@ -52,7 +54,7 @@ export default function CommentForm({
     addOptimisticComment(optimisticComment);
 
     formData.set("postId", String(postId));
-    alert("댓글을 등록했습니다.");
+    toast.success("댓글이 등록되었습니다.");
     // 폼 제출 후 초기화
     formRef.current?.reset();
     return action(formData);

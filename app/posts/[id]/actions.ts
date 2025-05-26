@@ -96,7 +96,7 @@ export const createComment = async (_: any, FormData: FormData) => {
   if (!results.success) {
     return results.error.flatten();
   } else {
-    // 댓글 생성성
+    // 댓글 생성
     await db.comment.create({
       data: {
         payload: results.data.payload,

@@ -1,5 +1,6 @@
 /*2024-11-23 커스텀 스크롤바 추가*/
 /*2024-12-14 버튼, 카드, 인풋 디자인 변경*/
+/*2025-04-29 다크모드 전환 애니메이션 개선 및 구름 요소 반응형 추가*/
 
 @tailwind base;
 @tailwind components;
@@ -37,11 +38,14 @@
     --radius-medium: 0.5rem;
     --radius-large: 0.75rem;
   }
-  /* a {
-    @apply text-primary-light hover:text-primary-dark 
-           dark:text-primary-light dark:hover:text-primary
-           transition-colors;
-  } */
+
+  /* 다크모드 전환 애니메이션 */
+  * {
+    transition-property: color, background-color, border-color,
+      text-decoration-color, fill, stroke;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 300ms;
+  }
 }
 
 @layer components {
@@ -275,7 +279,6 @@
   left: 90%;
   animation: twinkle 3s infinite;
 }
-/* ... 더 많은 별들 추가 ... */
 
 /* 파도 애니메이션 수정 */
 .wave {
@@ -376,5 +379,24 @@
   .lighthouse-light {
     width: 20px;
     height: 20px;
+  }
+  .cloud1 {
+    width: 80px;
+    height: 30px;
+  }
+  .cloud2 {
+    width: 60px;
+    height: 25px;
+  }
+  .cloud3 {
+    width: 70px;
+    height: 30px;
+  }
+  .seagull {
+    width: 40px;
+    height: 30px;
+  }
+  .wave {
+    height: 60px;
   }
 }

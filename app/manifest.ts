@@ -39,12 +39,12 @@ export default function manifest(): MetadataRoute.Manifest {
         src: "/images/favicon-196x196.png",
         sizes: "196x196",
         type: "image/png",
-        purpose: "maskable",
       },
       {
-        src: "/images/mstile-310x310.png",
-        sizes: "310x310",
+        src: "/images/favicon-196x196-maskable.png",
+        sizes: "196x196",
         type: "image/png",
+        purpose: "maskable",
       },
     ],
   };

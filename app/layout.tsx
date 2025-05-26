@@ -5,6 +5,7 @@ import ThemeProvider from "@/components/providers/ThemeProvider";
 import { Toaster } from "sonner";
 import NotificationListener from "@/components/notification-listener";
 import getSession from "@/lib/session";
+import ServiceWorkerRegistration from "@/components/service-worker-registration";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -48,11 +49,6 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  if (typeof window !== "undefined" && "serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/sw.js");
-    });
-  }
   const session = await getSession();
   return (
     <html lang="ko" suppressHydrationWarning>
@@ -65,7 +61,7 @@ export default async function RootLayout({
           sm:max-w-screen-sm sm:mx-auto sm:shadow-xl
           pb-[env(safe-area-inset-bottom)]`}
       >
-        <Toaster />
+        <Toaster position="bottom-right" richColors closeButton />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -73,6 +69,7 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           {session.id && <NotificationListener userId={session.id} />}
+          <ServiceWorkerRegistration />
           {children}
         </ThemeProvider>
       </body>

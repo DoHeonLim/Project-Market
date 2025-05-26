@@ -11,28 +11,37 @@
  2024.11.21  임도헌   Modified  Link를 StreamDetail로 옮김
  2024.11.23  임도헌   Modified  스트리밍 채팅방 컴포넌트 추가
  2024.12.12  임도헌   Modified  뒤로가기 버튼 추가
+ 2025.05.16  임도헌   Modified  스트리밍 상태 캐싱 최적화
  */
 
 import getSession from "@/lib/session";
 import { notFound } from "next/navigation";
-import { getStream, getStreamChatRoom, getStreamMessages } from "./actions";
-import { streamStatus } from "@/app/(tabs)/live/actions";
-import StreamDetail from "@/components/stream-detail";
+import {
+  getStreamDetail,
+  getStreamChatRoom,
+  getStreamMessages,
+  updateStreamStatus,
+} from "./actions";
 import { unstable_cache as nextCache } from "next/cache";
 import StreamChatRoom from "@/components/stream-chat-room";
 import { getUserProfile } from "@/app/chats/[id]/actions";
 import BackButton from "@/components/back-button";
+import StreamDetail from "@/components/stream-detail";
 
 // 스트리밍 캐싱
-const getCachedStream = nextCache(getStream, ["stream-detail"], {
+const getCachedStream = nextCache(getStreamDetail, ["stream-detail"], {
   tags: ["stream-detail"],
 });
 
 // 스트리밍 상태 캐싱
-const getCachedStatus = nextCache(streamStatus, ["stream-detail-status"], {
-  tags: ["stream-detail-status"],
-  revalidate: 60, // 1분
-});
+const getCachedStatus = nextCache(
+  updateStreamStatus,
+  ["stream-detail-status"],
+  {
+    tags: ["stream-detail-status"],
+    // revalidate: 30, // 30초마다 갱신
+  }
+);
 
 export default async function StreamDetailPage({
   params,
@@ -44,22 +53,31 @@ export default async function StreamDetailPage({
     return notFound();
   }
 
-  const [stream, session, streamChatRoom, user] = await Promise.all([
+  const [initialStream, session, streamChatRoom, user] = await Promise.all([
     getCachedStream(id),
     getSession(),
     getStreamChatRoom(id),
     getUserProfile(),
   ]);
 
-  if (!stream || !streamChatRoom || !user) {
+  if (!initialStream || !streamChatRoom || !user) {
     return notFound();
   }
 
-  // 현재 방송 상태
-  const status = await getCachedStatus(stream.stream_id);
-  // 방송 상태 가져오기 실패 시 스트리밍이 존재하지 않음
+  // 현재 방송 상태 업데이트 (캐시 적용)
+  const status = await getCachedStatus(initialStream.stream_id);
   if (!status.success) {
-    return notFound();
+    console.error("Failed to update stream status:", status.error);
+    // 상태 업데이트 실패 시에도 페이지는 표시
+  }
+
+  // 상태가 변경되었다면 stream 데이터 갱신
+  let stream = initialStream;
+  if (status.success && status.status !== initialStream.status) {
+    const updatedStream = await getCachedStream(id);
+    if (updatedStream) {
+      stream = updatedStream;
+    }
   }
 
   // 방송 메시지 초기화
@@ -69,12 +87,7 @@ export default async function StreamDetailPage({
     <div>
       <BackButton className="" />
       <div className="p-10">
-        <StreamDetail
-          stream={stream}
-          me={session.id!}
-          status={status}
-          streamId={id}
-        />
+        <StreamDetail stream={stream} me={session.id!} streamId={id} />
         <StreamChatRoom
           initialStreamMessage={initialStreamMessage}
           streamChatRoomId={streamChatRoom.id}

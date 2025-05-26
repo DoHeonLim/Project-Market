@@ -10,6 +10,7 @@ Date        Author   Status    Description
 2024.10.17  임도헌   Modified  이미지 최대 크기 상수 추가
 2024.12.10  임도헌   Modified  이미지 스켈레톤 상수 추가
 2025.04.13  임도헌   Modified  제품 관련 상수 추가
+2025.05.22  임도헌   Modified  스트리밍 접근 제어 상수 추가
 */
 
 // 패스워드 최소 값
@@ -80,4 +81,30 @@ export const COMPLETENESS_DISPLAY = {
   USED: "사용감 있음",
   REPLACEMENT: "대체 부품",
   INCOMPLETE: "부품 누락",
+} as const;
+
+// 스트리밍 접근 제어 상수
+export const STREAM_VISIBILITY = {
+  PUBLIC: "PUBLIC", // 모든 사용자 접근 가능
+  PRIVATE: "PRIVATE", // 비밀번호로 보호 (비공개)
+  FOLLOWERS: "FOLLOWERS", // 팔로워만 접근 가능
+} as const;
+
+// 스트리밍 접근 제어 타입
+export type StreamVisibility =
+  (typeof STREAM_VISIBILITY)[keyof typeof STREAM_VISIBILITY];
+
+// 스트리밍 접근 제어 한글 표시
+export const STREAM_VISIBILITY_DISPLAY = {
+  PUBLIC: "공개",
+  PRIVATE: "비공개",
+  FOLLOWERS: "팔로워만",
+} as const;
+
+// 스트리밍 카테고리
+export const STREAM_CATEGORY = {
+  GAME_PLAY: "🎮 게임 플레이",
+  REVIEW: "📝 리뷰",
+  WORKTHROUGH: "📚 공략",
+  COMMUNITY: "💬 커뮤니티",
 } as const;

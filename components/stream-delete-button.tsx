@@ -7,6 +7,7 @@ History
 Date        Author   Status    Description
 2024.11.19  임도헌   Created
 2024.11.19  임도헌   Modified  스트리밍 삭제 버튼 추가
+2025.05.16  임도헌   Modified  status props 추가
 
 */
 "use client";
@@ -16,14 +17,14 @@ import { DeleteResponse } from "./comment-delete-button";
 interface IStreamDeleteButton {
   streamId: string;
   id: number;
-  isLived: string;
+  status: string;
   onDelete: (streamId: string, id: number) => Promise<DeleteResponse>;
 }
 
 export default function StreamDeleteButton({
   streamId,
   id,
-  isLived,
+  status,
   onDelete,
 }: IStreamDeleteButton) {
   const router = useRouter();
@@ -43,16 +44,17 @@ export default function StreamDeleteButton({
       }
     }
   };
+
+  // 방송 중이거나 상태가 없는 경우 삭제 버튼을 숨김
+  const isStreaming = status === "connected";
+  if (isStreaming) return null;
+
   return (
-    <>
-      {isLived === null || isLived === "connected" ? null : (
-        <button
-          onClick={handleDeleteClick}
-          className="w-full mt-4 font-semibold text-[10px] text-white bg-rose-600 rounded-md hover:bg-rose-500 transition-colors sm:text-lg md:text-xl"
-        >
-          스트리밍 삭제
-        </button>
-      )}
-    </>
+    <button
+      onClick={handleDeleteClick}
+      className="w-full flex items-center justify-center flex-1 font-semibold text-white my-2 h-8 px-auto sm:text-lg md:text-xl bg-rose-600 rounded-md hover:bg-rose-500 transition-colors"
+    >
+      스트리밍 삭제
+    </button>
   );
 }

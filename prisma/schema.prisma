@@ -36,6 +36,8 @@
 // 2024.12.31  임도헌   Modified   PushSubscription 제약조건 추가
 // 2025.04.18  임도헌   Modified   User 모델에 이메일 인증 여부 추가
 // 2025.04.18  임도헌   Modified   EmailToken 모델 추가
+// 2025.05.18  임도헌   Modified   streamr관련 모델 전체 수정
+// 2025.05.22  임도헌   Modified   Follow 모델 추가
 
 generator client {
   provider = "prisma-client-js"
@@ -78,7 +80,10 @@ model User {
   push_subscriptions       PushSubscription[] //유저가 푸시 구독
   notification_preferences NotificationPreferences? //유저가 알림 설정
   search_histories         SearchHistory[] //유저가 검색한 기록
-  EmailToken               EmailToken[]
+  EmailToken               EmailToken[] // 유저 이메일 토큰
+  StreamViewer             StreamViewer[] // 유저 라이브 스트리밍 시청자 목록
+  followers                Follow[]                 @relation("Followers") // 나를 팔로우하는 사람들
+  following                Follow[]                 @relation("Following") // 내가 팔로우하는 사람들
 
   @@index([username]) // 사용자명 검색용
 }
@@ -134,6 +139,20 @@ model EmailToken {
   @@index([userId])
 }
 
+// 팔로우 모델
+model Follow {
+  id          Int      @id @default(autoincrement())
+  follower    User     @relation("Following", fields: [followerId], references: [id], onDelete: Cascade)
+  followerId  Int
+  following   User     @relation("Followers", fields: [followingId], references: [id], onDelete: Cascade)
+  followingId Int
+  created_at  DateTime @default(now())
+
+  @@unique([followerId, followingId]) // 한 유저는 다른 유저를 한 번만 팔로우할 수 있음
+  @@index([followerId])
+  @@index([followingId])
+}
+
 // 제품 모델
 // 판매 제품에 산 유저(purchaseUser) 추가해야되고, 판매 시간(purchaseDate) 추가, 판매 시간으로 제품 판매 여부 체크
 // 판매여부는 판매 시간으로 추정이 가능하다.
@@ -180,7 +199,8 @@ model Product {
 // 카테고리 모델
 model Category {
   id          Int        @id @default(autoincrement())
-  name        String // 전략, 가족, 파티, 협력 등
+  eng_name    String // 영어 이름
+  kor_name    String // 한글 이름
   icon        String? // 카테고리 아이콘
   description String?
   products    Product[]
@@ -331,17 +351,74 @@ model Comment {
 
 // 라이브 스트리밍 모델
 model LiveStream {
-  id         Int    @id @default(autoincrement()) //라이브 스트리밍 고유 아이디
-  title      String //라이브 스트리밍 제목
-  stream_key String //라이브 스트리밍 키
-  stream_id  String //라이브 스트리밍 아이디
+  id                Int       @id @default(autoincrement()) // 라이브 스트리밍 고유 아이디
+  title             String // 라이브 스트리밍 제목
+  description       String? // 라이브 스트리밍 설명
+  thumbnail         String? // 썸네일 이미지 URL
+  stream_key        String // 라이브 스트리밍 키
+  stream_id         String // 라이브 스트리밍 아이디
+  status            String // 스트리밍 상태
+  last_status_check DateTime? // 마지막 상태 체크 시간
+  started_at        DateTime? // 실제 시작 시간
+  ended_at          DateTime? // 종료 시간
+  replay_view_count Int       @default(0) // 녹화 시청자 수
+  duration          Int? // 스트리밍 지속 시간 (초)
+  visibility        String    @default("PUBLIC") // 스트리밍 접근 제어 (PUBLIC, PRIVATE, FOLLOWERS)
+  password          String? // 비밀번호 보호 시 사용(PRIVATE)
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade) //라이브 스트리밍 유저
-  userId         Int
-  streamChatRoom StreamChatRoom? //라이브 스트리밍 채팅방
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade) // 라이브 스트리밍 유저
+  userId           Int
+  streamChatRoom   StreamChatRoom? // 라이브 스트리밍 채팅방
+  tags             StreamTag[]     @relation("StreamTags") // 스트리밍 태그
+  category         StreamCategory  @relation(fields: [streamCategoryId], references: [id]) // 스트리밍 카테고리
+  streamCategoryId Int
+  viewers          StreamViewer[] // 현재 시청자 목록
+
+  @@index([status]) // 상태별 조회
+}
+
+// 스트리밍 시청자 모델
+model StreamViewer {
+  id       Int        @id @default(autoincrement())
+  userId   Int // 시청자 ID
+  streamId Int // 스트리밍 ID
+  joinedAt DateTime   @default(now()) // 시청 시작 시간
+  leftAt   DateTime? // 시청 종료 시간
+  stream   LiveStream @relation(fields: [streamId], references: [id], onDelete: Cascade)
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, streamId])
+  @@index([streamId])
+}
+
+// 라이브 스트리밍 태그 모델
+model StreamTag {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  streams LiveStream[] @relation("StreamTags")
+
+  @@index([name])
+}
+
+// 라이브 스트리밍 카테고리 모델
+model StreamCategory {
+  id          Int              @id @default(autoincrement())
+  eng_name    String // 영어 이름
+  kor_name    String // 한글 이름
+  icon        String? // 카테고리 아이콘
+  description String?
+  livestreams LiveStream[]
+  parent      StreamCategory?  @relation("StreamCategoryHierarchy", fields: [parentId], references: [id])
+  parentId    Int?
+  children    StreamCategory[] @relation("StreamCategoryHierarchy")
+
+  @@index([parentId]) // 부모 카테고리 조회
 }
 
 // 라이브 스트리밍 채팅방 모델

@@ -8,6 +8,7 @@ Date        Author   Status    Description
 2024.12.15  임도헌   Created
 2024.12.15  임도헌   Modified  카테고리 시드 추가
 2025.04.13  임도헌   Modified  뱃지 시드 추가
+2025.05.08  임도헌   Modified  스트리밍 카테고리 시드 추가
 */
 
 import { PrismaClient } from "@prisma/client";
@@ -15,109 +16,158 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
+  // 기존 데이터 삭제 (순서 중요)
+  await prisma.productMessage.deleteMany();
+  await prisma.productChatRoom.deleteMany();
+  await prisma.productImage.deleteMany();
+  await prisma.productLike.deleteMany();
+  await prisma.review.deleteMany();
+  await prisma.product.deleteMany();
+  await prisma.badge.deleteMany();
+  await prisma.category.deleteMany();
+  await prisma.streamCategory.deleteMany();
+
   const categories = [
     {
-      name: "전략",
+      eng_name: "STRATEGY",
+      kor_name: "전략",
       icon: "🎯",
       description: "전략적 사고가 필요한 게임",
       subcategories: [
         {
-          name: "경제",
+          eng_name: "ECONOMY",
+          kor_name: "경제",
           icon: "💰",
           description: "자원 관리와 경제 운영이 중심인 게임",
         },
         {
-          name: "정복",
+          eng_name: "CONQUEST",
+          kor_name: "점령",
           icon: "⚔️",
           description: "영토 확장과 전투가 있는 게임",
         },
         {
-          name: "문명",
+          eng_name: "CIVILIZATION",
+          kor_name: "문명",
           icon: "🏛️",
           description: "문명을 발전시키고 성장시키는 게임",
         },
-        { name: "워게임", icon: "🎖️", description: "전쟁 시뮬레이션 게임" },
+        {
+          eng_name: "WARGAME",
+          kor_name: "전쟁",
+          icon: "🎖️",
+          description: "전쟁 시뮬레이션 게임",
+        },
       ],
     },
     {
-      name: "가족",
+      eng_name: "FAMILY",
+      kor_name: "가족",
       icon: "👨‍👩‍👧‍👦",
       description: "온가족이 함께 즐길 수 있는 게임",
       subcategories: [
         {
-          name: "어린이",
+          eng_name: "CHILDREN",
+          kor_name: "어린이",
           icon: "🧒",
           description: "아이들도 쉽게 즐길 수 있는 게임",
         },
         {
-          name: "파티",
+          eng_name: "PARTY",
+          kor_name: "파티",
           icon: "🎉",
           description: "여러 명이 함께 즐기는 파티 게임",
         },
         {
-          name: "교육",
+          eng_name: "EDUCATION",
+          kor_name: "교육",
           icon: "📚",
           description: "학습 요소가 포함된 교육용 게임",
         },
       ],
     },
     {
-      name: "테마",
+      eng_name: "THEME",
+      kor_name: "테마",
       icon: "🎭",
       description: "특정 테마나 세계관을 가진 게임",
       subcategories: [
         {
-          name: "판타지",
+          eng_name: "FANTASY",
+          kor_name: "판타지",
           icon: "🐉",
           description: "마법과 모험이 있는 판타지 게임",
         },
         {
-          name: "공포",
+          eng_name: "HORROR",
+          kor_name: "공포",
           icon: "👻",
           description: "공포와 미스터리 테마의 게임",
         },
-        { name: "SF", icon: "🚀", description: "공상과학 테마의 게임" },
         {
-          name: "역사",
+          eng_name: "SF",
+          kor_name: "공상과학",
+          icon: "🚀",
+          description: "공상과학 테마의 게임",
+        },
+        {
+          eng_name: "HISTORY",
+          kor_name: "역사",
           icon: "📜",
           description: "역사적 사건이나 시대 배경의 게임",
         },
       ],
     },
     {
-      name: "추리",
+      eng_name: "REASONING",
+      kor_name: "추리",
       icon: "🔍",
       description: "논리적 추론이 필요한 게임",
       subcategories: [
         {
-          name: "범죄",
+          eng_name: "CRIME",
+          kor_name: "범죄",
           icon: "🕵️",
           description: "범죄 해결과 수사가 테마인 게임",
         },
         {
-          name: "미스터리",
+          eng_name: "MYSTERY",
+          kor_name: "미스터리",
           icon: "🎭",
           description: "비밀과 수수께끼를 푸는 게임",
         },
         {
-          name: "사회적 추리",
+          eng_name: "SOCIAL_MYSTERY",
+          kor_name: "사회적 추리",
           icon: "🗣️",
           description: "마피아류의 사회적 추리 게임",
         },
       ],
     },
     {
-      name: "협력",
+      eng_name: "COOPERATION",
+      kor_name: "협력",
       icon: "🤝",
       description: "플레이어들이 협력하는 게임",
       subcategories: [
-        { name: "생존", icon: "🏝️", description: "함께 생존해나가는 게임" },
         {
-          name: "퍼즐",
+          eng_name: "SURVIVAL",
+          kor_name: "생존",
+          icon: "🏝️",
+          description: "함께 생존해나가는 게임",
+        },
+        {
+          eng_name: "PUZZLE",
+          kor_name: "퍼즐",
           icon: "🧩",
           description: "협력하여 퍼즐을 해결하는 게임",
         },
-        { name: "팀전", icon: "👥", description: "팀을 이루어 대결하는 게임" },
+        {
+          eng_name: "TEAM_GAME",
+          kor_name: "팀 게임",
+          icon: "👥",
+          description: "팀을 이루어 대결하는 게임",
+        },
       ],
     },
   ];
@@ -133,6 +183,133 @@ async function main() {
     // 서브카테고리 생성 및 부모 카테고리와 연결
     for (const subcategory of subcategories) {
       await prisma.category.create({
+        data: {
+          ...subcategory,
+          parentId: mainCategory.id,
+        },
+      });
+    }
+  }
+
+  // 스트리밍 카테고리 데이터
+  const streamCategories = [
+    {
+      eng_name: "GAME_PLAY",
+      kor_name: "게임 플레이",
+      icon: "🎮",
+      description: "실시간 게임 플레이 스트리밍",
+      subcategories: [
+        {
+          eng_name: "MULTIPLAYER",
+          kor_name: "멀티플레이",
+          icon: "👥",
+          description: "여러 명이 함께하는 게임 플레이",
+        },
+        {
+          eng_name: "SOLO_PLAY",
+          kor_name: "솔로 플레이",
+          icon: "🎯",
+          description: "개인 플레이 스트리밍",
+        },
+        {
+          eng_name: "TOURNAMENT",
+          kor_name: "토너먼트",
+          icon: "🏆",
+          description: "대회나 토너먼트 스트리밍",
+        },
+      ],
+    },
+    {
+      eng_name: "REVIEW",
+      kor_name: "리뷰",
+      icon: "📝",
+      description: "게임 리뷰 및 분석",
+      subcategories: [
+        {
+          eng_name: "NEW_GAME_REVIEW",
+          kor_name: "신규 게임 리뷰",
+          icon: "🆕",
+          description: "새로 출시된 게임 리뷰",
+        },
+        {
+          eng_name: "CLASSIC_REVIEW",
+          kor_name: "클래식 게임 리뷰",
+          icon: "⭐",
+          description: "클래식 게임 리뷰",
+        },
+        {
+          eng_name: "COMPARISON_REVIEW",
+          kor_name: "비교 리뷰",
+          icon: "⚖️",
+          description: "게임 비교 분석",
+        },
+      ],
+    },
+    {
+      eng_name: "WORKTHROUGH",
+      kor_name: "공략",
+      icon: "📚",
+      description: "게임 공략 및 팁",
+      subcategories: [
+        {
+          eng_name: "BEGINNER_GUIDE",
+          kor_name: "초보자 가이드",
+          icon: "🎓",
+          description: "초보자를 위한 게임 가이드",
+        },
+        {
+          eng_name: "STRATEGY_WORKTHROUGH",
+          kor_name: "전략 공략",
+          icon: "🎯",
+          description: "게임 전략과 공략",
+        },
+        {
+          eng_name: "RULE_DESCRIPTION",
+          kor_name: "규칙 설명",
+          icon: "📖",
+          description: "게임 규칙 상세 설명",
+        },
+      ],
+    },
+    {
+      eng_name: "COMMUNITY",
+      kor_name: "커뮤니티",
+      icon: "💬",
+      description: "커뮤니티 활동",
+      subcategories: [
+        {
+          eng_name: "Q&A",
+          kor_name: "질문과 답변",
+          icon: "❓",
+          description: "게임 관련 질문과 답변",
+        },
+        {
+          eng_name: "DISCUSSION",
+          kor_name: "토론",
+          icon: "🗣️",
+          description: "게임 관련 토론",
+        },
+        {
+          eng_name: "EVENT",
+          kor_name: "이벤트",
+          icon: "🎉",
+          description: "커뮤니티 이벤트",
+        },
+      ],
+    },
+  ];
+
+  // 스트리밍 카테고리와 서브카테고리 생성
+  for (const category of streamCategories) {
+    const { subcategories, ...categoryData } = category;
+
+    const mainCategory = await prisma.streamCategory.create({
+      data: categoryData,
+    });
+
+    // 서브카테고리 생성 및 부모 카테고리와 연결
+    for (const subcategory of subcategories) {
+      await prisma.streamCategory.create({
         data: {
           ...subcategory,
           parentId: mainCategory.id,
@@ -242,7 +419,7 @@ async function main() {
     });
   }
 
-  console.log("카테고리와 뱃지 시드 완료!");
+  console.log("카테고리, 스트리밍 카테고리, 뱃지 시드 완료!");
 }
 
 main()

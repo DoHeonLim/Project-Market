@@ -11,6 +11,7 @@ Date        Author   Status    Description
 2024.10.11  임도헌   Modified  초기 state 전화번호 추가
 2024.12.14  임도헌   Modified  다른 방법의 로그인 링크 추가
 2024.12.24  임도헌   Modified  스타일 변경
+2025.04.29  임도헌   Modified  UI 수정
 */
 "use client";
 
@@ -30,16 +31,16 @@ const initialState = {
 export default function SMSLogin() {
   const [state, action] = useFormState(smsLogin, initialState);
   return (
-    <div className="flex flex-col gap-10 px-6 py-8 bg-background dark:bg-background-dark">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-medium text-text dark:text-text-dark">
+    <div className="flex flex-col gap-6 sm:gap-8 px-4 sm:px-6 py-6 sm:py-8 bg-background dark:bg-background-dark">
+      <div className="flex flex-col gap-2 items-center">
+        <h1 className="text-xl sm:text-2xl font-medium text-text dark:text-text-dark">
           🏮 등대 신호로 로그인
         </h1>
-        <h2 className="text-xl font-medium text-text dark:text-text-dark">
+        <p className="text-base sm:text-lg text-text/80 dark:text-text-dark/80">
           📱 전화번호로 빠른 항해를 시작하세요
-        </h2>
+        </p>
       </div>
-      <form action={action} className="flex flex-col gap-3">
+      <form action={action} className="flex flex-col gap-4 sm:gap-6">
         {state.token ? (
           <Input
             key="token"
@@ -52,7 +53,7 @@ export default function SMSLogin() {
             required
             icon={
               <svg
-                className="w-5 h-5"
+                className="w-4 h-4 sm:w-5 sm:h-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -76,7 +77,7 @@ export default function SMSLogin() {
             required
             icon={
               <svg
-                className="w-5 h-5"
+                className="w-4 h-4 sm:w-5 sm:h-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -93,7 +94,7 @@ export default function SMSLogin() {
         )}
         <Button text={state.token ? "🔍 신호 확인" : "💫 등대 신호 보내기"} />
       </form>
-      <div className="flex gap-2 text-text/90 dark:text-text-dark/90">
+      <div className="flex items-center justify-center gap-2 text-text/90 dark:text-text-dark/90 text-sm sm:text-base">
         <span>다른 방법으로 항해하실래요?</span>
         <Link
           href="/login"

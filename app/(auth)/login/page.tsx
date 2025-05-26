@@ -10,6 +10,7 @@ Date        Author   Status    Description
 2024.10.04  임도헌   Modified  폼 제출 유효성 검증 추가
 2024.12.14  임도헌   Modified  다른 방법의 로그인 링크 추가
 2024.12.24  임도헌   Modified  스타일 변경
+2025.04.29  임도헌   Modified  UI 수정
 */
 
 "use client";
@@ -26,18 +27,16 @@ export default function Login() {
   const [state, action] = useFormState(login, null);
 
   return (
-    <div className="flex flex-col gap-10 px-6 py-8 bg-gradient-to-b from-background to-background/95 dark:from-background-dark dark:to-background-dark/95">
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-bold text-text dark:text-text-dark">
-            ⚓ 항해 준비
-          </h1>
-        </div>
-        <p className="text-lg text-text/80 dark:text-text-dark/80">
+    <div className="flex flex-col gap-6 sm:gap-8 px-4 sm:px-6 py-6 sm:py-8 bg-gradient-to-b from-background to-background/95 dark:from-background-dark dark:to-background-dark/95">
+      <div className="flex flex-col gap-2 items-center">
+        <h1 className="text-xl sm:text-2xl font-medium text-text dark:text-text-dark">
+          ⚓ 항해 준비
+        </h1>
+        <p className="text-base sm:text-lg text-text/80 dark:text-text-dark/80">
           보드포트의 바다로 돌아오신 것을 환영합니다
         </p>
       </div>
-      <form action={action} className="flex flex-col gap-4">
+      <form action={action} className="flex flex-col gap-4 sm:gap-6">
         <Input
           name="email"
           type="email"
@@ -46,7 +45,7 @@ export default function Login() {
           required
           icon={
             <svg
-              className="w-5 h-5"
+              className="w-4 h-4 sm:w-5 sm:h-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -69,7 +68,7 @@ export default function Login() {
           required
           icon={
             <svg
-              className="w-5 h-5"
+              className="w-4 h-4 sm:w-5 sm:h-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -85,7 +84,7 @@ export default function Login() {
         />
         <Button text="⛵ 항해 시작하기" />
       </form>
-      <div className="flex items-center gap-2 text-text/90 dark:text-text-dark/90">
+      <div className="flex items-center justify-center gap-2 text-text/90 dark:text-text-dark/90 text-sm sm:text-base">
         <span>아직 선원이 아니신가요?</span>
         <Link
           href="/create-account"
@@ -94,7 +93,7 @@ export default function Login() {
           🎯 새로운 선원 등록
         </Link>
       </div>
-      <div className="space-y-3">
+      <div className="space-y-4 sm:space-y-6">
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-text/10 dark:border-text-dark/10"></div>

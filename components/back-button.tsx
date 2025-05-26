@@ -7,6 +7,7 @@
  Date        Author   Status    Description
  2024.12.11  임도헌   Created
  2024.12.11  임도헌   Modified  뒤로가기 버튼 컴포넌트 추가
+ 2025.04.28  임도헌   Modified  href props 추가
  */
 
 "use client";
@@ -16,18 +17,17 @@ import { useRouter } from "next/navigation";
 
 interface BackButtonProps {
   className?: string;
+  href?: string;
 }
 
-export default function BackButton({ className = "" }: BackButtonProps) {
+export default function BackButton({ className = "", href }: BackButtonProps) {
   const router = useRouter();
 
   return (
-    <div
-      className={`fixed left-1/2 -translate-x-1/2 top-0 z-10 max-w-screen-sm w-full ${className}`}
-    >
+    <div className={`fixed left-4 top-4 z-20 ${className}`}>
       <button
-        onClick={() => router.back()}
-        className="p-3 text-neutral-500 transition-colors hover:text-neutral-300 flex justify-start"
+        onClick={() => (href ? router.push(href) : router.back())}
+        className="text-neutral-500 transition-colors hover:text-neutral-300 flex justify-start"
       >
         <ArrowLeftCircleIcon className="w-10 h-10 text-semibold" />
       </button>

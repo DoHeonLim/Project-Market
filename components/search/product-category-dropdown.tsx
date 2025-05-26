@@ -8,58 +8,62 @@ Date        Author   Status    Description
 2024.12.17  임도헌   Created
 2024.12.17  임도헌   Modified  카테고리 드롭다운 컴포넌트 생성(카테고리 검색 기능 추가)
 2025.04.18  임도헌   Modified  드롭다운 색 수정
+2025.04.21  임도헌   Modified  GAME_TYPES를 SEED와 같게 변경
+2025.04.29  임도헌   Modified  검색 링크 변경
+2025.05.23  임도헌   Modified  카테고리 필드명 변경(name->kor_name)
 */
 "use client";
 
 import { useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
-import { ChevronLeftIcon, XMarkIcon } from "@heroicons/react/24/solid";
+import { useRouter } from "next/navigation";
+import { XMarkIcon } from "@heroicons/react/24/solid";
 
 interface CategoryDropdownProps {
   categories: {
     id: number;
-    name: string;
+    kor_name: string;
+    eng_name: string;
     icon: string | null;
     parentId: number | null;
     children: {
       id: number;
-      name: string;
+      kor_name: string;
+      eng_name: string;
       icon: string | null;
     }[];
   }[];
+  onCategorySelect?: () => void;
 }
 
 const GAME_TYPES = [
-  { id: "board", name: "보드게임", icon: "🎲" },
-  { id: "trpg", name: "TRPG", icon: "🎭" },
-  { id: "card", name: "카드게임", icon: "🃏" },
+  { id: "BOARD_GAME", name: "보드게임", icon: "🎲" },
+  { id: "TRPG", name: "TRPG", icon: "🎭" },
+  { id: "CARD_GAME", name: "카드게임", icon: "🃏" },
 ];
 
 export default function ProductCategoryDropdown({
   categories,
+  onCategorySelect,
 }: CategoryDropdownProps) {
   const router = useRouter();
-  const pathname = usePathname();
+
   const [isOpen, setIsOpen] = useState(false);
 
   const handleCategoryClick = (categoryId: number) => {
-    router.push(`/search/products?category=${categoryId}`);
+    router.push(`/products?category=${categoryId}`);
     setIsOpen(false);
+    onCategorySelect?.();
   };
 
   const handleGameTypeClick = (gameType: string) => {
-    router.push(`/search/products?game_type=${gameType}`);
+    router.push(`/products?game_type=${gameType}`);
     setIsOpen(false);
+    onCategorySelect?.();
   };
 
   return (
     <div className="relative">
       <div className="flex items-center justify-between">
-        {pathname !== "/products" && (
-          <button onClick={() => router.push("/products")}>
-            <ChevronLeftIcon className="w-10 h-10 text-semibold" />
-          </button>
-        )}
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="flex items-center gap-1 px-4 py-2 text-sm bg-primary dark:bg-primary-light text-white font-semibold rounded-md hover:bg-primary/90 dark:hover:bg-primary-light/90 transition-colors"
@@ -85,7 +89,7 @@ export default function ProductCategoryDropdown({
                 {GAME_TYPES.map((type) => (
                   <button
                     key={type.id}
-                    onClick={() => handleGameTypeClick(type.name)}
+                    onClick={() => handleGameTypeClick(type.id)}
                     className="w-full flex items-center px-2 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-neutral-700 rounded transition-colors"
                   >
                     {type.icon} <span className="ml-2">{type.name}</span>
@@ -108,7 +112,7 @@ export default function ProductCategoryDropdown({
                       className="w-full flex items-center px-2 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-neutral-700 rounded transition-colors"
                     >
                       {category.icon}{" "}
-                      <span className="ml-2">{category.name}</span>
+                      <span className="ml-2">{category.kor_name}</span>
                     </button>
                   ))}
               </div>

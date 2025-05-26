@@ -8,6 +8,7 @@ Date        Author   Status    Description
 2024.11.25  임도헌   Created
 2024.11.25  임도헌   Modified  프로필 수정 코드 추가
 2024.11.28  임도헌   Modified  프로필 수정 코드 완성
+2025.05.23  임도헌   Modified  getUser에 follow 값 가져오도록 변경
 */
 "use server";
 
@@ -20,17 +21,59 @@ import { passwordUpdateSchema } from "./schema";
 // 유저 프로필 정보 반환
 export const getUser = async () => {
   const session = await getSession();
-  if (session.id) {
+  if (!session.id) {
+    notFound();
+  } else {
     const user = await db.user.findUnique({
       where: {
         id: session.id,
       },
+      select: {
+        id: true,
+        username: true,
+        password: true,
+        avatar: true,
+        email: true,
+        github_id: true,
+        phone: true,
+        created_at: true,
+        updated_at: true,
+        emailVerified: true,
+        _count: {
+          select: {
+            followers: true,
+            following: true,
+          },
+        },
+        followers: {
+          select: {
+            follower: {
+              select: {
+                id: true,
+                username: true,
+                avatar: true,
+              },
+            },
+          },
+        },
+        following: {
+          select: {
+            following: {
+              select: {
+                id: true,
+                username: true,
+                avatar: true,
+              },
+            },
+          },
+        },
+      },
     });
-    if (user) {
-      return user;
+    if (!user) {
+      notFound();
     }
+    return user;
   }
-  notFound();
 };
 
 // 유저 전체 리뷰 찾아서 반환 (초기 5개만)

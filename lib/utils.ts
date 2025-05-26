@@ -11,6 +11,7 @@ Date        Author   Status    Description
 2024.12.11  임도헌   Modified   시간 포맷 수정(한국 시간대 기준)
 2024.12.23  임도헌   Modified   뱃지 관련 함수 추가
 2025.03.29  임도헌   Modified   커뮤니티 기여도 함수명 및 로직 변경(isPopularity)
+2025.04.18  임도헌   Modified   구성품 관리자 뱃지를 품질의 달인 뱃지로 변경
 */
 
 import db from "./db";
@@ -291,7 +292,7 @@ export function getBadgeKoreanName(badgeType: string): string {
     // 4. 신뢰도 뱃지
     VERIFIED_SAILOR: "인증된 선원",
     FAIR_TRADER: "정직한 상인",
-    COMPONENT_KEEPER: "구성품 관리자",
+    QUALITY_MASTER: "품질의 달인",
 
     // 5. 특별 이벤트 뱃지
     EARLY_SAILOR: "첫 항해 선원",

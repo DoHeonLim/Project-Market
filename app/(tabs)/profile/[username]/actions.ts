@@ -13,6 +13,7 @@ Date        Author   Status    Description
 2024.12.07  임도헌   Modified  getUserProfile에 평균 평점 및 갯수 삭제
 2024.12.12  임도헌   Modified  제품 대표 사진 하나 들고오기
 2024.12.22  임도헌   Modified  제품 모델 변경에 따른 리턴값 변경
+2025.05.23  임도헌   Modified  getUserProfile함수 수정(프로필 페이지일 경우만 본인 프로필로 이동)
 */
 
 "use server";
@@ -22,7 +23,10 @@ import getSession from "@/lib/session";
 import { notFound, redirect } from "next/navigation";
 
 // 유저 프로필 제공 함수
-export const getUserProfile = async (username: string) => {
+export const getUserProfile = async (
+  username: string,
+  isprofilepage: boolean
+) => {
   // 한글 디코딩
   const decodedUsername = decodeURIComponent(username);
 
@@ -33,6 +37,34 @@ export const getUserProfile = async (username: string) => {
       username: true,
       avatar: true,
       created_at: true,
+      _count: {
+        select: {
+          followers: true,
+          following: true,
+        },
+      },
+      followers: {
+        select: {
+          follower: {
+            select: {
+              id: true,
+              username: true,
+              avatar: true,
+            },
+          },
+        },
+      },
+      following: {
+        select: {
+          following: {
+            select: {
+              id: true,
+              username: true,
+              avatar: true,
+            },
+          },
+        },
+      },
       reviews: {
         select: {
           id: true,
@@ -53,7 +85,7 @@ export const getUserProfile = async (username: string) => {
   // 유저 본인이면 본인 프로필로 이동하기 위해서 session 정보 가져오기
   const session = await getSession();
   //   유저 본인이면 본인 프로필로 이동하기 위해서 session 정보 가져오기
-  if (session.id === user.id) {
+  if (isprofilepage && session.id === user.id) {
     redirect("/profile");
   }
 
@@ -87,11 +119,11 @@ export const getUserProducts = async (
       purchase_userId: true,
       category: {
         select: {
-          name: true,
+          kor_name: true,
           icon: true,
           parent: {
             select: {
-              name: true,
+              kor_name: true,
               icon: true,
             },
           },
@@ -147,11 +179,11 @@ export const getMoreUserProducts = async (
       purchase_userId: true,
       category: {
         select: {
-          name: true,
+          kor_name: true,
           icon: true,
           parent: {
             select: {
-              name: true,
+              kor_name: true,
               icon: true,
             },
           },
@@ -177,4 +209,20 @@ export const getMoreUserProducts = async (
   });
 
   return products;
+};
+
+// 현재 로그인한 사용자가 이 프로필의 주인을 팔로우하고 있는지 확인
+export const getisFollowing = async (
+  followerId: number,
+  followingId: number
+) => {
+  const follow = await db.follow.findUnique({
+    where: {
+      followerId_followingId: {
+        followerId,
+        followingId,
+      },
+    },
+  });
+  return !!follow;
 };

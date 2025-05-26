@@ -13,6 +13,8 @@ Date        Author   Status    Description
 2024.12.17  임도헌   Modified  프로필 페이지 디자인 변경
 2024.12.20  임도헌   Modified  푸시 알림 토글 컴포넌트 추가
 2024.12.31  임도헌   Modified  이메일 인증 기능 추가
+2025.05.16  임도헌   Modified  내 방송국 기능 추가
+2025.05.22  임도헌   Modified  팔로우 기능 추가
 */
 
 "use client";
@@ -26,8 +28,9 @@ import UserAvatar from "./user-avatar";
 import { PushNotificationToggle } from "./push-notification-toggle";
 import ProfileBadgesModal from "./modals/profile-badges-modal";
 import EmailVerificationModal from "./modals/email-verification-modal";
-import Image from "next/image";
-import { getBadgeKoreanName } from "@/lib/utils";
+import UserBadges from "./user-badges";
+import StreamCard from "./stream-card";
+import FollowListModal from "./modals/follow-list-modal";
 
 type User = {
   id: number;
@@ -36,6 +39,24 @@ type User = {
   email: string | null;
   created_at: Date;
   emailVerified: boolean;
+  _count?: {
+    followers: number;
+    following: number;
+  };
+  followers?: {
+    follower: {
+      id: number;
+      username: string;
+      avatar: string | null;
+    };
+  }[];
+  following?: {
+    following: {
+      id: number;
+      username: string;
+      avatar: string | null;
+    };
+  }[];
 };
 
 type Review = {
@@ -57,6 +78,23 @@ type Badge = {
   description: string;
 };
 
+type Stream = {
+  id: number;
+  title: string;
+  thumbnail: string | null;
+  stream_id: string;
+  status: string;
+  user: {
+    username: string;
+    avatar: string | null;
+  };
+  started_at: Date | null;
+  category: {
+    kor_name: string;
+    icon: string | null;
+  };
+  tags: { name: string }[];
+};
 type ProfileProps = {
   user: User;
   initialReviews: Review[];
@@ -64,6 +102,7 @@ type ProfileProps = {
   logOut: () => Promise<void>;
   badges: Badge[];
   userBadges: Badge[];
+  myStreams: Stream[];
 };
 
 export default function MyProfile({
@@ -73,40 +112,51 @@ export default function MyProfile({
   logOut,
   badges,
   userBadges,
+  myStreams,
 }: ProfileProps) {
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isBadgeModalOpen, setIsBadgeModalOpen] = useState(false);
   const [isEmailVerificationModalOpen, setIsEmailVerificationModalOpen] =
     useState(false);
+  const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false);
+  const [isFollowingModalOpen, setIsFollowingModalOpen] = useState(false);
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <span className="text-2xl font-semibold dark:text-white mt-10">
-        나의 프로필
-      </span>
-
-      <div className="flex gap-10 rounded-xl w-full pt-10">
-        <div className="w-full md:flex-row md:mr-10 flex flex-col justify-around items-center space-y-6">
-          <div className="md:flex-row flex flex-col items-center justify-center w-full gap-6">
-            <UserAvatar
-              avatar={user.avatar}
-              username={user.username}
-              size="lg"
-              showUsername={false}
-              disabled={true}
-            />
-            <div className="flex flex-col items-center md:items-start justify-center gap-2">
-              <span className="text-lg">{user.username}</span>
-              <span className="text-sm text-gray-400">
-                가입일: {new Date(user.created_at).toLocaleDateString()}
-              </span>
-              <div className="flex justify-center items-center">
-                <UserRating
-                  rating={averageRating?.average}
-                  totalReviews={averageRating?.total}
-                  size="md"
-                />
+      <div className="flex gap-10 rounded-xl w-full pt-10 relative">
+        <div className="md:flex-row flex flex-col items-center justify-center w-full gap-6">
+          <UserAvatar
+            avatar={user.avatar}
+            username={user.username}
+            size="lg"
+            showUsername={false}
+            disabled={true}
+          />
+          <div className="flex flex-col items-center md:items-start justify-center gap-2">
+            <span className="text-lg">{user.username}</span>
+            <span className="text-sm text-gray-400">
+              가입일: {new Date(user.created_at).toLocaleDateString()}
+            </span>
+            <div className="flex justify-center items-center gap-4">
+              <UserRating
+                rating={averageRating?.average}
+                totalReviews={averageRating?.total}
+                size="md"
+              />
+              <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                <button
+                  onClick={() => setIsFollowersModalOpen(true)}
+                  className="hover:text-primary dark:hover:text-primary-light"
+                >
+                  팔로워 {user._count?.followers ?? 0}
+                </button>
+                <button
+                  onClick={() => setIsFollowingModalOpen(true)}
+                  className="hover:text-primary dark:hover:text-primary-light"
+                >
+                  팔로잉 {user._count?.following ?? 0}
+                </button>
               </div>
             </div>
           </div>
@@ -154,6 +204,52 @@ export default function MyProfile({
           </div>
           <PushNotificationToggle />
         </div>
+      </div>
+      {/* 내 방송국 섹션 */}
+      <div className="w-full max-w-md mt-2 gap-2">
+        <div className="flex justify-between items-center mb-2">
+          <h2 className="text-xl font-bold dark:text-white">내 방송국</h2>
+          <Link
+            href={`/profile/${user.username}/streams`}
+            className="btn-primary text-xs"
+          >
+            전체 방송 보기
+          </Link>
+        </div>
+        {myStreams.length === 0 ? (
+          <div className="text-gray-500 dark:text-gray-400 mb-2">
+            아직 방송한 내역이 없습니다.
+          </div>
+        ) : (
+          <div className="flex gap-4 mb-2">
+            {myStreams.map((stream) => (
+              <StreamCard
+                key={stream.id}
+                id={stream.id}
+                title={stream.title}
+                thumbnail={stream.thumbnail}
+                isLive={stream.status === "CONNECTED"}
+                streamer={{
+                  username: stream.user.username,
+                  avatar: stream.user.avatar,
+                }}
+                startedAt={
+                  stream.started_at ? stream.started_at.toString() : undefined
+                }
+                category={
+                  stream.category
+                    ? {
+                        kor_name: stream.category.kor_name,
+                        icon: stream.category.icon ?? undefined,
+                      }
+                    : undefined
+                }
+                tags={stream.tags}
+                shortDescription={true}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="w-full max-w-md">
@@ -205,28 +301,7 @@ export default function MyProfile({
             획득한 뱃지
           </div>
         </div>
-
-        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-neutral-700">
-          {userBadges.slice(0, 5).map((badge) => (
-            <div
-              key={badge.id}
-              className="flex flex-col items-center p-3 min-w-[80px] rounded-lg bg-primary/5 dark:bg-primary-light/5 border border-primary/30 dark:border-primary-light/30"
-            >
-              <div className={`relative w-12 h-12 mb-2`}>
-                <Image
-                  src={`${badge.icon}/public`}
-                  alt={getBadgeKoreanName(badge.name)}
-                  fill
-                  className="object-contain transition-opacity"
-                  sizes="(max-width: 48px) 100vw, 48px"
-                />
-              </div>
-              <span className="text-xs text-center">
-                {getBadgeKoreanName(badge.name)}
-              </span>
-            </div>
-          ))}
-        </div>
+        <UserBadges badges={userBadges} max={5} />
         <button
           onClick={() => setIsBadgeModalOpen(true)}
           className="btn-primary w-full text-lg py-2.5"
@@ -264,6 +339,20 @@ export default function MyProfile({
         isOpen={isEmailVerificationModalOpen}
         onClose={() => setIsEmailVerificationModalOpen(false)}
         email={user.email || ""}
+      />
+      <FollowListModal
+        isOpen={isFollowersModalOpen}
+        onClose={() => setIsFollowersModalOpen(false)}
+        users={user.followers?.map((f) => f.follower) ?? []}
+        title="팔로워"
+        followingIds={user.following?.map((f) => f.following.id) ?? []}
+      />
+      <FollowListModal
+        isOpen={isFollowingModalOpen}
+        onClose={() => setIsFollowingModalOpen(false)}
+        users={user.following?.map((f) => f.following) ?? []}
+        title="팔로잉"
+        followingIds={user.following?.map((f) => f.following.id) ?? []}
       />
     </div>
   );

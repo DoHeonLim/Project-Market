@@ -10,10 +10,10 @@
  */
 "use client";
 import { useState } from "react";
-import StreamCard from "@/components/stream-card";
+import StreamCard from "@/components/live/StreamCard";
 import Link from "next/link";
-import StreamCategoryTabs from "@/components/search/stream-category-tabs";
-import SearchBar from "@/components/search/search-bar";
+import StreamCategoryTabs from "@/components/search/StreamCategoryTabs";
+import SearchBar from "@/components/search/SearchBar";
 import { FollowingStream, LiveStream } from "./page";
 
 export default function LivePageClient({

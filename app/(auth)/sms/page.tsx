@@ -15,8 +15,8 @@ Date        Author   Status    Description
 */
 "use client";
 
-import Button from "@/components/button";
-import Input from "@/components/input";
+import Button from "@/components/common/Button";
+import Input from "@/components/common/Input";
 import { useFormState } from "react-dom";
 import { smsLogin } from "./actions";
 import Link from "next/link";

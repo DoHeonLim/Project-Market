@@ -21,7 +21,7 @@ import {
   getUserBadges,
 } from "../actions";
 import { getisFollowing, getUserProducts, getUserProfile } from "./actions";
-import UserProfile from "@/components/user-profile";
+import UserProfile from "@/components/profile/UserProfile";
 
 export default async function UserProfilePage({
   params,

@@ -17,8 +17,8 @@ Date        Author   Status    Description
 "use client";
 
 // import dynamic from "next/dynamic";
-import Input from "@/components/input";
-import Button from "@/components/button";
+import Input from "@/components/common/Input";
+import Button from "@/components/common/Button";
 import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -28,8 +28,8 @@ import { useState } from "react";
 import { getUploadUrl } from "@/app/add-product/action";
 import { useRouter } from "next/navigation";
 import { useImageUpload } from "@/hooks/useImageUpload";
-import ImageUploader from "@/components/image/image-uploader";
-import TagInput from "@/components/tag-input";
+import ImageUploader from "@/components/image/ImageUploader";
+import TagInput from "@/components/common/TagInput";
 import { POST_CATEGORY } from "@/lib/constants";
 
 export default function AddPost() {

@@ -19,7 +19,7 @@ Date        Author   Status    Description
 
 "use client";
 
-import TimeAgo from "@/components/time-ago";
+import TimeAgo from "@/components/common/TimeAgo";
 import {
   PhotoIcon,
   Squares2X2Icon,
@@ -29,9 +29,9 @@ import { EyeIcon, HeartIcon, PlusIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { POST_CATEGORY } from "@/lib/constants";
 import Image from "next/image";
-import PostCategoryTabs from "../../../components/search/post-category-tabs";
-import SearchBar from "@/components/search/search-bar";
-import UserAvatar from "@/components/user-avatar";
+import PostCategoryTabs from "../../../components/search/PostCategoryTabs";
+import SearchBar from "@/components/search/SearchBar";
+import UserAvatar from "@/components/common/UserAvatar";
 import { useState, useEffect } from "react";
 import { getPosts, PostItem } from "./actions";
 

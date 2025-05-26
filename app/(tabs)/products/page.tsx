@@ -19,7 +19,7 @@ Date        Author   Status    Description
 2025.04.29  임도헌   Modified  검색 기능 search/products에서 products로 통합
 */
 
-import ProductList from "@/components/product-list";
+import ProductList from "@/components/product/ProductList";
 import { PlusIcon, MagnifyingGlassIcon } from "@heroicons/react/24/solid";
 import { Prisma } from "@prisma/client";
 import Link from "next/link";
@@ -31,7 +31,7 @@ import {
   searchProducts,
 } from "./actions";
 
-import SearchSection from "@/components/search/search-section";
+import SearchSection from "@/components/search/SearchSection";
 export type InitialProducts = Prisma.PromiseReturnType<
   typeof getInitialProducts
 >;

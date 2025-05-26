@@ -11,8 +11,8 @@
 import { notFound } from "next/navigation";
 import { getStream, recodingStream } from "@/app/streams/[id]/actions";
 import { unstable_cache as nextCache } from "next/cache";
-import TimeAgo from "@/components/time-ago";
-import BackButton from "@/components/back-button";
+import TimeAgo from "@/components/common/TimeAgo";
+import BackButton from "@/components/common/BackButton";
 
 // 스트리밍 캐싱
 const getCachedStream = nextCache(getStream, ["stream-detail"], {

@@ -25,8 +25,8 @@ Date        Author   Status    Description
 */
 "use client";
 
-import Button from "@/components/button";
-import Input from "@/components/input";
+import Button from "@/components/common/Button";
+import Input from "@/components/common/Input";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { getUploadUrl, uploadProduct } from "./action";
@@ -34,11 +34,11 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { productSchema, ProductType } from "./schema";
 import { useImageUpload } from "@/hooks/useImageUpload";
-import ImageUploader from "@/components/image/image-uploader";
+import ImageUploader from "@/components/image/ImageUploader";
 import { useRouter } from "next/navigation";
-import Select from "@/components/select";
+import Select from "@/components/common/Select";
 import { Category } from "@prisma/client";
-import TagInput from "@/components/tag-input";
+import TagInput from "@/components/common/TagInput";
 import {
   COMPLETENESS_DISPLAY,
   COMPLETENESS_TYPES,

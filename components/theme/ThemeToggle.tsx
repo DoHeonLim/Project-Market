@@ -1,5 +1,5 @@
 /**
-File Name : components/theme/ThemeToggle.tsx
+File Name : components/theme/ThemeToggle
 Description : 테마 변경 버튼
 Author : 임도헌
 

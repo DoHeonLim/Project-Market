@@ -16,7 +16,7 @@ Date        Author   Status    Description
 
 import { notFound, redirect } from "next/navigation";
 import { getIsOwner } from "../actions";
-import ProductEditForm from "@/components/product-edit-form";
+import ProductEditForm from "@/components/product/ProductEditForm";
 import db from "@/lib/db";
 import { getCategories, getProduct } from "./actions";
 

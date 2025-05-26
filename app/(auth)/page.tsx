@@ -13,7 +13,7 @@ Date        Author   Status    Description
 2025.04.29  임도헌   Modified  UI 수정
 */
 
-import Logo from "@/components/logo";
+import Logo from "@/components/common/Logo";
 import Link from "next/link";
 
 export default function Login() {

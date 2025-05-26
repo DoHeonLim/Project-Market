@@ -9,7 +9,7 @@
  2025.05.16  임도헌   Modified  유저 방송국 페이지 추가
  */
 import { getUserStreams } from "@/app/streams/actions";
-import UserStreamsClient from "@/components/user-streams-client";
+import UserStreamsClient from "@/components/live/UserStreamsClient";
 import { Prisma } from "@prisma/client";
 import { getisFollowing, getUserProfile } from "../actions";
 import getSession from "@/lib/session";

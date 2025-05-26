@@ -16,7 +16,7 @@ Date        Author   Status    Description
 2025.05.16  임도헌   Modified  방송 데이터 추가
 */
 
-import MyProfile from "@/components/my-profile";
+import MyProfile from "@/components/profile/MyProfile";
 import {
   getUser,
   getInitialUserReviews,

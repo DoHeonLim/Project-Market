@@ -3,9 +3,9 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import ThemeProvider from "@/components/providers/ThemeProvider";
 import { Toaster } from "sonner";
-import NotificationListener from "@/components/notification-listener";
+import NotificationListener from "@/components/common/NotificationListener";
 import getSession from "@/lib/session";
-import ServiceWorkerRegistration from "@/components/service-worker-registration";
+import ServiceWorkerRegistration from "@/components/common/ServiceWorkerRegistration";
 
 const inter = Inter({ subsets: ["latin"] });
 

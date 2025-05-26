@@ -13,11 +13,11 @@ Date        Author   Status    Description
 */
 "use client";
 
-import SocialLogin from "@/components/social-login";
+import SocialLogin from "@/components/common/SocialLogin";
 import { useFormState } from "react-dom";
 import { createAccount } from "./actions";
-import Input from "@/components/input";
-import Button from "@/components/button";
+import Input from "@/components/common/Input";
+import Button from "@/components/common/Button";
 import { PASSWORD_MIN_LENGTH } from "@/lib/constants";
 import Link from "next/link";
 

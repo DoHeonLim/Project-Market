@@ -13,7 +13,7 @@ Date        Author   Status    Description
 
 import getSession from "@/lib/session";
 import { getChatRooms } from "./actions";
-import ChatRoomListContainer from "@/components/chat-room-list-container";
+import ChatRoomListContainer from "@/components/chat/ChatRoomListContainer";
 
 export default async function Chat() {
   const session = await getSession();

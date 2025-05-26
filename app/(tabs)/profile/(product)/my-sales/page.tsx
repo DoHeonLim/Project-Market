@@ -11,11 +11,11 @@ Date        Author   Status    Description
 2024.12.12  임도헌   Modified  뒤로가기 버튼 추가
 */
 
-import MySalesProductList from "@/components/my-sales-product-list";
+import MySalesProductList from "@/components/product/MySalesProductList";
 import { unstable_cache as nextCache } from "next/cache";
 import { getSellingProducts } from "./actions";
 import getSession from "@/lib/session";
-import BackButton from "@/components/back-button";
+import BackButton from "@/components/common/BackButton";
 
 export default async function MySalesPage() {
   const session = await getSession();

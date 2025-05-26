@@ -15,8 +15,8 @@
 import { notFound } from "next/navigation";
 import { getStream, recodingStream } from "../actions";
 import { unstable_cache as nextCache } from "next/cache";
-import UserAvatar from "@/components/user-avatar";
-import TimeAgo from "@/components/time-ago";
+import UserAvatar from "@/components/common/UserAvatar";
+import TimeAgo from "@/components/common/TimeAgo";
 
 interface IRecodingProps {
   meta: { name: string };

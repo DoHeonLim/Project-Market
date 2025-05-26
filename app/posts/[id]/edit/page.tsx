@@ -13,8 +13,8 @@ import { notFound, redirect } from "next/navigation";
 import db from "@/lib/db";
 import { getPost } from "./actions";
 import { getIsOwner } from "@/app/products/[id]/actions";
-import PostEditForm from "@/components/post-edit-form";
-import BackButton from "@/components/back-button";
+import PostEditForm from "@/components/post/PostEditForm";
+import BackButton from "@/components/common/BackButton";
 
 export default async function PostEditPage({
   params,

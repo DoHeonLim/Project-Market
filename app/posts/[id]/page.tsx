@@ -19,17 +19,17 @@ Date        Author   Status    Description
 2025.05.10  임도헌   Modified  UI 변경
 */
 
-import Comment from "@/components/comment";
-import PostLikeButton from "@/components/post-like-button";
+import Comment from "@/components/post/comment/Comment";
+import PostLikeButton from "@/components/post/PostLikeButton";
 import db from "@/lib/db";
 import getSession from "@/lib/session";
 import { EyeIcon, PencilSquareIcon } from "@heroicons/react/24/solid";
 import { unstable_cache as nextCache } from "next/cache";
 import { notFound } from "next/navigation";
-import UserAvatar from "@/components/user-avatar";
-import Carousel from "@/components/carousel";
-import BackButton from "@/components/back-button";
-import TimeAgo from "@/components/time-ago";
+import UserAvatar from "@/components/common/UserAvatar";
+import Carousel from "@/components/common/Carousel";
+import BackButton from "@/components/common/BackButton";
+import TimeAgo from "@/components/common/TimeAgo";
 import { POST_CATEGORY } from "@/lib/constants";
 import Link from "next/link";
 

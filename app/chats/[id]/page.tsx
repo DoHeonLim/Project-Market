@@ -17,7 +17,7 @@ Date        Author   Status    Description
 // 해야될 것 만약 이미 해당 유저 두명이 존재하는 채팅방이 있다면 새로 방을 생성하지 않고
 // 기존 방으로 연결되게 변경해야 됨
 
-import ChatMessagesList from "@/components/chat-messages-list";
+import ChatMessagesList from "@/components/chat/ChatMessagesList";
 import getSession from "@/lib/session";
 import { notFound } from "next/navigation";
 import {

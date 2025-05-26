@@ -15,9 +15,9 @@ Date        Author   Status    Description
 
 "use client";
 
-import Button from "@/components/button";
-import Input from "@/components/input";
-import SocialLogin from "@/components/social-login";
+import Button from "@/components/common/Button";
+import Input from "@/components/common/Input";
+import SocialLogin from "@/components/common/SocialLogin";
 import { useFormState } from "react-dom";
 import { login } from "./actions";
 import { PASSWORD_MIN_LENGTH } from "@/lib/constants";

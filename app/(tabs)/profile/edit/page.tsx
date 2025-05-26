@@ -10,7 +10,7 @@ Date        Author   Status    Description
 2024.12.15  임도헌   Modified  다크모드 적용
 */
 
-import ProfileEditForm from "@/components/profile-edit-form";
+import ProfileEditForm from "@/components/profile/ProfileEditForm";
 import { getUser } from "../actions";
 
 export default async function EditProfilePage() {

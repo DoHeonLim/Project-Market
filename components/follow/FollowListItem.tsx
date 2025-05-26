@@ -10,7 +10,7 @@ Date        Author   Status    Description
 */
 
 import Link from "next/link";
-import UserAvatar from "../user-avatar";
+import UserAvatar from "../common/UserAvatar";
 import FollowButton from "./FollowButton";
 
 interface User {

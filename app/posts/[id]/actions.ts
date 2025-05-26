@@ -15,7 +15,7 @@
  */
 "use server";
 
-import { DeleteResponse } from "@/components/comment-delete-button";
+import { DeleteResponse } from "@/components/post/comment/CommentDeleteButton";
 import {
   badgeChecks,
   checkBoardExplorerBadge,

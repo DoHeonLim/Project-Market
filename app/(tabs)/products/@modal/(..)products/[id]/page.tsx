@@ -25,14 +25,14 @@
  2025.04.13  임도헌   Modified  game_type 필드를 영어로 변경
  */
 
-import CloseButton from "@/components/close-button";
-import UserAvatar from "@/components/user-avatar";
+import CloseButton from "@/components/common/CloseButton";
+import UserAvatar from "@/components/common/UserAvatar";
 import { formatToWon } from "@/lib/utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import Carousel from "@/components/carousel";
-import ProductLikeButton from "@/components/product-like-button";
-import TimeAgo from "@/components/time-ago";
+import Carousel from "@/components/common/Carousel";
+import ProductLikeButton from "@/components/product/ProductLikeButton";
+import TimeAgo from "@/components/common/TimeAgo";
 import { EyeIcon } from "@heroicons/react/24/solid";
 import {
   getCachedProduct,
@@ -40,8 +40,8 @@ import {
   getCachedProductWithViews,
   getIsOwner,
 } from "@/app/products/[id]/actions";
-import ChatButton from "@/components/chat-button";
-import ProductInfoItem from "@/components/product-info-item";
+import ChatButton from "@/components/chat/ChatButton";
+import ProductInfoItem from "@/components/product/ProductInfoItem";
 import {
   COMPLETENESS_DISPLAY,
   CONDITION_DISPLAY,

@@ -23,10 +23,10 @@ import {
   updateStreamStatus,
 } from "./actions";
 import { unstable_cache as nextCache } from "next/cache";
-import StreamChatRoom from "@/components/stream-chat-room";
+import StreamChatRoom from "@/components/live/StreamChatRoom";
 import { getUserProfile } from "@/app/chats/[id]/actions";
-import BackButton from "@/components/back-button";
-import StreamDetail from "@/components/stream-detail";
+import BackButton from "@/components/common/BackButton";
+import StreamDetail from "@/components/live/StreamDetail";
 
 // 스트리밍 캐싱
 const getCachedStream = nextCache(getStreamDetail, ["stream-detail"], {

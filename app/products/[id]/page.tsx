@@ -37,11 +37,11 @@ import db from "@/lib/db";
 import { formatToWon } from "@/lib/utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import UserAvatar from "@/components/user-avatar";
-import Carousel from "@/components/carousel";
-import ProductLikeButton from "@/components/product-like-button";
-import BackButton from "@/components/back-button";
-import TimeAgo from "@/components/time-ago";
+import UserAvatar from "@/components/common/UserAvatar";
+import Carousel from "@/components/common/Carousel";
+import ProductLikeButton from "@/components/product/ProductLikeButton";
+import BackButton from "@/components/common/BackButton";
+import TimeAgo from "@/components/common/TimeAgo";
 import { EyeIcon } from "@heroicons/react/24/solid";
 import {
   getCachedProduct,
@@ -50,8 +50,8 @@ import {
   getCachedProductWithViews,
   getIsOwner,
 } from "./actions";
-import ChatButton from "@/components/chat-button";
-import ProductInfoItem from "@/components/product-info-item";
+import ChatButton from "@/components/chat/ChatButton";
+import ProductInfoItem from "@/components/product/ProductInfoItem";
 import {
   COMPLETENESS_DISPLAY,
   CONDITION_DISPLAY,

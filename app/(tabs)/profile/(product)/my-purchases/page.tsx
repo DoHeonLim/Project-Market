@@ -13,8 +13,8 @@ Date        Author   Status    Description
 import getSession from "@/lib/session";
 import { unstable_cache as nextCache } from "next/cache";
 import { getPurchasedProducts } from "./actions";
-import MyPurchasesList from "@/components/my-purchases-list";
-import BackButton from "@/components/back-button";
+import MyPurchasesList from "@/components/product/MyPurchasesList";
+import BackButton from "@/components/common/BackButton";
 
 // 상태 유저에 대한 리뷰 기능 추가해야됨
 export default async function MyPurchasesPage() {

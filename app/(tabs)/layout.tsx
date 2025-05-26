@@ -10,7 +10,7 @@ Date        Author   Status    Description
 2025.04.29  임도헌   Modified  UI 수정
 */
 
-import TabBar from "@/components/tab-bar";
+import TabBar from "@/components/common/TabBar";
 
 export default function TabLayout({ children }: { children: React.ReactNode }) {
   return (

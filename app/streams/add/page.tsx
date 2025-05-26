@@ -16,17 +16,17 @@
 import { startStream, getUploadUrl } from "./actions";
 import { STREAM_VISIBILITY, STREAM_VISIBILITY_DISPLAY } from "@/lib/constants";
 import { useState, useEffect } from "react";
-import Input from "@/components/input";
-import Button from "@/components/button";
-import ImageUploader from "@/components/image/image-uploader";
+import Input from "@/components/common/Input";
+import Button from "@/components/common/Button";
+import ImageUploader from "@/components/image/ImageUploader";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
-import Select from "@/components/select";
+import Select from "@/components/common/Select";
 import { StreamCategory } from "@prisma/client";
-import TagInput from "@/components/tag-input";
+import TagInput from "@/components/common/TagInput";
 
 // 스트리밍 생성 스키마
 const streamSchema = z.object({

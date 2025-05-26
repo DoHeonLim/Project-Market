@@ -19,6 +19,8 @@ Date        Author   Status    Description
 2024.12.16  임도헌   Modified  제품 태그 추가
 2024.12.16  임도헌   Modified  제품 게임 타입 추가
 2024.12.24  임도헌   Modified  스타일 수정
+2025.05.06  임도헌   Modified  그리드, 리스트 뷰 기능 추가
+2025.05.23  임도헌   Modified  카테고리 필드명 변경(name->kor_name)
 */
 
 import { formatToWon } from "@/lib/utils";
@@ -26,6 +28,7 @@ import Image from "next/image";
 import Link from "next/link";
 import TimeAgo from "./time-ago";
 import { EyeIcon, HeartIcon } from "@heroicons/react/24/solid";
+import { GAME_TYPE_DISPLAY } from "@/lib/constants";
 
 interface IListProductProps {
   title: string;
@@ -36,10 +39,10 @@ interface IListProductProps {
   reservation_userId: number | null;
   purchase_userId: number | null;
   category: {
-    name: string | null;
+    kor_name: string | null;
     icon: string | null;
     parent: {
-      name: string | null;
+      kor_name: string | null;
       icon: string | null;
     } | null;
   } | null;
@@ -51,6 +54,8 @@ interface IListProductProps {
   search_tags: {
     name: string;
   }[];
+  viewMode: "grid" | "list";
+  isPriority?: boolean;
 }
 
 export default function ListProduct({
@@ -66,81 +71,110 @@ export default function ListProduct({
   game_type,
   _count,
   search_tags,
+  viewMode,
+  isPriority,
 }: IListProductProps) {
   const thumbnailUrl = `${images[0]?.url}/public`;
 
   return (
     <Link
       href={`/products/${id}`}
-      className="flex gap-5 p-4 border-b border-neutral-300 dark:border-neutral-600 hover:bg-neutral-200/50 dark:hover:bg-neutral-800/50 hover:rounded-md hover:scale-[1.02] transition-all group"
+      className={`${
+        viewMode === "grid"
+          ? "flex flex-col h-full p-4 border border-neutral-200 dark:border-neutral-700 rounded-lg hover:bg-neutral-100/50 dark:hover:bg-neutral-800/50 hover:shadow-lg transition-all group"
+          : "flex flex-row gap-4 p-4 border-b border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100/50 dark:hover:bg-neutral-800/50 transition-all group"
+      }`}
     >
-      <div className="relative overflow-hidden rounded-md size-28 group-hover:shadow-lg transition-shadow">
+      <div
+        className={`relative overflow-hidden rounded-lg ${
+          viewMode === "grid" ? "aspect-square w-full" : "size-28 flex-shrink-0"
+        } group-hover:shadow-lg transition-shadow`}
+      >
         <Image
           fill
           src={thumbnailUrl}
-          sizes="(max-width: 768px) 112px, 112px"
+          priority={isPriority}
+          sizes={
+            viewMode === "grid"
+              ? "(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              : "112px"
+          }
           className="object-cover transform group-hover:scale-105 transition-transform duration-300"
           alt={title}
         />
         {(reservation_userId || purchase_userId) && (
           <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-            <span className="text-white font-bold">
+            <span className="text-white font-bold text-sm sm:text-base">
               {purchase_userId ? "⚓ 판매완료" : "🛞 예약중"}
             </span>
           </div>
         )}
       </div>
-      <div className="flex flex-col gap-2 justify-center flex-1">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-primary dark:text-primary-light font-medium">
-            🎲 {game_type}
-          </span>
-          <span className="text-sm text-neutral-600 dark:text-neutral-400">
-            |
+      <div
+        className={`flex flex-col gap-2 ${
+          viewMode === "grid" ? "mt-3" : "flex-1"
+        }`}
+      >
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-xs sm:text-sm text-primary dark:text-primary-light font-medium">
+            🎲 {GAME_TYPE_DISPLAY[game_type as keyof typeof GAME_TYPE_DISPLAY]}
           </span>
           {category && (
-            <span className="text-sm text-neutral-600 dark:text-neutral-400">
-              {category.parent?.icon} {category.parent?.name} &gt;{" "}
-              {category.icon} {category.name}
-            </span>
+            <>
+              <span className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400">
+                |
+              </span>
+              <span className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400 line-clamp-1">
+                {category.parent?.icon} {category.parent?.kor_name} &gt;{" "}
+                {category.icon} {category.kor_name}
+              </span>
+            </>
           )}
         </div>
-        <h3 className="text-lg font-semibold text-text dark:text-text-dark group-hover:text-primary dark:group-hover:text-primary-light transition-colors">
+        <h3
+          className={`font-semibold text-text dark:text-text-dark group-hover:text-primary dark:group-hover:text-primary-light transition-colors ${
+            viewMode === "grid"
+              ? "text-sm sm:text-base line-clamp-2"
+              : "text-base sm:text-lg line-clamp-1"
+          }`}
+        >
           {title}
         </h3>
-        <div className="flex items-center gap-2">
-          <span className="text-lg font-bold text-accent dark:text-accent-light">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-base sm:text-lg font-bold text-accent dark:text-accent-light">
             💰 {formatToWon(price)}원
           </span>
           {purchase_userId && (
-            <span className="px-2 py-1 text-sm font-medium bg-neutral-500 text-white rounded-full">
+            <span className="px-2 py-0.5 text-xs sm:text-sm font-medium bg-neutral-500 text-white rounded-full">
               ⚓ 판매완료
             </span>
           )}
           {reservation_userId && !purchase_userId && (
-            <span className="px-2 py-1 text-sm font-medium bg-green-500 text-white rounded-full">
+            <span className="px-2 py-0.5 text-xs sm:text-sm font-medium bg-green-500 text-white rounded-full">
               🛞 예약중
             </span>
           )}
         </div>
-        <div className="flex flex-wrap items-center gap-3 text-sm">
-          <div className="flex items-center gap-1 text-neutral-500 dark:text-neutral-400">
-            <EyeIcon className="size-4" />
-            <span>{views}</span>
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
+            <div className="flex items-center gap-1 text-neutral-500 dark:text-neutral-400">
+              <EyeIcon className="size-3 sm:size-4" />
+              <span>{views}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <HeartIcon className="size-3 sm:size-4 text-rose-600" />
+              <span className="text-neutral-500 dark:text-neutral-400">
+                {_count.product_likes}
+              </span>
+            </div>
+            <TimeAgo date={created_at.toString()} />
           </div>
-          <div className="flex items-center gap-1">
-            <HeartIcon className="size-4 text-rose-600" />
-            <span className="text-neutral-500 dark:text-neutral-400">
-              {_count.product_likes}
-            </span>
-          </div>
-          <TimeAgo date={created_at.toString()} />
           {search_tags.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {search_tags.map((tag, index) => (
                 <span
                   key={index}
-                  className="px-2 py-0.5 text-xs bg-primary/10 text-primary dark:bg-primary-light/10 dark:text-primary-light rounded-full"
+                  className="px-1.5 py-0.5 text-[10px] sm:text-xs bg-primary/10 text-primary dark:bg-primary-light/10 dark:text-primary-light rounded-full"
                 >
                   🏷️ {tag.name}
                 </span>

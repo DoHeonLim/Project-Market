@@ -20,6 +20,9 @@
  2024.12.15  임도헌   Modified  보드포트 컨셉으로 스타일 변경
  2024.12.16  임도헌   Modified  제품 조회수 추가
  2024.12.17  임도헌   Modified  서버코드 모두 app/products/[id]/actions로 이동
+ 2025.04.13  임도헌   Modified  completeness 필드를 영어로 변경
+ 2025.04.13  임도헌   Modified  condition 필드를 영어로 변경
+ 2025.04.13  임도헌   Modified  game_type 필드를 영어로 변경
  */
 
 import CloseButton from "@/components/close-button";
@@ -39,6 +42,11 @@ import {
 } from "@/app/products/[id]/actions";
 import ChatButton from "@/components/chat-button";
 import ProductInfoItem from "@/components/product-info-item";
+import {
+  COMPLETENESS_DISPLAY,
+  CONDITION_DISPLAY,
+  GAME_TYPE_DISPLAY,
+} from "@/lib/constants";
 
 export default async function Modal({
   params,
@@ -47,31 +55,27 @@ export default async function Modal({
     id: string;
   };
 }) {
-  // 제품 아이디
   const id = Number(params.id);
   if (isNaN(id)) {
     return notFound();
   }
-  // 제품 정보
+
   const product = await getCachedProduct(id);
   if (!product) {
     return notFound();
   }
+
   const views = await getCachedProductWithViews(id);
   const isOwner = await getIsOwner(product.userId);
   const { likeCount, isLiked } = await getCachedProductLikeStatus(id);
 
   return (
     <div className="fixed top-0 left-0 z-50 flex items-center justify-center w-full h-full bg-black/60">
-      <CloseButton />
-      <div className="flex flex-col max-w-screen-sm bg-white dark:bg-neutral-800 rounded-lg overflow-hidden max-h-[90vh]">
+      <div className="flex flex-col max-w-screen-sm py-2 bg-white dark:bg-neutral-800 rounded-lg overflow-hidden max-h-[90vh]">
+        <CloseButton />
         {/* 이미지 캐러셀 */}
         <div className="w-full h-[300px] relative">
           <Carousel images={product.images} className="w-full h-full" />
-          <div className="absolute top-4 right-4 flex items-center gap-1 px-2 py-1 bg-black/50 rounded-full text-white text-sm">
-            <EyeIcon className="size-4" />
-            <span>{views}</span>
-          </div>
         </div>
 
         {/* 판매자 정보 */}
@@ -86,7 +90,10 @@ export default async function Modal({
               />
             </div>
           </div>
-
+          <div className="flex items-center gap-1 px-2 py-1 bg-black/50 rounded-full text-white text-sm">
+            <EyeIcon className="size-4" />
+            <span>{views}</span>
+          </div>
           <TimeAgo date={product.created_at.toString()} />
         </div>
 
@@ -96,10 +103,15 @@ export default async function Modal({
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-2">
                 <Link
-                  href={`/search/products?game_type=${product.game_type}`}
+                  href={`/products?game_type=${product.game_type}`}
                   className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-primary/10 text-primary dark:bg-primary-light/10 dark:text-primary-light rounded-full hover:bg-primary/20 dark:hover:bg-primary-light/20 transition-all hover:scale-105 active:scale-95"
                 >
-                  🎲 {product.game_type}
+                  🎲{" "}
+                  {
+                    GAME_TYPE_DISPLAY[
+                      product.game_type as keyof typeof GAME_TYPE_DISPLAY
+                    ]
+                  }
                 </Link>
               </div>
               <div className="flex justify-between items-center">
@@ -122,13 +134,13 @@ export default async function Modal({
                       <>
                         <span>
                           {product.category.parent.icon}{" "}
-                          {product.category.parent.name}
+                          {product.category.parent.kor_name}
                         </span>
                         <span className="text-neutral-400">&gt;</span>
                       </>
                     )}
                     <span>
-                      {product.category.icon} {product.category.name}
+                      {product.category.icon} {product.category.kor_name}
                     </span>
                   </span>
                 }
@@ -141,10 +153,21 @@ export default async function Modal({
                 label="⌛ 플레이 시간"
                 value={product.play_time}
               />
-              <ProductInfoItem label="📦 제품 상태" value={product.condition} />
+              <ProductInfoItem
+                label="📦 제품 상태"
+                value={
+                  CONDITION_DISPLAY[
+                    product.condition as keyof typeof CONDITION_DISPLAY
+                  ]
+                }
+              />
               <ProductInfoItem
                 label="🧩 구성품 상태"
-                value={product.completeness}
+                value={
+                  COMPLETENESS_DISPLAY[
+                    product.completeness as keyof typeof COMPLETENESS_DISPLAY
+                  ]
+                }
               />
               <ProductInfoItem
                 label="📖 설명서"
@@ -158,7 +181,7 @@ export default async function Modal({
                 {product.search_tags.map((tag, index) => (
                   <Link
                     key={index}
-                    href={`/search/products?keyword=${tag.name}`}
+                    href={`/products?keyword=${tag.name}`}
                     className="px-3 py-1 text-sm bg-primary/10 text-primary dark:bg-primary-light/10 dark:text-primary-light rounded-full hover:bg-primary/20 dark:hover:bg-primary-light/20 transition-colors"
                   >
                     🏷️ {tag.name}

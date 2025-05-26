@@ -7,6 +7,7 @@ History
 Date        Author   Status    Description
 2024.12.16  임도헌   Created
 2024.12.16  임도헌   Modified  카테고리 조회 라우트 추가
+2025.05.23  임도헌   Modified  카테고리 필드명 변경(name->kor_name)
 */
 import { NextResponse } from "next/server";
 import db from "@/lib/db";
@@ -15,7 +16,7 @@ export async function GET() {
   try {
     const categories = await db.category.findMany({
       orderBy: {
-        name: "asc",
+        kor_name: "asc",
       },
     });
     return NextResponse.json(categories);

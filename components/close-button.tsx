@@ -8,6 +8,7 @@ Date        Author   Status    Description
 2024.10.22  임도헌   Created
 2024.10.22  임도헌   Modified  close-button 컴포넌트 추가
 2024.12.29  임도헌   Modified  z-index 추가
+2025.05.10  임도헌   Modified  스타일 변경
 
 */
 "use client";
@@ -25,7 +26,7 @@ export default function CloseButton() {
       <button
         aria-label="Close"
         onClick={handleCloseClick}
-        className="absolute right-5 top-5 text-neutral-200 z-50"
+        className="flex justify-end mr-2 text-neutral-200 z-50"
       >
         <XMarkIcon className="size-10" />
       </button>

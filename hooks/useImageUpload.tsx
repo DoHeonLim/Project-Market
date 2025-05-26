@@ -38,39 +38,39 @@ export function useImageUpload({
   ) => {
     const { files: newFiles } = event.target;
     if (!newFiles) return;
-    
+
     setIsUploading(true);
     try {
-
-    if (previews.length + newFiles.length > maxImages) {
-      toast.error(`이미지는 최대 ${maxImages}개까지만 업로드할 수 있습니다.`);
-      event.target.value = "";
-      return;
-    }
-
-    for (const file of Array.from(newFiles)) {
-      if (!file.type.startsWith('image/')) {
-        toast.error('이미지 파일만 업로드할 수 있습니다.');
+      if (previews.length + newFiles.length > maxImages) {
+        toast.error(`이미지는 최대 ${maxImages}개까지만 업로드할 수 있습니다.`);
         event.target.value = "";
         return;
       }
-      if (file.size > maxSize) {
-        toast.error('이미지는 3MB 이하로 올려주세요.');
-        event.target.value = "";
-        return;
+
+      for (const file of Array.from(newFiles)) {
+        if (!file.type.startsWith("image/")) {
+          toast.error("이미지 파일만 업로드할 수 있습니다.");
+          event.target.value = "";
+          return;
+        }
+        if (file.size > maxSize) {
+          toast.error("이미지는 3MB 이하로 올려주세요.");
+          event.target.value = "";
+          return;
+        }
       }
-    }
-    // 미리보기 URL 생성
-    const newPreviews = Array.from(newFiles).map((file) =>
-      URL.createObjectURL(file)
-    );
-    // 미리보기 세팅
-    setPreviews((prev) => [...prev, ...newPreviews]);
-    // 이미지 파일 세팅
-    setFiles((prev) => [...prev, ...Array.from(newFiles)]);
-    setValue("photos", [...(getValues("photos") || []), ...newPreviews]);
+      // 미리보기 URL 생성
+      const newPreviews = Array.from(newFiles).map((file) =>
+        URL.createObjectURL(file)
+      );
+      // 미리보기 세팅
+      setPreviews((prev) => [...prev, ...newPreviews]);
+      // 이미지 파일 세팅
+      setFiles((prev) => [...prev, ...Array.from(newFiles)]);
+      setValue("photos", [...(getValues("photos") || []), ...newPreviews]);
     } catch (error) {
-      toast.error('이미지 업로드 중 오류가 발생했습니다.');
+      console.error(error);
+      toast.error("이미지 업로드 중 오류가 발생했습니다.");
     } finally {
       setIsUploading(false);
     }

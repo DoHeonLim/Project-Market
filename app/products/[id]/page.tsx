@@ -28,6 +28,9 @@ Date        Author   Status    Description
 2024.12.22  임도헌   Modified  채팅방 생성 함수 변경, 제품 캐싱 함수 변경
 2024.12.25  임도헌   Modified  제품 상세 페이지 다크모드 추가
 2024.12.25  임도헌   Modified  제품 상세 정보 컴포넌트 분리
+2025.04.13  임도헌   Modified  completeness 필드를 영어로 변경
+2025.04.13  임도헌   Modified  condition 필드를 영어로 변경
+2025.04.13  임도헌   Modified  game_type 필드를 영어로 변경
 */
 
 import db from "@/lib/db";
@@ -49,6 +52,11 @@ import {
 } from "./actions";
 import ChatButton from "@/components/chat-button";
 import ProductInfoItem from "@/components/product-info-item";
+import {
+  COMPLETENESS_DISPLAY,
+  CONDITION_DISPLAY,
+  GAME_TYPE_DISPLAY,
+} from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -119,7 +127,12 @@ export default async function ProductDetail({
                 href={`/search/products?game_type=${product.game_type}`}
                 className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-primary/10 text-primary dark:bg-primary-light/10 dark:text-primary-light rounded-full hover:bg-primary/20 dark:hover:bg-primary-light/20 transition-all hover:scale-105 active:scale-95"
               >
-                🎲 {product.game_type}
+                🎲{" "}
+                {
+                  GAME_TYPE_DISPLAY[
+                    product.game_type as keyof typeof GAME_TYPE_DISPLAY
+                  ]
+                }
               </Link>
             </div>
             <div className="flex justify-between items-center">
@@ -142,13 +155,13 @@ export default async function ProductDetail({
                     <>
                       <span>
                         {product.category.parent.icon}{" "}
-                        {product.category.parent.name}
+                        {product.category.parent.kor_name}
                       </span>
                       <span className="text-neutral-400">&gt;</span>
                     </>
                   )}
                   <span>
-                    {product.category.icon} {product.category.name}
+                    {product.category.icon} {product.category.kor_name}
                   </span>
                 </span>
               }
@@ -158,10 +171,21 @@ export default async function ProductDetail({
               value={`${product.min_players} - ${product.max_players}명`}
             />
             <ProductInfoItem label="⌛ 플레이 시간" value={product.play_time} />
-            <ProductInfoItem label="📦 제품 상태" value={product.condition} />
+            <ProductInfoItem
+              label="📦 제품 상태"
+              value={
+                CONDITION_DISPLAY[
+                  product.condition as keyof typeof CONDITION_DISPLAY
+                ]
+              }
+            />
             <ProductInfoItem
               label="🧩 구성품 상태"
-              value={product.completeness}
+              value={
+                COMPLETENESS_DISPLAY[
+                  product.completeness as keyof typeof COMPLETENESS_DISPLAY
+                ]
+              }
             />
             <ProductInfoItem
               label="📖 설명서"
@@ -175,7 +199,7 @@ export default async function ProductDetail({
               {product.search_tags.map((tag, index) => (
                 <Link
                   key={index}
-                  href={`/search/products?keyword=${tag.name}`}
+                  href={`/products?keyword=${tag.name}`}
                   className="px-3 py-1 text-sm bg-primary/10 text-primary dark:bg-primary-light/10 dark:text-primary-light rounded-full hover:bg-primary/20 dark:hover:bg-primary-light/20 transition-colors"
                 >
                   🏷️ {tag.name}

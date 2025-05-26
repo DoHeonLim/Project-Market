@@ -9,6 +9,7 @@ Date        Author   Status    Description
 2024.12.12  임도헌   Modified  제품 상세보기 서버 코드 추가
 2024.12.17  임도헌   Modified  page에 있는 서버 코드들 전부 actions로 옮김
 2024.12.22  임도헌   Modified  채팅방 생성 함수 변경, 제품 캐싱 함수 변경
+2025.05.23  임도헌   Modified  카테고리 필드명 변경(name->kor_name)
 */
 "use server";
 
@@ -46,11 +47,11 @@ export const getProduct = async (id: number) => {
         },
         category: {
           select: {
-            name: true,
+            kor_name: true,
             icon: true,
             parent: {
               select: {
-                name: true,
+                kor_name: true,
                 icon: true,
               },
             },

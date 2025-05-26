@@ -21,6 +21,7 @@ Date        Author   Status    Description
 2025.04.18  임도헌   Modified  기존 초기화 버튼은 이미지만 초기화 됬었음, 전체 초기화로 변경
 2025.04.18  임도헌   Modified  업로드 버튼 위치 변경
 2025.04.28  임도헌   Modified  tag 초기화 로직 변경(setvalue에서 control과 reset사용)
+2025.05.23  임도헌   Modified  카테고리 필드명 변경(name->kor_name)
 */
 "use client";
 
@@ -333,7 +334,7 @@ export default function AddProduct() {
               .filter((cat) => !cat.parentId)
               .map((category) => (
                 <option key={category.id} value={category.id.toString()}>
-                  {category.icon} {category.name}
+                  {category.icon} {category.kor_name}
                 </option>
               ))}
           </Select>
@@ -349,7 +350,7 @@ export default function AddProduct() {
               .filter((cat) => cat.parentId === selectedMainCategory)
               .map((category) => (
                 <option key={category.id} value={category.id.toString()}>
-                  {category.icon} {category.name}
+                  {category.icon} {category.kor_name}
                 </option>
               ))}
           </Select>

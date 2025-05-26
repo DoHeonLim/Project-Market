@@ -12,7 +12,9 @@ Date        Author   Status    Description
 2024.12.12  임도헌   Modified  제품 편집 폼 액션 코드 추가(여러 이미지 업로드)
 2024.12.12  임도헌   Modified  폼 제출 후 모달에서 수정했는지 상세 페이지에서 수정했는지 확인 후 페이지 이동 로직 수정
 2024.12.29  임도헌   Modified  보트포트 형식에 맞게 제품 수정 폼 변경
-2025.04.18  읻모헌   Modified  타입 상수 constants로 이동
+2025.04.13  임도헌   Modified  completeness 필드를 영어로 변경
+2025.04.13  임도헌   Modified  condition 필드를 영어로 변경
+2025.04.13  임도헌   Modified  game_type 필드를 영어로 변경
 */
 "use client";
 
@@ -393,7 +395,7 @@ export default function ProductEditForm({
               .filter((cat) => !cat.parentId)
               .map((category) => (
                 <option key={category.id} value={category.id.toString()}>
-                  {category.icon} {category.name}
+                  {category.icon} {category.kor_name}
                 </option>
               ))}
           </Select>
@@ -410,7 +412,7 @@ export default function ProductEditForm({
               .filter((cat) => cat.parentId === selectedMainCategory)
               .map((category) => (
                 <option key={category.id} value={category.id.toString()}>
-                  {category.icon} {category.name}
+                  {category.icon} {category.kor_name}
                 </option>
               ))}
           </Select>

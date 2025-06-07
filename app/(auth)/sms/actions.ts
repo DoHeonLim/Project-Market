@@ -10,6 +10,7 @@ Date        Author   Status    Description
 2024.10.11  임도헌   Modified  인증 번호 검증 때 전화번호까지 검증
 2025.04.05  임도헌   Modified  twillo에서 CoolSMS로 변경
 2025.06.05  임도헌   Modified  비즈니스 로직 분리
+2025.06.07  임도헌   Modified  리디렉션 제거
 */
 
 "use server";
@@ -90,6 +91,6 @@ export async function verifyPhoneToken(formData: FormData) {
   await db.sMSToken.delete({ where: { id: verifiedToken.id } });
   await checkVerifiedSailorBadge(verifiedToken.userId);
 
-  // ✅ 세션 저장 및 리디렉션 분리
+  // ✅ 세션 저장
   return saveUserSession(verifiedToken.userId);
 }

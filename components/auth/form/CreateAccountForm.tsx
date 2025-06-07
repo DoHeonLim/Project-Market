@@ -7,7 +7,7 @@ History
 Date        Author   Status    Description
 2025.05.30  임도헌   Created
 2025.05.30  임도헌   Modified  회원가입 폼 컴포넌트로 분리
-
+2025.06.07  임도헌   Modified  toast및 router.push로 페이지 이동
 */
 
 "use client";
@@ -23,6 +23,8 @@ import Link from "next/link";
 import SocialLogin from "@/components/common/SocialLogin";
 import { createAccountSchema } from "@/lib/auth/create-account/createAccountSchema";
 import { z } from "zod";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 type FormData = z.infer<typeof createAccountSchema>;
 
@@ -37,6 +39,7 @@ export default function CreateAccountForm() {
   });
 
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
   const onSubmit = (data: FormData) => {
     startTransition(async () => {
@@ -58,6 +61,9 @@ export default function CreateAccountForm() {
             setError(key, { message });
           }
         });
+      } else {
+        toast.success("🪪 선원 등록 완료! 이제 당신의 항해를 시작해보세요.");
+        router.push("/profile");
       }
     });
   };

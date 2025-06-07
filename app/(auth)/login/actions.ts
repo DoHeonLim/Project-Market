@@ -9,6 +9,7 @@
  2024.10.04  임도헌   Modified  폼 제출 및 검증 기능 추가
  2024.10.06  임도헌   Modified  로그인 기능 완성
  2025.05.30  임도헌   Modified  비즈니스 로직 분리
+ 2025.06.07  임도헌   Modified  리디렉션 제거
  */
 "use server";
 
@@ -57,6 +58,6 @@ export async function login(_: any, formData: FormData) {
     };
   }
 
-  // ✅ 세션 저장 및 리디렉션
+  // ✅ 세션 저장
   return saveUserSession(userId);
 }

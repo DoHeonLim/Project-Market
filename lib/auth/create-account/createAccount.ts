@@ -7,11 +7,12 @@
  Date        Author   Status    Description
  2025.05.30  임도헌   Created
  2025.05.30  임도헌   Modified  유저 회원가입 함수 분리
+ 2025.06.07  임도헌   Modified  saveUserSession 사용으로 변경
  */
 
 import bcrypt from "bcrypt";
 import db from "@/lib/db";
-import getSession from "@/lib/session";
+import { saveUserSession } from "../saveUserSession";
 
 export async function createAccount(data: {
   username: string;
@@ -30,7 +31,5 @@ export async function createAccount(data: {
     select: { id: true },
   });
   // 로그인한 유저 저장
-  const session = await getSession();
-  session.id = user.id;
-  await session.save();
+  return saveUserSession(user.id);
 }

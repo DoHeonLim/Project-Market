@@ -8,6 +8,7 @@ Date        Author   Status    Description
 2025.05.30  임도헌   Created
 2025.05.30  임도헌   Modified  SMS 로그인 폼 컴포넌트로 분리
 2025.06.05  임도헌   Modified  버튼 클릭 시 아무 반응 없던 것 수정. (z.object로 감싸니 작동)
+2025.06.07  임도헌   Modified  toast및 router.push로 페이지 이동
 */
 
 // react-hook-form에 사용되는 schema가 z.object가 아닌 단일 필드라서 전체 폼 검증이 무효화됨.
@@ -22,6 +23,8 @@ import Button from "@/components/common/Button";
 import { sendPhoneToken, verifyPhoneToken } from "@/app/(auth)/sms/actions";
 import { phoneSchema, tokenSchema } from "@/lib/auth/sms/smsSchema";
 import { z } from "zod";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 type Phase = "phone" | "token";
 type FormValues = { phone?: string; token?: string };
@@ -45,6 +48,8 @@ export default function SmsForm() {
     resolver: zodResolver(schema),
   });
 
+  const router = useRouter();
+
   const onSubmit = (data: FormValues) => {
     setFormError(null);
     startTransition(async () => {
@@ -57,6 +62,9 @@ export default function SmsForm() {
         } else {
           setPhone(data.phone);
           setPhase("token");
+          toast.success(
+            "📨 인증번호를 전송했어요. 도착까지 잠시만 기다려주세요."
+          );
           reset();
         }
       }
@@ -68,6 +76,9 @@ export default function SmsForm() {
         const res = await verifyPhoneToken(formData);
         if (res?.error) {
           setFormError(res.error);
+        } else {
+          toast.success("📱 인증 완료! 항해를 위한 탑승 절차가 끝났습니다.");
+          router.push("profile");
         }
       }
     });

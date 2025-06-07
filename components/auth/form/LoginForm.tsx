@@ -7,6 +7,7 @@ History
 Date        Author   Status    Description
 2025.05.30  임도헌   Created
 2025.05.30  임도헌   Modified  로그인 폼 컴포넌트로 분리
+2025.06.07  임도헌   Modified  toast및 router.push로 페이지 이동
 */
 "use client";
 
@@ -20,6 +21,8 @@ import Link from "next/link";
 import SocialLogin from "@/components/common/SocialLogin";
 import { loginSchema } from "@/lib/auth/login/loginSchema";
 import { login } from "@/app/(auth)/login/actions";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 type FormData = z.infer<typeof loginSchema>;
 
@@ -33,6 +36,7 @@ export default function LoginForm() {
     resolver: zodResolver(loginSchema),
   });
 
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   const onSubmit = (data: FormData) => {
@@ -53,6 +57,11 @@ export default function LoginForm() {
             setError(key, { message });
           }
         });
+      } else {
+        toast.success(
+          "⛵ 환영합니다, 선원님! 보드포트의 바다로 입항하셨습니다."
+        );
+        router.push("/profile");
       }
     });
   };

@@ -7,6 +7,7 @@
  Date        Author   Status    Description
  2025.05.30  임도헌   Created
  2025.05.30  임도헌   Modified  기존 app\(auth)\sms\actions 에 있던 스키마 분리
+ 2025.06.07  임도헌   Modified  전화번호 11자리 숫자 검증으로 변경.
 */
 
 import { z } from "zod";
@@ -16,9 +17,13 @@ import validator from "validator";
 export const phoneSchema = z
   .string({ required_error: "전화번호를 입력해주세요." })
   .trim()
-  .refine((phone) => validator.isMobilePhone(phone, "ko-KR"), {
-    message: "올바른 전화번호 형식이 아닙니다.",
-  });
+  .refine(
+    (phone) =>
+      validator.isMobilePhone(phone, "ko-KR") && /^[0-9]{11}$/.test(phone),
+    {
+      message: "전화번호는 11자리 숫자여야 합니다.",
+    }
+  );
 
 // 인증번호 형식만 검증
 export const tokenSchema = z.coerce

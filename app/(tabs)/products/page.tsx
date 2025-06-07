@@ -17,6 +17,7 @@ Date        Author   Status    Description
 2024.12.16  임도헌   Modified  인기 검색 기록 얻기 기능 추가
 2024.12.27  임도헌   Modified  제품 페이지 다크모드 추가
 2025.04.29  임도헌   Modified  검색 기능 search/products에서 products로 통합
+2025.05.30  임도헌   Modified  add-product 페이지 products/add로 이동
 */
 
 import ProductList from "@/components/product/ProductList";
@@ -151,7 +152,7 @@ export default async function Products({ searchParams }: ProductsPageProps) {
 
       {/* 제품 추가 버튼 */}
       <Link
-        href="add-product"
+        href="products/add"
         className="fixed flex items-center justify-center text-white transition-all duration-300 bg-primary dark:bg-primary-light rounded-full size-14 sm:size-16 bottom-20 sm:bottom-24 right-4 sm:right-8 hover:bg-primary-dark dark:hover:bg-primary-light-dark hover:scale-105 shadow-lg hover:shadow-xl"
       >
         <PlusIcon aria-label="add_product" className="size-8 sm:size-10" />

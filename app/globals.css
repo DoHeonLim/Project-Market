@@ -88,50 +88,72 @@
 /* 구름 애니메이션 */
 .clouds {
   position: absolute;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 0;
   top: 0;
   left: 0;
-  right: 0;
-  height: 100%;
-  pointer-events: none;
 }
 
 .cloud {
   position: absolute;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 100px;
-  animation: moveCloud linear infinite;
+  width: 200px;
+  height: 100px;
+  border-radius: 50%;
+  filter: blur(10px);
+  opacity: 0.5;
+  animation: floatCloud linear infinite;
 }
 
 .cloud1 {
-  width: 120px;
-  height: 40px;
-  top: 25%;
-  animation-duration: 30s;
+  top: 10%;
+  left: -20%;
+  animation-duration: 70s;
 }
 
 .cloud2 {
-  width: 80px;
-  height: 30px;
-  top: 15%;
-  animation-duration: 20s;
-  animation-delay: -15s;
+  top: 30%;
+  left: 0%;
+  animation-duration: 40s;
 }
 
 .cloud3 {
-  width: 100px;
-  height: 35px;
-  top: 35%;
-  animation-duration: 25s;
-  animation-delay: -7s;
+  top: 50%;
+  left: -10%;
+  animation-duration: 55s;
 }
 
-@keyframes moveCloud {
-  from {
-    left: -20%;
+@keyframes floatCloud {
+  0% {
+    transform: translateX(0);
   }
-  to {
-    left: 120%;
+  100% {
+    transform: translateX(150vw);
   }
+}
+
+/* 구름 그림자 효과 */
+.cloud::before,
+.cloud::after {
+  content: "";
+  position: absolute;
+  background: inherit;
+  border-radius: 50%;
+}
+
+.cloud::before {
+  width: 100px;
+  height: 50px;
+  top: -20px;
+  left: 15px;
+}
+
+.cloud::after {
+  width: 80px;
+  height: 40px;
+  top: 70px;
+  right: 15px;
 }
 
 /* 갈매기 애니메이션 */
@@ -213,36 +235,12 @@
   }
 }
 
-/* 구름 그림자 효과 */
-.cloud::before,
-.cloud::after {
-  content: "";
-  position: absolute;
-  background: inherit;
-  border-radius: 50%;
-}
-
-.cloud::before {
-  width: 50px;
-  height: 50px;
-  top: -20px;
-  left: 15px;
-}
-
-.cloud::after {
-  width: 40px;
-  height: 40px;
-  top: -15px;
-  right: 15px;
-}
-
 /* 별 효과 수정 */
 .stars {
   position: absolute;
   width: 100%;
   height: 100%;
-  top: 0;
-  left: 0;
+  overflow: hidden;
 }
 
 .star {
@@ -251,6 +249,7 @@
   height: 2px;
   background: white;
   border-radius: 50%;
+  animation: twinkle 2s infinite ease-in-out alternate;
 }
 
 /* 각 별들의 위치를 명시적으로 지정 */
@@ -278,6 +277,92 @@
   top: 25%;
   left: 90%;
   animation: twinkle 3s infinite;
+}
+.star6 {
+  top: 5%;
+  left: 60%;
+  animation: twinkle 4s infinite;
+}
+.star7 {
+  top: 40%;
+  left: 30%;
+  animation: twinkle 3.5s infinite;
+}
+.star8 {
+  top: 55%;
+  left: 80%;
+  animation: twinkle 5s infinite;
+}
+.star9 {
+  top: 65%;
+  left: 15%;
+  animation: twinkle 3.2s infinite;
+}
+.star10 {
+  top: 75%;
+  left: 45%;
+  animation: twinkle 4.2s infinite;
+}
+.star11 {
+  top: 85%;
+  left: 70%;
+  animation: twinkle 4.8s infinite;
+}
+.star12 {
+  top: 90%;
+  left: 10%;
+  animation: twinkle 3.6s infinite;
+}
+.star13 {
+  top: 35%;
+  left: 85%;
+  animation: twinkle 5.2s infinite;
+}
+.star14 {
+  top: 45%;
+  left: 5%;
+  animation: twinkle 4.3s infinite;
+}
+.star15 {
+  top: 15%;
+  left: 35%;
+  animation: twinkle 3.7s infinite;
+}
+.star16 {
+  top: 20%;
+  left: 65%;
+  animation: twinkle 4.9s infinite;
+}
+.star17 {
+  top: 60%;
+  left: 90%;
+  animation: twinkle 3.4s infinite;
+}
+.star18 {
+  top: 70%;
+  left: 25%;
+  animation: twinkle 4.1s infinite;
+}
+.star19 {
+  top: 80%;
+  left: 50%;
+  animation: twinkle 3.8s infinite;
+}
+.star20 {
+  top: 95%;
+  left: 75%;
+  animation: twinkle 4.6s infinite;
+}
+
+@keyframes twinkle {
+  0% {
+    opacity: 0.2;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
 }
 
 /* 파도 애니메이션 수정 */
@@ -317,18 +402,6 @@
   }
   100% {
     transform: translateX(-50%);
-  }
-}
-
-@keyframes twinkle {
-  0%,
-  100% {
-    opacity: 0.2;
-    transform: scale(0.8);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.2);
   }
 }
 

@@ -12,9 +12,16 @@ Date        Author   Status    Description
 2024.12.23  임도헌   Modified   뱃지 관련 함수 추가
 2025.03.29  임도헌   Modified   커뮤니티 기여도 함수명 및 로직 변경(isPopularity)
 2025.04.18  임도헌   Modified   구성품 관리자 뱃지를 품질의 달인 뱃지로 변경
+2025.05.29  임도헌   Modified   cn 유틸(tailwind-merge, clsx 기능 조합)
 */
 
 import db from "./db";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+// clsx → 조건부 클래스 생성
+// twMerge → Tailwind 클래스 병합
+export const cn = (...inputs: ClassValue[]): string => twMerge(clsx(...inputs));
 
 // 제공된 시간에 따라 몇일 전에 올렸는지 한국 기준으로 변경하는 함수
 export const formatToTimeAgo = (date: string): string => {

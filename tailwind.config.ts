@@ -29,14 +29,11 @@ const config: Config = {
           light: "#FDE68A",
           dark: "#F59E0B",
         },
-        background: {
-          DEFAULT: "#FFFFFF", // 화이트 (깔끔함)
-          dark: "#000000",
-        },
-        text: {
-          DEFAULT: "#000000",
-          dark: "#FFFFFF",
-        },
+        // ✅ 배경 및 텍스트 색상 평면화
+        background: "#FFFFFF",
+        "background-dark": "#000000",
+        text: "#000000",
+        "text-dark": "#FFFFFF",
       },
     },
   },

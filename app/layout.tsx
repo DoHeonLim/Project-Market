@@ -6,6 +6,7 @@ import { Toaster } from "sonner";
 import NotificationListener from "@/components/common/NotificationListener";
 import getSession from "@/lib/session";
 import ServiceWorkerRegistration from "@/components/common/ServiceWorkerRegistration";
+import AppWrapper from "@/components/layout/AppWrapper";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -52,26 +53,20 @@ export default async function RootLayout({
   const session = await getSession();
   return (
     <html lang="ko" suppressHydrationWarning>
-      <body
-        className={`${inter.className} 
-          relative min-h-[100dvh] w-full
-          bg-background dark:bg-background-dark 
-          text-text dark:text-text-dark
-          transition-colors duration-300
-          sm:max-w-screen-sm sm:mx-auto sm:shadow-xl
-          pb-[env(safe-area-inset-bottom)]`}
-      >
-        <Toaster position="bottom-right" richColors closeButton />
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {session.id && <NotificationListener userId={session.id} />}
-          <ServiceWorkerRegistration />
-          {children}
-        </ThemeProvider>
+      <body className={inter.className}>
+        <AppWrapper>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <Toaster position="bottom-right" richColors closeButton />
+            {session.id && <NotificationListener userId={session.id} />}
+            <ServiceWorkerRegistration />
+            {children}
+          </ThemeProvider>
+        </AppWrapper>
       </body>
     </html>
   );

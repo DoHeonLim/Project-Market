@@ -11,6 +11,7 @@ Date        Author   Status    Description
 2025.04.21  임도헌   Modified  GAME_TYPES를 SEED와 같게 변경
 2025.04.29  임도헌   Modified  검색 링크 변경
 2025.05.23  임도헌   Modified  카테고리 필드명 변경(name->kor_name)
+2025.06.12  임도헌   Modified  카테고리 평탄화
 */
 "use client";
 
@@ -25,12 +26,6 @@ interface CategoryDropdownProps {
     eng_name: string;
     icon: string | null;
     parentId: number | null;
-    children: {
-      id: number;
-      kor_name: string;
-      eng_name: string;
-      icon: string | null;
-    }[];
   }[];
   onCategorySelect?: () => void;
 }
@@ -46,7 +41,6 @@ export default function ProductCategoryDropdown({
   onCategorySelect,
 }: CategoryDropdownProps) {
   const router = useRouter();
-
   const [isOpen, setIsOpen] = useState(false);
 
   const handleCategoryClick = (categoryId: number) => {
@@ -60,6 +54,8 @@ export default function ProductCategoryDropdown({
     setIsOpen(false);
     onCategorySelect?.();
   };
+
+  const topLevelCategories = categories.filter((c) => c.parentId === null);
 
   return (
     <div className="relative">
@@ -103,18 +99,16 @@ export default function ProductCategoryDropdown({
                 카테고리
               </h3>
               <div className="space-y-1">
-                {categories
-                  .filter((category) => category.parentId === null)
-                  .map((category) => (
-                    <button
-                      key={category.id}
-                      onClick={() => handleCategoryClick(category.id)}
-                      className="w-full flex items-center px-2 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-neutral-700 rounded transition-colors"
-                    >
-                      {category.icon}{" "}
-                      <span className="ml-2">{category.kor_name}</span>
-                    </button>
-                  ))}
+                {topLevelCategories.map((category) => (
+                  <button
+                    key={category.id}
+                    onClick={() => handleCategoryClick(category.id)}
+                    className="w-full flex items-center px-2 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-neutral-700 rounded transition-colors"
+                  >
+                    {category.icon}{" "}
+                    <span className="ml-2">{category.kor_name}</span>
+                  </button>
+                ))}
               </div>
             </div>
           </div>

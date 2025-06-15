@@ -20,7 +20,6 @@ interface SearchParams {
   condition?: string;
 }
 
-// 사용자의 검색 조건을 기반으로 Prisma용 where 조건을 생성
 export async function getProductSearchCondition({
   keyword,
   category,
@@ -29,35 +28,33 @@ export async function getProductSearchCondition({
   game_type,
   condition,
 }: SearchParams): Promise<Prisma.ProductWhereInput> {
-  let categoryCondition = {};
+  let categoryCondition: Prisma.ProductWhereInput = {};
 
   if (category) {
     const categoryId = parseInt(category);
-    if (isNaN(categoryId)) return {};
-
-    const selectedCategory = await db.category.findUnique({
-      where: { id: categoryId },
-      include: {
-        children: {
-          select: { id: true },
+    if (!isNaN(categoryId)) {
+      const selectedCategory = await db.category.findUnique({
+        where: { id: categoryId },
+        include: {
+          children: { select: { id: true } },
         },
-      },
-    });
+      });
 
-    if (selectedCategory) {
-      if (selectedCategory.parentId === null) {
-        categoryCondition = {
-          OR: [
-            { categoryId: selectedCategory.id },
-            {
-              categoryId: {
-                in: selectedCategory.children.map((child) => child.id),
+      if (selectedCategory) {
+        if (selectedCategory.parentId === null) {
+          categoryCondition = {
+            OR: [
+              { categoryId: selectedCategory.id },
+              {
+                categoryId: {
+                  in: selectedCategory.children.map((child) => child.id),
+                },
               },
-            },
-          ],
-        };
-      } else {
-        categoryCondition = { categoryId: selectedCategory.id };
+            ],
+          };
+        } else {
+          categoryCondition = { categoryId: selectedCategory.id };
+        }
       }
     }
   }
@@ -70,22 +67,20 @@ export async function getProductSearchCondition({
               {
                 title: {
                   contains: keyword,
-                  mode: "insensitive",
-                } as Prisma.StringFilter,
+                  // ❗ SQLite는 mode: "insensitive"를 지원하지 않음(나중에 postgreSQL로 변경 예정)
+                },
               },
               {
                 description: {
                   contains: keyword,
-                  mode: "insensitive",
-                } as Prisma.StringFilter,
+                },
               },
               {
                 search_tags: {
                   some: {
                     name: {
                       contains: keyword,
-                      mode: "insensitive",
-                    } as Prisma.StringFilter,
+                    },
                   },
                 },
               },

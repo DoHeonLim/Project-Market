@@ -16,23 +16,7 @@
 import db from "@/lib/db";
 import { PRODUCT_SELECT } from "@/lib/constants/productSelect";
 import { getProductSearchCondition } from "@/lib/queries/getProductSearchCondition";
-
-// 카테고리 얻어오기
-export const getCategories = async () => {
-  return db.category.findMany({
-    where: { parentId: null },
-    include: {
-      children: {
-        select: {
-          id: true,
-          kor_name: true,
-          eng_name: true,
-          icon: true,
-        },
-      },
-    },
-  });
-};
+import { ProductType } from "@/types/product";
 
 interface SearchParams {
   keyword?: string;
@@ -57,5 +41,8 @@ export const searchProducts = async (params: SearchParams) => {
     orderBy: { created_at: "desc" },
   });
 
-  return products;
+  return {
+    products: products as ProductType[],
+    nextCursor: null,
+  };
 };

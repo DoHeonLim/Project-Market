@@ -1,5 +1,5 @@
 /**
-File Name : hooks/usePushNotification.ts
+File Name : hooks/usePushNotification
 Description : 푸시 알림 커스텀 훅
 Author : 임도헌
 
@@ -135,9 +135,8 @@ export function usePushNotification() {
   // 서비스 워커 등록
   const registerServiceWorker = async () => {
     try {
-      const registration = await navigator.serviceWorker.register(
-        "/service-worker.js"
-      );
+      const registration =
+        await navigator.serviceWorker.register("/service-worker.js");
       console.log("Service Worker registered:", registration);
       return registration;
     } catch (error) {

@@ -12,6 +12,7 @@ Date        Author   Status    Description
 2025.04.29  임도헌   Modified  검색시 기존 검색 파라미터를 유지하지 않게 변경
 2025.04.29  임도헌   Modified  최근 검색 기록 실시간으로 업데이트 되도록 변경
 2025.04.30  임도헌   Modified  성능 최적화 및 사용자 경험 개선
+2025.06.12  임도헌   Modified  카테고리 평탄화
 */
 "use client";
 
@@ -32,27 +33,17 @@ import {
   GAME_TYPE_DISPLAY,
   CONDITION_DISPLAY,
 } from "@/lib/constants";
+import { getCategoryName } from "@/lib/category/getCategoryName";
+import { useRouter } from "next/navigation";
 import {
   deleteAllSearchHistory,
   deleteSearchHistory,
   getUserSearchHistory,
-} from "@/app/(tabs)/products/actions";
-import { useRouter } from "next/navigation";
+} from "@/app/(tabs)/products/actions/history";
+import type { Category } from "@prisma/client";
 
 interface SearchSectionProps {
-  categories: {
-    id: number;
-    eng_name: string;
-    kor_name: string;
-    icon: string | null;
-    parentId: number | null;
-    children: {
-      id: number;
-      eng_name: string;
-      kor_name: string;
-      icon: string | null;
-    }[];
-  }[];
+  categories: Category[];
   keyword: string | undefined;
   searchParams: { [key: string]: string | undefined };
   searchHistory: {
@@ -86,25 +77,6 @@ export default function SearchSection({
   });
   const router = useRouter();
 
-  // 카테고리 이름 찾기 (useMemo로 최적화)
-  const getCategoryName = useCallback(
-    (categoryId: string) => {
-      const id = parseInt(categoryId);
-      const parentCategory = categories.find((cat) => cat.id === id);
-      if (parentCategory) return parentCategory.kor_name;
-
-      for (const parent of categories) {
-        const childCategory = parent.children.find((child) => child.id === id);
-        if (childCategory) {
-          return `${parent.kor_name} > ${childCategory.kor_name}`;
-        }
-      }
-      return categoryId;
-    },
-    [categories]
-  );
-
-  // searchParams가 변경될 때마다 filters 업데이트
   useEffect(() => {
     setFilters({
       category: searchParams.category ?? "",
@@ -115,12 +87,10 @@ export default function SearchSection({
     });
   }, [searchParams]);
 
-  // searchHistory가 변경될 때마다 localSearchHistory 업데이트
   useEffect(() => {
     setLocalSearchHistory(searchHistory);
   }, [searchHistory]);
 
-  // 검색 기록 삭제 핸들러 (useCallback으로 최적화)
   const handleDeleteKeyword = useCallback(async (keywordToDelete: string) => {
     try {
       await deleteSearchHistory(keywordToDelete);
@@ -131,7 +101,6 @@ export default function SearchSection({
     }
   }, []);
 
-  // 전체 검색 기록 삭제 핸들러
   const handleDeleteAllKeywords = useCallback(async () => {
     try {
       await deleteAllSearchHistory();
@@ -141,7 +110,6 @@ export default function SearchSection({
     }
   }, []);
 
-  // 필터 변경 핸들러 (useCallback으로 최적화)
   const handleFilterChange = useCallback(
     (key: keyof FilterState, value: string) => {
       setFilters((prev) => ({ ...prev, [key]: value }));
@@ -149,15 +117,12 @@ export default function SearchSection({
     []
   );
 
-  // 필터 제거 핸들러 (useCallback으로 최적화)
   const handleFilterRemove = useCallback((key: keyof FilterState) => {
     setFilters((prev) => ({ ...prev, [key]: "" }));
   }, []);
 
-  // 검색 핸들러 (useCallback으로 최적화)
   const handleSearch = useCallback(
     async (keyword: string) => {
-      // 중복 검색어 제거 및 최신 검색어를 맨 앞으로 이동
       const newSearchHistory = [
         { keyword, created_at: new Date() },
         ...localSearchHistory.filter((item) => item.keyword !== keyword),
@@ -165,15 +130,13 @@ export default function SearchSection({
 
       setLocalSearchHistory(newSearchHistory);
 
-      // 검색 시 현재 적용된 필터와 함께 검색
       const searchParams = new URLSearchParams({
         keyword,
         ...filters,
       });
 
-      // 검색 페이지로 이동하기 전에 검색 기록 업데이트
       try {
-        await deleteSearchHistory(keyword); // 기존 검색어 삭제
+        await deleteSearchHistory(keyword);
         router.push(`/products?${searchParams.toString()}`);
       } catch (error) {
         console.error("Failed to update search history:", error);
@@ -183,7 +146,6 @@ export default function SearchSection({
     [localSearchHistory, filters, router]
   );
 
-  // 필터 표시 컴포넌트 (useMemo로 최적화)
   const filterTags = useMemo(() => {
     return Object.entries(filters).map(([key, value]) => {
       if (!value) return null;
@@ -196,7 +158,7 @@ export default function SearchSection({
         displayValue =
           CONDITION_DISPLAY[value as keyof typeof CONDITION_DISPLAY];
       } else if (key === "category") {
-        displayValue = getCategoryName(value);
+        displayValue = getCategoryName(value, categories);
       }
 
       return (
@@ -221,7 +183,7 @@ export default function SearchSection({
         </div>
       );
     });
-  }, [filters, getCategoryName, handleFilterRemove]);
+  }, [filters, categories, handleFilterRemove]);
 
   return (
     <div className="sticky top-0 z-10 bg-white dark:bg-neutral-900">

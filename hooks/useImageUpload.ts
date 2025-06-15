@@ -1,15 +1,17 @@
 /**
-File Name : hooks/useImageUpload
-Description : 이미지 업로드 커스텀 훅
-Author : 임도헌
+ * File Name : hooks/useImageUpload
+ * Description : 이미지 업로드를 위한 공통 커스텀 훅
+ * Author : 임도헌
+ *
+ * History
+ * Date        Author   Status    Description
+ * 2024.12.10  임도헌   Created   이미지 업로드 커스텀 훅 생성
+ * 2024.12.10  임도헌   Modified toast 기반 오류 처리 및 상태관리 추가
+ * 2025.04.28  임도헌   Modified toast UI로 변경
+ * 2025.05.26  임도헌   Modified .tsx → .ts 확장자 변경
+ * 2025.06.15  임도헌   Modified  주석 추가
+ */
 
-History
-Date        Author   Status    Description
-2024.12.10  임도헌   Created
-2024.12.10  임도헌   Modified  이미지 업로드 커스텀 훅 추가
-2025.04.28  임도헌   Modified  toast UI로 변경
-2025.05.26  임도헌   Modified  .tsx -> .ts로 변경
-*/
 import { useState } from "react";
 import type { DropResult } from "@hello-pangea/dnd";
 import { MAX_PHOTO_SIZE } from "@/lib/constants";
@@ -17,23 +19,35 @@ import { UseFormGetValues, UseFormSetValue } from "react-hook-form";
 import { toast } from "sonner";
 
 interface UseImageUploadProps {
-  maxImages?: number;
-  maxSize?: number;
-  setValue: UseFormSetValue<any>;
-  getValues: UseFormGetValues<any>;
+  maxImages?: number; // 최대 업로드 가능한 이미지 수
+  maxSize?: number; // 개별 이미지 최대 크기 (기본 3MB)
+  setValue: UseFormSetValue<any>; // react-hook-form의 setValue
+  getValues: UseFormGetValues<any>; // react-hook-form의 getValues
 }
 
+/**
+ * useImageUpload
+ * 이미지 업로드를 위한 커스텀 훅으로, 다음과 같은 기능을 제공한다:
+ * - 이미지 유효성 검증 (개수, 타입, 크기)
+ * - 이미지 미리보기 URL 생성 및 상태 저장
+ * - react-hook-form의 photos 필드와 연동
+ * - 이미지 삭제 및 정렬 변경 기능 제공 (Drag & Drop 기반)
+ */
 export function useImageUpload({
   maxImages = 5,
   maxSize = MAX_PHOTO_SIZE,
   setValue,
   getValues,
 }: UseImageUploadProps) {
-  const [previews, setPreviews] = useState<string[]>([]);
-  const [files, setFiles] = useState<File[]>([]);
-  const [isImageFormOpen, setIsImageFormOpen] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
+  const [previews, setPreviews] = useState<string[]>([]); // 이미지 미리보기 URL 배열
+  const [files, setFiles] = useState<File[]>([]); // 업로드할 이미지 파일 배열
+  const [isImageFormOpen, setIsImageFormOpen] = useState(false); // 이미지 업로드 폼 열림 여부
+  const [isUploading, setIsUploading] = useState(false); // 업로드 중 상태
 
+  /**
+   * handleImageChange
+   * - 이미지 선택 시 유효성 검증 후 미리보기 및 상태 업데이트
+   */
   const handleImageChange = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -60,13 +74,12 @@ export function useImageUpload({
           return;
         }
       }
-      // 미리보기 URL 생성
+
       const newPreviews = Array.from(newFiles).map((file) =>
         URL.createObjectURL(file)
       );
-      // 미리보기 세팅
+
       setPreviews((prev) => [...prev, ...newPreviews]);
-      // 이미지 파일 세팅
       setFiles((prev) => [...prev, ...Array.from(newFiles)]);
       setValue("photos", [...(getValues("photos") || []), ...newPreviews]);
     } catch (error) {
@@ -77,32 +90,33 @@ export function useImageUpload({
     }
   };
 
+  /**
+   * handleDeleteImage
+   * - 특정 인덱스의 이미지를 삭제하고 상태 동기화
+   */
   const handleDeleteImage = (index: number) => {
-    // 현재 photos 값을 가져옴
     const currentPhotos: string[] = getValues("photos");
-
-    // previews와 photos 배열에서 해당 인덱스 항목 제거
     setPreviews((prev) => prev.filter((_, i) => i !== index));
     setFiles((prev) => prev.filter((_, i) => i !== index));
-
-    // photos 값 업데이트
     setValue(
       "photos",
-      currentPhotos.filter((photo: string, i: number) => i !== index)
+      currentPhotos.filter((_, i) => i !== index)
     );
   };
 
+  /**
+   * handleDragEnd
+   * - Drag & Drop으로 이미지 순서를 변경할 때 실행
+   */
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
 
     const items = Array.from(previews);
     const fileItems = Array.from(files);
 
-    // 이미지 순서 변경
     const [reorderedPreview] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, reorderedPreview);
 
-    // 파일 순서도 같이 변경
     const [reorderedFile] = fileItems.splice(result.source.index, 1);
     fileItems.splice(result.destination.index, 0, reorderedFile);
 
@@ -111,6 +125,10 @@ export function useImageUpload({
     setValue("photos", items);
   };
 
+  /**
+   * resetImage
+   * - 이미지 상태 초기화
+   */
   const resetImage = () => {
     setPreviews([]);
     setFiles([]);

@@ -7,19 +7,17 @@ History
 Date        Author   Status    Description
 2024.10.14  임도헌   Created
 2024.10.14  임도헌   Modified  제품 로딩 페이지 추가
+2025.06.08  임도헌   Created   제품 목록 로딩 수정
 */
 
 export default function Loading() {
   return (
-    <div className="flex flex-col gap-5 p-5 animate-pulse">
-      {[...Array(10)].map((_, index) => (
-        <div key={index} className="*:rounded-md flex gap-5">
-          <div className="size-28 bg-neutral-700" />
-          <div className="*:rounded-md flex flex-col gap-2">
-            <div className="w-40 h-5 bg-neutral-700" />
-            <div className="w-20 h-5 bg-neutral-700" />
-            <div className="w-10 h-5 bg-neutral-700" />
-          </div>
+    <div className="grid grid-cols-2 gap-4 p-4">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="flex flex-col space-y-2 animate-pulse">
+          <div className="w-full h-40 bg-neutral-200 dark:bg-neutral-700 rounded-lg" />
+          <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-3/4" />
+          <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-1/2" />
         </div>
       ))}
     </div>

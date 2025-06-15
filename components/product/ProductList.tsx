@@ -1,6 +1,6 @@
 /**
 File Name : components/product/ProductList
-Description : 제품 컴포넌트
+Description : 제품 목록 컴포넌트 (무한 스크롤 포함)
 Author : 임도헌
 
 History
@@ -14,75 +14,38 @@ Date        Author   Status    Description
 2025.04.29  임도헌   Modified  검색 결과가 변경될 때마다 제품 목록 업데이트 되도록 수정
 2025.04.30  임도헌   Modified  성능 최적화 및 사용자 경험 개선
 2025.05.06  임도헌   Modified  그리드/리스트 뷰 모드 추가
+2025.06.07  임도헌   Modified  nextCursor 기반 페이지네이션 적용 및 props 구조 변경
+2025.06.07  임도헌   Modified  무한 스크롤 훅 useInfiniteScroll 분리 적용
+2025.06.07  임도헌   Modified  ProductCard 기반으로 구조 정리
 */
 "use client";
 
-import { InitialProducts } from "@/app/(tabs)/products/page";
-import ListProduct from "./ListProduct";
-import { useEffect, useRef, useState, useCallback } from "react";
-import { getMoreProducts } from "@/app/(tabs)/products/actions";
+import { useRef, useState } from "react";
 import { Squares2X2Icon, ListBulletIcon } from "@heroicons/react/24/outline";
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
+import { useProductPagination } from "@/hooks/useProductPagination";
+import ProductCard from "./productCard";
+import { Products } from "@/types/product";
 
-interface IProductListProps {
-  initialProducts: InitialProducts;
-}
+type ProductListProps = {
+  initialProducts: Products;
+};
 
-export default function ProductList({ initialProducts }: IProductListProps) {
-  const [products, setProducts] = useState(initialProducts);
-  const [isLoading, setIsLoading] = useState(false);
-  const [page, setPage] = useState(0);
-  const [isLastPage, setIsLastPage] = useState(false);
+export default function ProductList({ initialProducts }: ProductListProps) {
+  const triggerRef = useRef<HTMLSpanElement>(null);
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
-  const trigger = useRef<HTMLSpanElement>(null);
 
-  // 검색 결과가 변경될 때마다 제품 목록이 업데이트 되도록 변경
-  useEffect(() => {
-    setProducts(initialProducts);
-    setPage(0);
-    setIsLastPage(false);
-  }, [initialProducts]);
+  const { products, isLoading, hasMore, loadMore } = useProductPagination({
+    initialProducts: initialProducts.products,
+    initialCursor: initialProducts.nextCursor,
+  });
 
-  // 무한 스크롤 로직을 useCallback으로 최적화
-  const loadMoreProducts = useCallback(async () => {
-    if (isLoading || isLastPage) return;
-
-    setIsLoading(true);
-    try {
-      const newProducts = await getMoreProducts(page + 1);
-      if (newProducts.length > 0) {
-        setProducts((prev) => [...prev, ...newProducts]);
-        setPage((prev) => prev + 1);
-      } else {
-        setIsLastPage(true);
-      }
-    } catch (error) {
-      console.error("Failed to load more products:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [page, isLoading, isLastPage]);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const element = entries[0];
-        if (element.isIntersecting && trigger.current) {
-          observer.unobserve(trigger.current);
-          loadMoreProducts();
-        }
-      },
-      {
-        threshold: 0.5, // 50% 보일 때 로드 시작
-        rootMargin: "100px", // 미리 로드 시작
-      }
-    );
-
-    if (trigger.current) {
-      observer.observe(trigger.current);
-    }
-
-    return () => observer.disconnect();
-  }, [loadMoreProducts]);
+  useInfiniteScroll({
+    triggerRef,
+    hasMore,
+    isLoading,
+    onLoadMore: loadMore,
+  });
 
   return (
     <div className="flex flex-col gap-6">
@@ -95,7 +58,7 @@ export default function ProductList({ initialProducts }: IProductListProps) {
               ? "bg-primary/10 text-primary dark:bg-primary-light/10 dark:text-primary-light"
               : "text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800"
           }`}
-          aria-label="리스트트 뷰"
+          aria-label="리스트 뷰"
         >
           <ListBulletIcon className="size-5" />
         </button>
@@ -132,28 +95,27 @@ export default function ProductList({ initialProducts }: IProductListProps) {
             }
           >
             {products.map((product, index) => (
-              <ListProduct
+              <ProductCard
                 key={product.id}
-                {...product}
+                product={product}
                 viewMode={viewMode}
                 isPriority={index < 3}
               />
             ))}
           </div>
 
-          {!isLastPage && (
+          {hasMore && (
             <span
-              ref={trigger}
+              ref={triggerRef}
               className="mb-96 text-sm font-medium bg-primary/10 dark:bg-primary-light/10 text-primary dark:text-primary-light w-fit mx-auto px-4 py-2 rounded-full hover:bg-primary/20 dark:hover:bg-primary-light/20 active:scale-95 transition-all cursor-pointer flex items-center gap-2"
             >
               {isLoading ? (
                 <>
-                  <span className="animate-spin">🌊</span>
-                  항해중...
+                  <span className="animate-spin">🌊</span> 항해중...
                 </>
               ) : (
                 <>
-                  <span>⚓</span>더 많은 보드게임 찾기
+                  <span>⚓</span> 더 많은 보드게임 찾기
                 </>
               )}
             </span>

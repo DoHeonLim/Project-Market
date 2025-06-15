@@ -9,6 +9,7 @@ Date        Author   Status    Description
 2024.12.17  임도헌   Modified  검색 필터 컴포넌트 생성
 2025.04.18  임도헌   Modified  모바일일때는 고정위치 PC일때는 절대 위치로 변경
 2025.04.30  임도헌   Modified  성능 최적화 및 사용자 경험 개선
+2025.06.12  임도헌   Modified  카테고리 평탄화
 */
 "use client";
 
@@ -19,20 +20,10 @@ import {
 } from "@/lib/constants";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
+import type { Category } from "@prisma/client";
 
 interface SearchFiltersProps {
-  categories: {
-    id: number;
-    eng_name: string;
-    kor_name: string;
-    icon: string | null;
-    parentId: number | null;
-    children: {
-      id: number;
-      kor_name: string;
-      icon: string | null;
-    }[];
-  }[];
+  categories: Category[];
   filters: FilterState;
   onFilterChange: (key: keyof FilterState, value: string) => void;
   onClose: () => void;
@@ -44,28 +35,23 @@ export default function SearchFilters({
   onFilterChange,
   onClose,
 }: SearchFiltersProps) {
-  // 임시 필터 상태
   const [tempFilters, setTempFilters] = useState<FilterState>(filters);
   const [selectedParentCategory, setSelectedParentCategory] =
     useState<string>("");
 
-  // filters prop이 변경되면 임시 필터도 업데이트
   useEffect(() => {
     setTempFilters(filters);
   }, [filters]);
 
-  // 부모 카테고리 변경 시 처리 (useCallback으로 최적화)
   const handleParentCategoryChange = useCallback((value: string) => {
     setSelectedParentCategory(value);
     setTempFilters((prev) => ({ ...prev, category: value }));
   }, []);
 
-  // 자식 카테고리 변경 시 처리 (useCallback으로 최적화)
   const handleChildCategoryChange = useCallback((value: string) => {
     setTempFilters((prev) => ({ ...prev, category: value }));
   }, []);
 
-  // 필터 적용 (useCallback으로 최적화)
   const handleApplyFilters = useCallback(() => {
     Object.entries(tempFilters).forEach(([key, value]) => {
       onFilterChange(key as keyof FilterState, value);
@@ -73,7 +59,6 @@ export default function SearchFilters({
     onClose();
   }, [tempFilters, onFilterChange, onClose]);
 
-  // 필터 초기화 (useCallback으로 최적화)
   const handleResetFilters = useCallback(() => {
     const resetFilters = {
       category: "",
@@ -86,7 +71,6 @@ export default function SearchFilters({
     setSelectedParentCategory("");
   }, []);
 
-  // 가격 입력 유효성 검사 (useCallback으로 최적화)
   const handlePriceChange = useCallback(
     (key: "minPrice" | "maxPrice", value: string) => {
       const numValue =
@@ -96,7 +80,6 @@ export default function SearchFilters({
     []
   );
 
-  // 게임 타입 옵션 (useMemo로 최적화)
   const gameTypeOptions = useMemo(() => {
     return Object.entries(GAME_TYPE_DISPLAY).map(([key, value]) => (
       <option key={key} value={key}>
@@ -105,7 +88,6 @@ export default function SearchFilters({
     ));
   }, []);
 
-  // 제품 상태 옵션 (useMemo로 최적화)
   const conditionOptions = useMemo(() => {
     return Object.entries(CONDITION_DISPLAY).map(([key, value]) => (
       <option key={key} value={key}>
@@ -113,6 +95,11 @@ export default function SearchFilters({
       </option>
     ));
   }, []);
+
+  const parentCategories = categories.filter((c) => c.parentId === null);
+  const childCategories = categories.filter(
+    (c) => c.parentId?.toString() === selectedParentCategory
+  );
 
   return (
     <>
@@ -152,13 +139,11 @@ export default function SearchFilters({
                   aria-label="부모 카테고리 선택"
                 >
                   <option value="">전체</option>
-                  {categories
-                    .filter((category) => category.parentId === null)
-                    .map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.icon} {category.kor_name}
-                      </option>
-                    ))}
+                  {parentCategories.map((category) => (
+                    <option key={category.id} value={category.id.toString()}>
+                      {category.icon} {category.kor_name}
+                    </option>
+                  ))}
                 </select>
 
                 {selectedParentCategory && (
@@ -169,13 +154,11 @@ export default function SearchFilters({
                     aria-label="자식 카테고리 선택"
                   >
                     <option value={selectedParentCategory}>전체</option>
-                    {categories
-                      .find((c) => c.id.toString() === selectedParentCategory)
-                      ?.children.map((child) => (
-                        <option key={child.id} value={child.id}>
-                          {child.icon} {child.kor_name}
-                        </option>
-                      ))}
+                    {childCategories.map((child) => (
+                      <option key={child.id} value={child.id.toString()}>
+                        {child.icon} {child.kor_name}
+                      </option>
+                    ))}
                   </select>
                 )}
               </div>
@@ -309,13 +292,11 @@ export default function SearchFilters({
                 aria-label="부모 카테고리 선택"
               >
                 <option value="">전체</option>
-                {categories
-                  .filter((category) => category.parentId === null)
-                  .map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.icon} {category.kor_name}
-                    </option>
-                  ))}
+                {parentCategories.map((category) => (
+                  <option key={category.id} value={category.id.toString()}>
+                    {category.icon} {category.kor_name}
+                  </option>
+                ))}
               </select>
 
               {selectedParentCategory && (
@@ -326,13 +307,11 @@ export default function SearchFilters({
                   aria-label="자식 카테고리 선택"
                 >
                   <option value={selectedParentCategory}>전체</option>
-                  {categories
-                    .find((c) => c.id.toString() === selectedParentCategory)
-                    ?.children.map((child) => (
-                      <option key={child.id} value={child.id}>
-                        {child.icon} {child.kor_name}
-                      </option>
-                    ))}
+                  {childCategories.map((child) => (
+                    <option key={child.id} value={child.id.toString()}>
+                      {child.icon} {child.kor_name}
+                    </option>
+                  ))}
                 </select>
               )}
             </div>

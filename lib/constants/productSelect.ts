@@ -18,6 +18,7 @@ export const PRODUCT_SELECT = {
     take: 1,
     select: {
       url: true,
+      order: true,
     },
   },
   id: true,

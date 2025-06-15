@@ -7,13 +7,17 @@ History
 Date        Author   Status    Description
 2024.12.11  임도헌   Created
 2024.12.11  임도헌   Modified  제품 좋아요 버튼 컴포넌트 추가
+2025.06.08  임도헌   Modified  서버 데이터 props 기반으로 분리
 */
 "use client";
 
-import { HeartIcon } from "@heroicons/react/24/solid";
+import { useTransition } from "react";
+import {
+  dislikeProduct,
+  likeProduct,
+} from "@/app/products/view/[id]/actions/like";
 import { HeartIcon as OutlineHeartIcon } from "@heroicons/react/24/outline";
-import { useOptimistic } from "react";
-import { dislikeProduct, likeProduct } from "@/app/products/[id]/actions";
+import { HeartIcon } from "@heroicons/react/24/solid";
 
 interface IProductLikeButtonProps {
   isLiked: boolean;
@@ -26,41 +30,50 @@ export default function ProductLikeButton({
   likeCount,
   productId,
 }: IProductLikeButtonProps) {
-  const [state, reducerFn] = useOptimistic(
-    { isLiked, likeCount },
-    (previousState) => ({
-      isLiked: !previousState.isLiked,
-      likeCount: previousState.isLiked
-        ? previousState.likeCount - 1
-        : previousState.likeCount + 1,
-    })
-  );
+  // const [state, reducerFn] = useOptimistic(
+  //   { isLiked, likeCount },
+  //   (previousState) => ({
+  //     isLiked: !previousState.isLiked,
+  //     likeCount: previousState.isLiked
+  //       ? previousState.likeCount - 1
+  //       : previousState.likeCount + 1,
+  //   })
+  // );
 
-  const handleClick = async () => {
-    reducerFn(undefined);
-    if (isLiked) {
-      await dislikeProduct(productId);
-    } else {
-      await likeProduct(productId);
-    }
+  // const handleClick = async () => {
+  //   reducerFn(undefined);
+  //   if (isLiked) {
+  //     await dislikeProduct(productId);
+  //   } else {
+  //     await likeProduct(productId);
+  //   }
+  // };
+
+  const [isPending, startTransition] = useTransition();
+
+  const handleClick = () => {
+    startTransition(async () => {
+      if (isLiked) {
+        await dislikeProduct(productId);
+      } else {
+        await likeProduct(productId);
+      }
+    });
   };
 
   return (
     <button
       onClick={handleClick}
       className={`flex items-center gap-1 p-2 transition-colors
-        ${
-          state.isLiked
-            ? "text-rose-500"
-            : "text-neutral-400 hover:text-rose-500"
-        }`}
+        ${isLiked ? "text-rose-500" : "text-neutral-400 hover:text-rose-500"}`}
+      disabled={isPending}
     >
-      {state.isLiked ? (
+      {isLiked ? (
         <HeartIcon aria-label="heart" className="size-10" />
       ) : (
         <OutlineHeartIcon aria-label="heart_outline" className="size-10" />
       )}
-      <span>{state.likeCount}</span>
+      <span>{likeCount}</span>
     </button>
   );
 }

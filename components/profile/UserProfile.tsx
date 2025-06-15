@@ -23,7 +23,7 @@ import Image from "next/image";
 import UserRating from "./UserRating";
 import { useEffect, useRef, useState } from "react";
 import { getMoreUserProducts } from "@/app/(tabs)/profile/[username]/actions";
-import ListProduct from "../product/ListProduct";
+import ListProduct from "../product/ProductCard";
 import { ProductsSkeleton } from "@/app/(tabs)/profile/[username]/loading";
 import ProfileReviewsModal from "./ProfileReviewsModal";
 import { ListBulletIcon, Squares2X2Icon } from "@heroicons/react/24/outline";

@@ -13,12 +13,13 @@
  2025.04.28  임도헌   Modified  tags 제약조건 완화
  2025.06.15  임도헌   Modified  productFormSchema로 통합
  2025.06.15  임도헌   Modified  lib 폴더로 이동
+ 2025.06.18  임도헌   Modified  id를 z.number().optional()로 수정(제품 추가에서 에러 발생해서 optional로 변경)
  */
 
 import { z } from "zod";
 
 export const productFormSchema = z.object({
-  id: z.coerce.number(),
+  id: z.coerce.number().optional(),
   title: z.string({
     required_error: "제목을 입력해주세요.",
   }),

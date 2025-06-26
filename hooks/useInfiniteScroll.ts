@@ -18,22 +18,18 @@ interface UseInfiniteScrollProps {
 }
 
 /**
- * useInfiniteScroll
- * 특정 요소가 화면에 일정 비율 보이면 onLoadMore 콜백을 실행하는 커스텀 훅입.
+ * 특정 요소가 화면에 일정 비율 보이면 onLoadMore 콜백을 실행하는 커스텀 훅.
  * - IntersectionObserver API를 사용.
  * - 커서 기반 페이지네이션 로직을 가진 훅과 함께 사용.
  *
  * 주요 사용 대상: useProductPagination, usePostPagination, useStreamPagination 등
- *
- * @param {UseInfiniteScrollProps} props
- * @returns 없음
  */
 export function useInfiniteScroll({
   triggerRef,
   hasMore,
   isLoading,
   onLoadMore,
-}: UseInfiniteScrollProps) {
+}: UseInfiniteScrollProps): void {
   useEffect(() => {
     if (!triggerRef.current || !hasMore || isLoading) return;
 

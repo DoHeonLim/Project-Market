@@ -38,7 +38,7 @@ export interface PopularSearchItem {
   count: number;
 }
 
-// 🔸 검색 기록 저장
+// 🔸 검색 기록 저장 (내부 로직)
 export const saveSearchHistory = async (
   userId: number,
   searchData: SearchData
@@ -63,6 +63,14 @@ export const saveSearchHistory = async (
       },
     });
   }
+};
+
+// 🔸 클라이언트 호출용: 세션에서 유저 ID 자동 처리
+export const createSearchHistory = async (keyword: string): Promise<void> => {
+  const session = await getSession();
+  if (!session?.id) return;
+
+  await saveSearchHistory(session.id, { keyword });
 };
 
 // 🔸 최근 검색 기록 가져오기

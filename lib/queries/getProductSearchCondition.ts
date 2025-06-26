@@ -67,7 +67,7 @@ export async function getProductSearchCondition({
               {
                 title: {
                   contains: keyword,
-                  // ❗ SQLite는 mode: "insensitive"를 지원하지 않음(나중에 postgreSQL로 변경 예정)
+                  // ❗ SQLite는 mode: "insensitive"를 지원하지 않음(나중에 postgreSQL로 변경)
                 },
               },
               {

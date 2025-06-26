@@ -1,5 +1,5 @@
 /**
-File Name : components/productDetail/modal/ProductDetailModalContainer.tsx
+File Name : components/productDetail/modal/ProductDetailModalContainer
 Description : 제품 상세 페이지 모달 컨테이너
 Author : 임도헌
 

@@ -29,7 +29,7 @@ export default function ProductDetailHeader({
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-2">
         <Link
-          href={`/search/products?game_type=${game_type}`}
+          href={`/products?game_type=${game_type}`}
           className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-primary/10 text-primary dark:bg-primary-light/10 dark:text-primary-light rounded-full hover:bg-primary/20 dark:hover:bg-primary-light/20 transition-all hover:scale-105 active:scale-95"
         >
           🎲 {GAME_TYPE_DISPLAY[game_type as keyof typeof GAME_TYPE_DISPLAY]}

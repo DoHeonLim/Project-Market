@@ -42,11 +42,11 @@ export const POST_CATEGORY = {
 
 // 제품 필터 타입
 export type FilterState = {
-  category: string;
-  minPrice: string;
-  maxPrice: string;
-  game_type: string;
-  condition: string;
+  category?: string;
+  minPrice?: string;
+  maxPrice?: string;
+  game_type?: string;
+  condition?: string;
 };
 
 // 게시글 카테고리 타입

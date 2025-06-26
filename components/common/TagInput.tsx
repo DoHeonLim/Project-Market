@@ -84,7 +84,7 @@ export default function TagInput({
         onChange={(e) => setTagInput(e.target.value)}
         onKeyDown={handleAddTag}
         placeholder="태그를 입력하세요"
-        className="p-2 border rounded-md dark:bg-neutral-800 dark:border-neutral-700"
+        className="input-primary p-2 border rounded-md dark:bg-neutral-800 dark:border-neutral-700"
         disabled={tags.length >= maxTags}
       />
       {error && <p className="text-sm text-red-500">{error.message}</p>}

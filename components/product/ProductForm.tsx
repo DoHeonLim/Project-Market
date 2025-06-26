@@ -26,6 +26,7 @@ Date        Author   Status    Description
 2025.04.13  임도헌   Modified  condition 필드를 영어로 변경
 2025.04.13  임도헌   Modified  game_type 필드를 영어로 변경
 2025.06.15  임도헌   Modified  통합된 제품 폼으로 병합
+2025.06.18  임도헌   Modified  제품 등록 시 id를 zod에서 optional로 지정해서 오류 해결
  */
 "use client";
 
@@ -96,12 +97,12 @@ export default function ProductForm({
       id: defaultValues.id || 0,
       title: defaultValues.title || "",
       description: defaultValues.description || "",
-      price: defaultValues.price || 0,
+      price: defaultValues.price,
       photos: defaultValues.photos || [],
       game_type: defaultValues.game_type || "BOARD_GAME",
-      min_players: defaultValues.min_players || 1,
-      max_players: defaultValues.max_players || 4,
-      play_time: defaultValues.play_time || "30분",
+      min_players: defaultValues.min_players,
+      max_players: defaultValues.max_players,
+      play_time: defaultValues.play_time,
       condition: defaultValues.condition || "NEW",
       completeness: defaultValues.completeness || "PERFECT",
       has_manual: defaultValues.has_manual ?? true,
@@ -193,7 +194,10 @@ export default function ProductForm({
         .filter((url): url is string => !!url);
 
       const formData = new FormData();
-      if (mode === "edit") formData.append("id", data.id.toString());
+      if (mode === "edit") {
+        const productId = defaultValues.id ? defaultValues.id.toString() : "0";
+        formData.append("id", productId);
+      }
       Object.entries(data).forEach(([key, value]) => {
         if (key === "tags") formData.append(key, JSON.stringify(value));
         else if (key !== "photos" && key !== "id")
@@ -281,6 +285,7 @@ export default function ProductForm({
         <Input
           type="number"
           required
+          placeholder="최저 인원"
           min={1}
           {...register("min_players")}
           errors={[errors.min_players?.message ?? ""]}
@@ -288,6 +293,7 @@ export default function ProductForm({
         <Input
           type="number"
           required
+          placeholder="최대 인원"
           min={minPlayers}
           {...register("max_players")}
           errors={[errors.max_players?.message ?? ""]}

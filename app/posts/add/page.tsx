@@ -1,208 +1,27 @@
 /**
-File Name : app/posts/add/page
-Description : 동네생활 게시글 생성 페이지
-Author : 임도헌
+ * File Name : components/post/PostForm
+ * Description : 게시글 작성/수정 공통 폼
+ * Author : 임도헌
+ *
+ * History
+ * Date        Author   Status    Description
+ * 2025.07.04  임도헌   Created   기존 add/page.tsx 흐름 유지하며 공통 폼 리팩토링
+ */
 
-History
-Date        Author   Status    Description
-2024.11.23  임도헌   Created
-2024.11.23  임도헌   Modified  동네생활 게시글 생성 페이지 추가
-2024.12.10  임도헌   Modified  게시글에 이미지 업로드 추가(이미지 여러개)
-2024.12.10  임도헌   Modified  이미지 업로드 로딩 상태 추가
-2024.12.18  임도헌   Modified  항해일지 추가 페이지로 변경(동네생활 -> 항해일지)
-2025.04.18  임도헌   Modified  초기화, 뒤로가기 버튼 색 변경
-2025.04.21  임도헌   Modified  게시글 reset 로직 변경
-2025.04.21  임도헌   Modified  tag 로직 변경
-*/
-"use client";
+import PostForm from "@/components/post/PostForm";
+import { createPost } from "@/lib/post/create/createPost";
 
-// import dynamic from "next/dynamic";
-import Input from "@/components/common/Input";
-import Button from "@/components/common/Button";
-import Link from "next/link";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { postSchema, PostType } from "./schema";
-import { uploadPost } from "./actions";
-import { useState } from "react";
-import { getUploadUrl } from "@/app/add-product/action";
-import { useRouter } from "next/navigation";
-import { useImageUpload } from "@/hooks/useImageUpload";
-import ImageUploader from "@/components/image/ImageUploader";
-import TagInput from "@/components/common/TagInput";
-import { POST_CATEGORY } from "@/lib/constants";
-
-export default function AddPost() {
-  const router = useRouter();
-  const [isUploading, setIsUploading] = useState(false); // 로딩 상태 추가
-  const [resetSignal, setResetSignal] = useState(0);
-  // RHF 사용
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    control,
-    formState: { errors },
-    getValues,
-    reset,
-  } = useForm<PostType>({
-    resolver: zodResolver(postSchema),
-  });
-  // 이미지 업로드 커스텀 훅
-  const {
-    previews,
-    files,
-    isImageFormOpen,
-    setIsImageFormOpen,
-    handleImageChange,
-    handleDeleteImage,
-    handleDragEnd,
-    resetImage: resetImages,
-  } = useImageUpload({ maxImages: 5, setValue, getValues });
-
-  const resetForm = () => {
-    // 이미지 리셋
-    resetImages();
-    // 폼 초기화
-    reset({
-      title: "",
-      description: "",
-      category: "",
-      photos: [],
-      tags: [],
-    });
-    setResetSignal((prev) => prev + 1); // resetSignal 트리거
-  };
-
-  const onSubmit = handleSubmit(async (data: PostType) => {
-    setIsUploading(true); // 업로드 시작
-
-    try {
-      const uploadedPhotoUrls: string[] = [];
-
-      // 이미지가 있는 경우에만 업로드 처리
-      if (files.length > 0) {
-        const uploadPromises = files.map(async (file) => {
-          const { success, result } = await getUploadUrl();
-          if (!success) throw new Error("Failed to get upload URL");
-
-          const { uploadURL, id } = result;
-          const cloudflareForm = new FormData();
-          cloudflareForm.append("file", file);
-
-          const response = await fetch(uploadURL, {
-            method: "POST",
-            body: cloudflareForm,
-          });
-
-          if (!response.ok) throw new Error("Failed to upload image");
-
-          return `https://imagedelivery.net/3o3hwIVwLhMgAkoMCda2JQ/${id}`;
-        });
-
-        const urls = await Promise.all(uploadPromises);
-        uploadedPhotoUrls.push(...urls);
-      }
-
-      // 폼 데이터 생성
-      const formData = new FormData();
-      formData.append("title", data.title);
-      formData.append("description", data.description);
-      formData.append("category", data.category);
-      data.tags?.forEach((tag) => formData.append("tags[]", tag));
-      uploadedPhotoUrls.forEach((url) => formData.append("photos[]", url));
-
-      const result = await uploadPost(formData);
-
-      if (result?.success && result.postId) {
-        router.push(`/posts/${result.postId}`);
-      } else if (result?.error) {
-        alert(result.error);
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      alert("게시글 작성에 실패했습니다.");
-    } finally {
-      setIsUploading(false);
-    }
-  });
-
+export default function AddPostPage() {
   return (
-    <div>
-      <h1 className="pl-5 pt-5 font-semibold text-center">게시글 작성하기</h1>
-      <form onSubmit={onSubmit} className="flex flex-col gap-5 p-5">
-        {/* 카테고리 선택 */}
-        <select
-          {...register("category")}
-          className="w-full p-2 bg-neutral-800 rounded-md"
-        >
-          <option value="">카테고리 선택</option>
-          {Object.entries(POST_CATEGORY).map(([key, value]) => (
-            <option key={key} value={key}>
-              {value}
-            </option>
-          ))}
-        </select>
-        {errors.category && (
-          <p className="text-red-500">{errors.category.message}</p>
-        )}
-
-        <Input
-          type="text"
-          required
-          placeholder="제목"
-          {...register("title")}
-          errors={[errors.title?.message ?? ""]}
-        />
-
-        <Input
-          type="textarea"
-          required
-          placeholder="내용"
-          {...register("description")}
-          errors={[errors.description?.message ?? ""]}
-          className="p-2 input-primary min-h-[200px] resize-y"
-        />
-
-        {/* 태그 입력 */}
-        <TagInput
-          name="tags"
-          control={control}
-          maxTags={5}
-          resetSignal={resetSignal}
-        />
-
-        {/* 이미지 업로드 */}
-        <ImageUploader
-          previews={previews}
-          onImageChange={handleImageChange}
-          onDeleteImage={handleDeleteImage}
-          onDragEnd={handleDragEnd}
-          isOpen={isImageFormOpen}
-          onToggle={() => setIsImageFormOpen(!isImageFormOpen)}
-        />
-
-        <Button
-          text={isUploading ? "업로드 중..." : "작성 완료"}
-          disabled={isUploading}
-        />
-
-        <div className="flex gap-2">
-          <button
-            type="reset"
-            onClick={resetForm}
-            className="flex-1 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
-          >
-            초기화
-          </button>
-          <Link
-            href="/posts"
-            className="flex-1 py-2 bg-neutral-500 text-white rounded-md hover:bg-neutral-600 transition-colors text-center"
-          >
-            뒤로가기
-          </Link>
-        </div>
-      </form>
+    <div className="min-h-screen dark:bg-neutral-900 bg-white p-4">
+      <h1 className="text-center text-2xl font-bold mb-2 dark:text-white">
+        게시글 작성
+      </h1>
+      <PostForm
+        onSubmit={createPost}
+        backUrl="/posts"
+        submitLabel="게시글 등록"
+      />
     </div>
   );
 }

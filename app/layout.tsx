@@ -61,7 +61,16 @@ export default async function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <Toaster position="bottom-right" richColors closeButton />
+            <Toaster
+              position="bottom-right"
+              richColors
+              toastOptions={{
+                closeButton: true,
+                classNames: {
+                  closeButton: "text-black", // 모든 토스트의 X 버튼을 검은색으로
+                },
+              }}
+            />
             {session.id && <NotificationListener userId={session.id} />}
             <ServiceWorkerRegistration />
             {children}

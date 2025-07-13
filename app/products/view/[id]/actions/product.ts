@@ -7,11 +7,11 @@ History
 Date        Author   Status    Description
 2024.12.12  임도헌   Created   제품 상세 정보 관련 서버 코드 분리
 2025.06.08  임도헌   Modified  actions 파일 역할별 분리 시작
+2024.07.06  임도헌   Modified  getIsOwner 함수 lib로 이동
 */
 "use server";
 
 import db from "@/lib/db";
-import getSession from "@/lib/session";
 import { ProductDetailType } from "@/types/product";
 import { unstable_cache as nextCache } from "next/cache";
 
@@ -88,16 +88,3 @@ export const getCachedProduct = (id: number) => {
 //     tags: ["product-title"],
 //   })();
 // };
-
-/**
- * 제품 소유자 체크 함수
- * @param userId 유저 ID
- * @returns 소유자 여부
- */
-export const getIsOwner = async (userId: number) => {
-  const session = await getSession();
-  if (session.id) {
-    return session.id === userId;
-  }
-  return false;
-};

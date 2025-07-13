@@ -19,7 +19,7 @@ import Link from "next/link";
 import TimeAgo from "./TimeAgo";
 
 interface UserAvatarProps {
-  avatar: string | null;
+  avatar?: string | null;
   username: string;
   showUsername?: boolean;
   size?: "sm" | "md" | "lg";

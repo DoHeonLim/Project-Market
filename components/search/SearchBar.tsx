@@ -12,16 +12,17 @@ Date        Author   Status    Description
 2025.04.18  임도헌   Modified  검색바 마진 수정
 2025.04.30  임도헌   Modified  성능 최적화 및 사용자 경험 개선
 2025.06.17  임도헌   Modified  검색어 입력 UI로 역할 축소, 도메인 독립 구조로 리팩토링
+2025.07.04  임도헌   Modified  Controlled Component 전환 및 상태 동기화
 */
 "use client";
 
 import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
-import { useState } from "react";
-import { cn } from "@/lib/utils"; // tailwind-merge 혹은 clsx 대체용
+import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface SearchBarProps {
   placeholder?: string;
-  defaultValue?: string;
+  value: string; // ✅ Controlled value
   className?: string;
   autoFocus?: boolean;
   onSearch: (keyword: string) => void;
@@ -29,22 +30,25 @@ interface SearchBarProps {
 
 export default function SearchBar({
   placeholder = "검색어를 입력하세요",
-  defaultValue = "",
+  value,
   className = "",
   autoFocus = false,
   onSearch,
 }: SearchBarProps) {
-  const [keyword, setKeyword] = useState(defaultValue);
+  const [keyword, setKeyword] = useState(value);
   const [isPending, setIsPending] = useState(false);
+
+  // ✅ URL query value 변경 시 로컬 상태 동기화
+  useEffect(() => {
+    setKeyword(value);
+  }, [value]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = keyword.trim();
-    if (!trimmed) return;
-
     setIsPending(true);
     onSearch(trimmed);
-    setTimeout(() => setIsPending(false), 300); // 로딩 애니메이션용 (선택)
+    setTimeout(() => setIsPending(false), 300); // 로딩 애니메이션용
   };
 
   return (

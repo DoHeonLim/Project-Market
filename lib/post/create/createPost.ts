@@ -1,43 +1,44 @@
 /**
-File Name : app/posts/add/actions
-Description : 동네생활 게시글 생성 서버 코드
-Author : 임도헌
-
-History
-Date        Author   Status    Description
-2024.11.23  임도헌   Created
-2024.11.23  임도헌   Modified  동네생활 게시글 생성 코드 추가
-2024.12.10  임도헌   Modified  이미지 여러개 업로드 코드 추가
-2025.03.02  임도헌   Modified  게시글 작성시 게시글 추가 관련 뱃지 체크 추가
-2025.03.29  임도헌   Modified  checkBoardExplorerBadge 기능 추가
-*/
+ * File Name : lib/post/create/createPost
+ * Description : 게시글 생성 서버 액션
+ * Author : 임도헌
+ *
+ * History
+ * Date        Author   Status    Description
+ * 2024.11.23  임도헌   Created
+ * 2024.11.23  임도헌   Modified  동네생활 게시글 생성 코드 추가
+ * 2024.12.10  임도헌   Modified  이미지 여러개 업로드 코드 추가
+ * 2025.03.02  임도헌   Modified  게시글 작성시 게시글 추가 관련 뱃지 체크 추가
+ * 2025.03.29  임도헌   Modified  checkBoardExplorerBadge 기능 추가
+ * 2025.07.04  임도헌   Modified   게시글 생성 액션 분리 및 리팩토링
+ */
 "use server";
 
 import db from "@/lib/db";
 import getSession from "@/lib/session";
 import { revalidatePath } from "next/cache";
-import { postSchema } from "./schema";
+import { postFormSchema } from "@/lib/post/form/postFormSchema";
 import {
   badgeChecks,
   checkBoardExplorerBadge,
   checkRuleSageBadge,
 } from "@/lib/check-badge-conditions";
 
-export const uploadPost = async (formData: FormData) => {
+export async function createPost(formData: FormData) {
   const session = await getSession();
-  if (!session.id) return { error: "로그인이 필요합니다." };
+  if (!session?.id) return { success: false, error: "로그인이 필요합니다." };
 
   const data = {
     title: formData.get("title"),
     description: formData.get("description"),
     category: formData.get("category"),
-    tags: formData.getAll("tags[]").map(String),
-    photos: formData.getAll("photos[]").map(String),
+    tags: JSON.parse(JSON.stringify(formData.getAll("tags[]"))),
+    photos: JSON.parse(JSON.stringify(formData.getAll("photos[]"))),
   };
 
-  const results = postSchema.safeParse(data);
+  const results = postFormSchema.safeParse(data);
   if (!results.success) {
-    return { error: results.error.flatten() };
+    return { success: false, error: "유효성 검사에 실패했습니다." };
   }
 
   try {
@@ -49,11 +50,7 @@ export const uploadPost = async (formData: FormData) => {
           title: results.data.title,
           description: results.data.description,
           category: results.data.category,
-          user: {
-            connect: {
-              id: session.id,
-            },
-          },
+          user: { connect: { id: session.id } },
         },
       });
 
@@ -66,15 +63,10 @@ export const uploadPost = async (formData: FormData) => {
             create: { name: tagName, count: 1 },
             update: { count: { increment: 1 } },
           });
-
           // 게시글과 태그 연결
           await tx.post.update({
             where: { id: post.id },
-            data: {
-              tags: {
-                connect: { id: tag.id },
-              },
-            },
+            data: { tags: { connect: { id: tag.id } } },
           });
         }
       }
@@ -87,18 +79,14 @@ export const uploadPost = async (formData: FormData) => {
               data: {
                 url,
                 order: index,
-                post: {
-                  connect: {
-                    id: post.id,
-                  },
-                },
+                post: { connect: { id: post.id } },
               },
             })
           )
         );
       }
-
-      return post; // 생성된 게시글 반환
+      // 생성된 게시글 반환
+      return post;
     });
 
     // 게시글 생성 후 뱃지 체크 수행
@@ -109,15 +97,17 @@ export const uploadPost = async (formData: FormData) => {
     if (results.data.category === "MAP") {
       await checkRuleSageBadge(session.id);
       await checkBoardExplorerBadge(session.id);
-    }
-    // LOG일 경우에만 수행
-    if (results.data.category === "LOG")
+      // LOG일 경우에만 수행
+    } else if (results.data.category === "LOG") {
       await checkBoardExplorerBadge(session.id);
+    }
 
     revalidatePath("/posts");
-    return { success: true, postId: post.id }; // 게시글 ID 반환
+
+    // 게시글 ID 반환
+    return { success: true, postId: post.id };
   } catch (error) {
-    console.error("게시글 생성 중 오류 발생:", error);
-    return { error: "게시글 생성에 실패했습니다." };
+    console.error("게시글 생성 오류:", error);
+    return { success: false, error: "게시글 생성 중 오류가 발생했습니다." };
   }
-};
+}

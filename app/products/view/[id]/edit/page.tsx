@@ -13,15 +13,17 @@ Date        Author   Status    Description
 2024.12.29  임도헌   Modified  보트포트 형식에 맞게 제품 수정 폼 변경
 2025.04.18  임도헌   Modified  삭제하기 버튼 마진 삭제
 2025.06.15  임도헌   Modified  제품 등록 및 편집 폼 통합
+2025.07.06  임도헌   Modified  getIsOwner함수 lib로 이동
 */
 
 import { notFound, redirect } from "next/navigation";
 import ProductForm from "@/components/product/ProductForm";
-import { getCachedProduct, getIsOwner } from "../actions/product";
+import { getCachedProduct } from "../actions/product";
 import { fetchCategories } from "@/lib/category/fetchCategories";
 import { convertProductToFormValues } from "@/lib/product/form/convertProductToFormValues";
 import { deleteProduct } from "@/lib/product/delete/deleteProduct";
 import { updateProductAction } from "../actions/update";
+import { getIsOwner } from "@/lib/get-is-owner";
 
 export default async function EditPage({ params }: { params: { id: string } }) {
   const id = Number(params.id);

@@ -11,14 +11,15 @@ Date        Author   Status    Description
 2024.12.18  임도헌   Modified  sm:hidden 추가(모바일 반응형 추가)
 2024.12.24  임도헌   Modified  좋아요 버튼 아이콘 변경
 2025.05.10  임도헌   Modified  startTransition을 사용한 성능 최적화
+2025.07.06  임도헌   Modified  좋아요 함수 import 변경
 */
 "use client";
 
 import { HeartIcon } from "@heroicons/react/24/solid";
 import { HeartIcon as OutlineHeartIcon } from "@heroicons/react/24/outline";
 import { useOptimistic, startTransition } from "react";
-import { dislikePost, likePost } from "@/app/posts/[id]/actions";
 import { toast } from "sonner";
+import { dislikePost, likePost } from "@/app/posts/[id]/actions/likes";
 
 interface ILikeButtonProps {
   isLiked: boolean;
@@ -49,7 +50,7 @@ export default function PostLikeButton({
     try {
       if (isLiked) {
         await dislikePost(postId);
-        toast.success("좋아요를 취소했습니다.");
+        toast.error("좋아요를 취소했습니다."); // UI 디자인 때문에 error 사용
       } else {
         await likePost(postId);
         toast.success("좋아요를 눌렀습니다.");

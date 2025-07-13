@@ -16,13 +16,13 @@ import { useState, useRef } from "react";
 import Image from "next/image";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 
-interface PostImage {
+interface Image {
   url: string;
-  order: number;
+  order?: number;
 }
 
 interface CarouselProps {
-  images: PostImage[];
+  images: Image[];
   className?: string;
 }
 

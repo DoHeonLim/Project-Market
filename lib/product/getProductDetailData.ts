@@ -6,15 +6,14 @@
  * History
  * Date        Author   Status    Description
  * 2025.06.07  임도헌   Created
+ * 2025.07.06  임도헌   Modified  getIsOwner import 변경
  */
 
 import { getCachedProductLikeStatus } from "@/app/products/view/[id]/actions/like";
-import {
-  getCachedProduct,
-  getIsOwner,
-} from "@/app/products/view/[id]/actions/product";
+import { getCachedProduct } from "@/app/products/view/[id]/actions/product";
 import { getCachedProductWithViews } from "@/app/products/view/[id]/actions/view";
 import { ProductDetailType } from "@/types/product";
+import { getIsOwner } from "@/lib/get-is-owner";
 
 export interface ProductDetailData {
   product: ProductDetailType;

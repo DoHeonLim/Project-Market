@@ -46,7 +46,9 @@ export function useProductPagination({
     setIsLoading(true);
     try {
       const newData = await getMoreProducts(cursor);
-      setProducts((prev) => [...prev, ...newData.products]);
+      if (newData.products.length > 0) {
+        setProducts((prev) => [...prev, ...newData.products]);
+      }
       setCursor(newData.nextCursor);
       setHasMore(newData.nextCursor !== null);
     } catch (error) {

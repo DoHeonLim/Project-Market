@@ -15,7 +15,7 @@
  2024.12.16  임도헌   Modified  제품 업로드 보드게임 유형으로 변경
  2025.06.12  임도헌   Modified  cloudFlare getUploadUrl 함수 lib로 이동
  2025.06.12  임도헌   Modified  fetchCategories를 api에서 server action으로 변경
- 2025.06.15  임도헌   Modified   제품 등록 로직 lib로 분리 후 연결
+ 2025.06.15  임도헌   Modified  제품 등록 로직 lib로 분리 후 연결
  */
 "use server";
 

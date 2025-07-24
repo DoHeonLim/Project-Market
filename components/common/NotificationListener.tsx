@@ -8,6 +8,7 @@ Date        Author   Status    Description
 2024.12.22  임도헌   Created
 2024.12.22  임도헌   Modified  푸시 알림 리스너 컴포넌트 추가
 2025.01.12  임도헌   Modified  푸시 알림 이미지 추가
+2025.07.24  임도헌   Modified  console.log(payload) 삭제
 */
 
 "use client";
@@ -23,7 +24,6 @@ export default function NotificationListener({ userId }: { userId: number }) {
 
     channel
       .on("broadcast", { event: "notification" }, ({ payload }) => {
-        console.log("Received notification payload:", payload);
         if (payload.userId === userId) {
           toast(payload.title, {
             description: payload.body,

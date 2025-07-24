@@ -1,6 +1,7 @@
 /*2024-11-23 커스텀 스크롤바 추가*/
 /*2024-12-14 버튼, 카드, 인풋 디자인 변경*/
 /*2025-04-29 다크모드 전환 애니메이션 개선 및 구름 요소 반응형 추가*/
+/*2025-07-24 커스텀 스크롤바 수정 */
 
 @tailwind base;
 @tailwind components;
@@ -9,18 +10,18 @@
 /* 커스텀 스크롤바 스타일 */
 .scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: #6366f1 #171717;
+  scrollbar-color: #4338ca #ffffff;
 }
 .scrollbar::-webkit-scrollbar {
   width: 12px;
 }
 .scrollbar::-webkit-scrollbar-track {
-  background: #171717;
+  background: #ffffff;
 }
 .scrollbar::-webkit-scrollbar-thumb {
-  background-color: #6366f1;
+  background-color: #4338ca;
   border-radius: 6px;
-  border: 3px solid #6366f1;
+  border: 3px solid #4338ca;
 }
 
 @layer base {

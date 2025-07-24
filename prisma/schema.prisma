@@ -251,9 +251,9 @@ model ProductChatRoom {
 
 // 제품 채팅 메세지 모델
 model ProductMessage {
-  id      Int      @id @default(autoincrement())
+  id      Int     @id @default(autoincrement())
   payload String
-  isRead  Boolean? @default(false) //읽음 여부
+  isRead  Boolean @default(false) //읽음 여부
 
   created_at DateTime @default(now()) //메세지 생성 시간
   updated_at DateTime @updatedAt //메세지 업데이트 시간

@@ -12,49 +12,61 @@ Date        Author   Status    Description
 2024.12.12  임도헌   Modified  뒤로가기 버튼 추가
 2024.12.22  임도헌   Modified  채팅방에 어떤 제품인지 추가
 2025.05.01  임도헌   Modified  뒤로가기 버튼 삭제
+2025.07.13  임도헌   Modified  함수명 변경 및 비즈니스 로직 분리
+2025.07.17  임도헌   Modified  메시지 무한 스크롤 구현
+2025.07.24  임도헌   Modified  캐싱 기능 추가
 */
 
-// 해야될 것 만약 이미 해당 유저 두명이 존재하는 채팅방이 있다면 새로 방을 생성하지 않고
-// 기존 방으로 연결되게 변경해야 됨
-
+import { unstable_cache as nextCache } from "next/cache";
 import ChatMessagesList from "@/components/chat/ChatMessagesList";
-import getSession from "@/lib/session";
 import { notFound } from "next/navigation";
+import { getUserInfo } from "@/lib/user/getUserInfo";
+import { getChatRoomDetails } from "@/lib/chat/room/getChatRoomDetails";
 import {
-  getMessages,
-  getRoom,
-  getUserProfile,
-  readMessageUpdate,
-} from "./actions";
+  getInitialMessagesAction,
+  readMessageUpdateAction,
+} from "./actions/messages";
+import ChatHeader from "@/components/chat/ChatHeader";
+import { checkChatRoomAccessAction } from "./actions/room";
 
 export default async function ChatRoom({ params }: { params: { id: string } }) {
   const chatRoomId = params.id;
-  // 현재 채팅방 정보
-  const room = await getRoom(chatRoomId);
-  if (!room) {
-    return notFound();
-  }
-  // 메세지 초깃값
-  const initialMessages = await getMessages(chatRoomId);
-  const session = await getSession();
   // 유저 정보
-  const user = await getUserProfile();
-  if (!user) {
-    return notFound();
-  }
+  const user = await getUserInfo();
+  if (!user) return notFound();
+
+  // 현재 채팅방 정보
+  const room = await checkChatRoomAccessAction(chatRoomId, user.id);
+  if (!room) return notFound();
+
+  const product = await getChatRoomDetails(room.productId);
+  if (!product) return notFound();
+
+  // 메세지 초깃값
+  const getCachedInitialMessages = nextCache(
+    getInitialMessagesAction,
+    [`chat-messages-${chatRoomId}`],
+    { tags: [`chat-messages-${chatRoomId}`] }
+  );
+
+  // 캐싱된 함수로 초깃값 불러오기
+  const initialMessages = await getCachedInitialMessages(chatRoomId, 20);
+
+  const productUser = await getUserInfo(product.userId);
+  if (!productUser) return notFound();
 
   // 채팅 방에 들어가면 메시지 읽음 표시로 업데이트
-  await readMessageUpdate(chatRoomId, session.id!);
+  await readMessageUpdateAction(chatRoomId, user.id);
 
   return (
     <>
+      <ChatHeader product={product} user={productUser} />
       <ChatMessagesList
         productChatRoomId={chatRoomId}
-        userId={session.id!}
-        username={user.username}
-        avatar={user.avatar!}
+        user={user}
+        productUser={productUser}
         initialMessages={initialMessages}
-        product={room.product}
+        product={product}
       />
     </>
   );

@@ -23,6 +23,7 @@
  * 2025.07.17  임도헌   Modified  채팅 무한 스크롤 구현
  * 2025.07.22  임도헌   Modified  ChatInputBar 입력 상태 관리 통합, 코드 심플화 및 스크롤 위치 유지 최적화
  * 2025.07.24  임도헌   Modified  useInfiniteMessages 적용(훅으로 분리)
+ * 2025.07.29  임도헌   Modified  낙관적 업데이트(메시지) 제거
  */
 
 "use client";
@@ -53,19 +54,21 @@ interface ChatMessagesListProps {
 
 /**
  * ChatMessagesList
- * - 채팅 상세 화면의 메시지 UI 및 입력 바 구성
- * - 무한 스크롤 및 실시간 수신, 낙관적 메시지 처리 포함
+ * - 채팅방 메시지 리스트 + 입력창 UI
+ * - 무한 스크롤, 실시간 메시지 구독, 메시지 전송 기능 포함
  */
 export default function ChatMessagesList({
   initialMessages,
   user,
   productChatRoomId,
 }: ChatMessagesListProps) {
-  /* 무한 스크롤 메시지 훅 */
+  /**
+   * 1단계: 무한 스크롤 훅 사용
+   * - 이전 메시지 로드, DOM 참조 등 처리
+   */
   const {
     messages,
     isFetching,
-    appendMessage,
     setMessages,
     containerRef,
     sentinelRef,
@@ -73,76 +76,55 @@ export default function ChatMessagesList({
   } = useInfiniteMessages(initialMessages, productChatRoomId);
 
   /**
-   * 실시간 메시지 구독
-   * - 내가 보낸 optimistic 메시지와 동일하면 대체
-   * - 이미 수신한 메시지라면 무시
-   * - 마지막 메시지로 추가 후 스크롤 이동
+   * 2단계: Supabase 실시간 구독
+   * - 새로운 메시지 수신 시 리스트 추가 + 스크롤 이동
+   * - 읽음 처리 이벤트 수신 시 isRead 상태 업데이트
    */
-  useChatSubscription(
-    productChatRoomId,
-    (newMessage) => {
-      setMessages((prev) => {
-        const optimisticIndex = prev.findIndex(
-          (msg) =>
-            msg.id < 0 && // 음수 ID는 낙관적 메시지
-            msg.payload === newMessage.payload &&
-            msg.user.id === newMessage.user.id
-        );
-
-        // 낙관적 메시지를 대체
-        if (optimisticIndex !== -1) {
-          const updated = [...prev];
-          updated[optimisticIndex] = {
-            ...newMessage,
-            id: prev[optimisticIndex].id,
-          };
-          return updated;
-        }
-
-        // 중복 메시지 방지
-        if (prev.some((msg) => msg.id === newMessage.id)) {
-          return prev;
-        }
-
-        return [...prev, newMessage];
-      });
-
-      // 마지막 메시지로 스크롤
+  useChatSubscription({
+    chatRoomId: productChatRoomId,
+    currentUserId: user.id,
+    onNewMessage: (newMessage) => {
+      setMessages((prev) => [...prev, newMessage]);
+      // 메시지 수신 후 스크롤 하단으로 이동
       requestAnimationFrame(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
       });
     },
-    user.id
-  );
-
-  /* 최초 진입 시 맨 아래로 스크롤 */
-  useEffect(() => {
-    requestAnimationFrame(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
-    });
-  }, [messagesEndRef]);
+    onMessagesRead: (readIds) => {
+      setMessages((prev) =>
+        prev.map((msg) =>
+          readIds.includes(msg.id) ? { ...msg, isRead: true } : msg
+        )
+      );
+    },
+  });
 
   /**
-   * 메시지 전송 핸들러
-   * - 낙관적 메시지 먼저 추가
-   * - 뱃지 체크
-   * - 서버에 전송 후 실패 시 예외 처리
+   * 3단계: 최초 진입/갱신 시 스크롤 하단으로 이동
    */
-  const onSubmit = async (text: string) => {
-    const optimisticMessage: ChatMessage = {
-      id: -Date.now(),
-      payload: text,
-      isRead: false,
-      created_at: new Date(),
-      user: { id: user.id, username: user.username },
-      productChatRoomId,
-    };
-
-    appendMessage(optimisticMessage);
-    checkQuickResponseBadgeAction(user.id);
+  useEffect(() => {
+    if (!messagesEndRef.current) return;
 
     requestAnimationFrame(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    });
+  }, [messages, messagesEndRef]);
+
+  /**
+   * 4단계: 메시지 전송 핸들러
+   * - 뱃지 체크 호출
+   * - 서버로 메시지 전송
+   * - 전송 직후 두 프레임 후 스크롤 이동
+   */
+  const onSubmit = async (text: string) => {
+    // 뱃지 처리
+    checkQuickResponseBadgeAction(user.id);
+
+    //  메시지 추가 후 → 두 프레임 뒤에 스크롤
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      });
     });
 
     try {

@@ -94,18 +94,10 @@ export default function useInfiniteMessages(
     return () => observer.disconnect();
   }, [fetchMore, isFetching]);
 
-  /**
-   * 실시간 또는 낙관적 메시지 추가
-   */
-  const appendMessage = (newMessage: ChatMessage) => {
-    setMessages((prev) => [...prev, newMessage]);
-  };
-
   /** 외부로 반환되는 값들 */
   return {
     messages,
     isFetching,
-    appendMessage,
     setMessages,
     containerRef,
     sentinelRef,

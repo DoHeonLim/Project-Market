@@ -15,6 +15,8 @@ export default function AddProductButton() {
   return (
     <Link
       href="/products/add"
+      title="새 제품 추가"
+      aria-label="제품 추가"
       className="fixed flex items-center justify-center text-white transition-all duration-300 bg-primary dark:bg-primary-light rounded-full size-14 sm:size-16 bottom-20 sm:bottom-24 right-4 sm:right-8 hover:bg-primary-dark dark:hover:bg-primary-light-dark hover:scale-105 shadow-lg hover:shadow-xl"
     >
       <PlusIcon aria-label="add_product" className="size-8 sm:size-10" />

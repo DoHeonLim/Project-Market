@@ -58,11 +58,11 @@ const handleTokenExists = async (token: number) => {
     },
     select: {
       id: true,
-      expiresAt: true,
+      expires_at: true,
     },
   });
   if (!exists) return false;
-  if (exists.expiresAt < new Date()) return false;
+  if (exists.expires_at < new Date()) return false;
   return true;
 };
 
@@ -144,7 +144,7 @@ export const verifyEmail = async (
         data: {
           token,
           email: result.data,
-          expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10분 후 만료
+          expires_at: new Date(Date.now() + 10 * 60 * 1000), // 10분 후 만료
           user: {
             connect: {
               email: result.data,

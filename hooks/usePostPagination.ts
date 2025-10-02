@@ -17,7 +17,7 @@ import { PostDetail } from "@/types/post";
 interface UsePostPagination {
   initialPosts: PostDetail[];
   initialCursor: number | null;
-  searchParams: Record<string, string>; // ✅ 검색 조건 추가
+  searchParams: Record<string, string>; // 검색 조건 추가
 }
 
 interface UsePostPaginationResult {
@@ -26,7 +26,7 @@ interface UsePostPaginationResult {
   isLoading: boolean;
   hasMore: boolean;
   loadMore: () => Promise<void>;
-  reset: () => void; // ✅ 초기화 메서드 추가
+  reset: () => void; // 초기화 메서드 추가
 }
 
 /**
@@ -48,7 +48,7 @@ export function usePostPagination({
     if (isLoading || !hasMore) return;
     setIsLoading(true);
     try {
-      const newData = await getMorePosts(cursor, searchParams); // ✅ 검색 조건 전달
+      const newData = await getMorePosts(cursor, searchParams); // 검색 조건 전달
       if (newData.posts.length > 0) {
         setPosts((prev) => [...prev, ...newData.posts]);
       }

@@ -1,5 +1,5 @@
 /**
- File Name : components\auth\background\Stars
+ File Name : components/auth/background/Stars
  Description : 별 컴포넌트 - 다크모드에서만
  Author : 임도헌
  

@@ -125,12 +125,12 @@ export default function TabBar() {
           </span>
         </Link>
         <Link
-          href="/live"
+          href="/streams"
           className="flex flex-col items-center justify-center gap-0.5 p-1 sm:p-2
             hover:bg-neutral-100 dark:hover:bg-neutral-700 
             rounded-xl transition-colors"
         >
-          {pathname === "/live" ? (
+          {pathname === "/streams" ? (
             <SolidVideoCameraIcon
               aria-label="activate_live_icon"
               className="size-6 sm:size-7 dark:text-primary-light text-primary"
@@ -143,7 +143,7 @@ export default function TabBar() {
           )}
           <span
             className={`text-xs sm:text-sm whitespace-nowrap ${
-              pathname === "/live"
+              pathname === "/stream"
                 ? "dark:text-primary-light text-primary"
                 : "dark:text-neutral-400 text-neutral-600"
             }`}

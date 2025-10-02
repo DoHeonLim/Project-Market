@@ -45,9 +45,9 @@ export default function UserAvatar({
 
   const AvatarContent = () => (
     <div
-      className={`flex items-center gap-2 p-2 ${
+      className={`flex items-center p-2 ${
         disabled ? "" : "hover:bg-neutral-400 dark:hover:bg-neutral-700"
-      } rounded-md pr-2`}
+      } rounded-md`}
     >
       {avatar !== null ? (
         <Image
@@ -61,11 +61,13 @@ export default function UserAvatar({
         <UserIcon
           aria-label="user_icon"
           className={`${sizes[size]} ${
-            size === "lg" ? "text-gray-300 dark:text-gray-500" : ""
+            size === "lg"
+              ? "text-gray-300 dark:text-gray-500"
+              : "text-neutral-200 dark:text-neutral-500"
           } rounded-${size === "lg" ? "full" : "md"}`}
         />
       )}
-      <div className="flex items-start h-full">
+      <div className="flex items-start h-full pl-2">
         {showUsername ? (
           text ? (
             <div className="text-sm font-semibold dark:text-white">

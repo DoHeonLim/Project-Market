@@ -1,5 +1,5 @@
 /**
- * File Name : components/search/SearchModal.tsx
+ * File Name : components/search/SearchModal
  * Description : 모바일/PC 검색 모달 UI 컴포넌트
  * Author : 임도헌
  *
@@ -46,6 +46,9 @@ export default function SearchModal({
 }: SearchModalProps) {
   if (!isOpen) return null;
 
+  // controlled value로 전달 (undefined일 경우 빈 문자열)
+  const value = keyword ?? "";
+
   if (isMobile) {
     return (
       <div className="fixed inset-0 z-50 bg-white dark:bg-neutral-900">
@@ -58,7 +61,7 @@ export default function SearchModal({
             >
               <XMarkIcon className="size-6" />
             </button>
-            <SearchBar onSearch={onSearch} defaultValue={keyword} autoFocus />
+            <SearchBar onSearch={onSearch} value={value} autoFocus />
           </div>
 
           <div className="flex-1 overflow-y-auto">
@@ -90,7 +93,7 @@ export default function SearchModal({
       <div className="absolute inset-x-0 top-full bg-white dark:bg-neutral-900 border-b dark:border-neutral-700 shadow-lg z-50">
         <div className="p-4">
           <div className="flex gap-3">
-            <SearchBar onSearch={onSearch} defaultValue={keyword} autoFocus />
+            <SearchBar onSearch={onSearch} value={value} autoFocus />
           </div>
 
           <div className="mt-4 flex gap-8">

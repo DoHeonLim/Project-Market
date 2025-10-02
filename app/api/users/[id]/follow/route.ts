@@ -7,11 +7,18 @@ History
 Date        Author   Status    Description
 2025.05.22  임도헌   Created
 2025.05.22  임도헌   Modified  팔로우 추가 삭제 API 추가
+2025.09.24  임도헌   Modified  캐시 무효화만 추가
 */
-
+import { revalidateTag } from "next/cache";
 import db from "@/lib/db";
 import getSession from "@/lib/session";
 import { NextResponse } from "next/server";
+
+const rvAfterFollow = (viewerId: number, targetId: number) => {
+  revalidateTag("broadcast-list");
+  revalidateTag(`user-broadcasts-${targetId}`);
+  revalidateTag(`user-broadcasts-${viewerId}`);
+};
 
 export async function POST(
   request: Request,
@@ -19,42 +26,33 @@ export async function POST(
 ) {
   try {
     const session = await getSession();
-    if (!session?.id) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
+    if (!session?.id) return new NextResponse("Unauthorized", { status: 401 });
 
     const userId = parseInt(params.id);
-    if (isNaN(userId)) {
+    if (!Number.isFinite(userId)) {
       return new NextResponse("Invalid user ID", { status: 400 });
     }
-
-    // 자기 자신을 팔로우할 수 없음
     if (session.id === userId) {
       return new NextResponse("Cannot follow yourself", { status: 400 });
     }
 
-    // 이미 팔로우 중인지 확인
-    const existingFollow = await db.follow.findUnique({
+    const existing = await db.follow.findUnique({
       where: {
-        followerId_followingId: {
-          followerId: session.id,
-          followingId: userId,
-        },
+        followerId_followingId: { followerId: session.id, followingId: userId },
       },
     });
 
-    if (existingFollow) {
-      return new NextResponse("Already following", { status: 400 });
+    if (existing) {
+      // 멱등: 그래도 캐시 무효화는 해주는 편이 안전 (동일 뷰어 키 캐시가 있을 수 있음)
+      rvAfterFollow(session.id, userId);
+      return new NextResponse("Already following", { status: 200 });
     }
 
-    // 팔로우 생성
     await db.follow.create({
-      data: {
-        followerId: session.id,
-        followingId: userId,
-      },
+      data: { followerId: session.id, followingId: userId },
     });
 
+    rvAfterFollow(session.id, userId);
     return new NextResponse("Followed successfully", { status: 200 });
   } catch (error) {
     console.error("[FOLLOW_POST]", error);
@@ -68,25 +66,18 @@ export async function DELETE(
 ) {
   try {
     const session = await getSession();
-    if (!session?.id) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
+    if (!session?.id) return new NextResponse("Unauthorized", { status: 401 });
 
     const userId = parseInt(params.id);
-    if (isNaN(userId)) {
+    if (!Number.isFinite(userId)) {
       return new NextResponse("Invalid user ID", { status: 400 });
     }
 
-    // 팔로우 관계 삭제
-    await db.follow.delete({
-      where: {
-        followerId_followingId: {
-          followerId: session.id,
-          followingId: userId,
-        },
-      },
+    await db.follow.deleteMany({
+      where: { followerId: session.id, followingId: userId },
     });
 
+    rvAfterFollow(session.id, userId);
     return new NextResponse("Unfollowed successfully", { status: 200 });
   } catch (error) {
     console.error("[FOLLOW_DELETE]", error);

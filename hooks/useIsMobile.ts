@@ -1,5 +1,5 @@
 /**
- * File Name : hooks/useIsMobile.ts
+ * File Name : hooks/useIsMobile
  * Description : 모바일 뷰포트 여부 감지 훅
  * Author : 임도헌
  *

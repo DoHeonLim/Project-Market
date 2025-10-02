@@ -37,32 +37,15 @@ export const getUserProfile = async (
       username: true,
       avatar: true,
       created_at: true,
-      _count: {
-        select: {
-          followers: true,
-          following: true,
-        },
-      },
+      _count: { select: { followers: true, following: true } },
       followers: {
         select: {
-          follower: {
-            select: {
-              id: true,
-              username: true,
-              avatar: true,
-            },
-          },
+          follower: { select: { id: true, username: true, avatar: true } },
         },
       },
       following: {
         select: {
-          following: {
-            select: {
-              id: true,
-              username: true,
-              avatar: true,
-            },
-          },
+          following: { select: { id: true, username: true, avatar: true } },
         },
       },
       reviews: {
@@ -70,12 +53,7 @@ export const getUserProfile = async (
           id: true,
           payload: true,
           rate: true,
-          user: {
-            select: {
-              username: true,
-              avatar: true,
-            },
-          },
+          user: { select: { username: true, avatar: true } },
         },
       },
     },
@@ -211,18 +189,16 @@ export const getMoreUserProducts = async (
   return products;
 };
 
-// 현재 로그인한 사용자가 이 프로필의 주인을 팔로우하고 있는지 확인
-export const getisFollowing = async (
+/** viewer가 channel owner를 팔로우 중인지 확인 */
+export async function getIsFollowing(
   followerId: number,
   followingId: number
-) => {
+): Promise<boolean> {
+  if (!followerId || !followingId) return false;
+  if (followerId === followingId) return true; // 자기 자신은 true로 처리(UX 단순화)
   const follow = await db.follow.findUnique({
-    where: {
-      followerId_followingId: {
-        followerId,
-        followingId,
-      },
-    },
+    where: { followerId_followingId: { followerId, followingId } },
+    select: { followerId: true },
   });
   return !!follow;
-};
+}

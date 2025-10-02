@@ -1,16 +1,16 @@
+/**
+ File Name : middleware
+ Description : 미들웨어
+ Author : 임도헌
+ 
+ History
+ Date        Author   Status    Description
+ 2024.10.08  임도헌   Created
+ 2024.10.08  임도헌   Modified  인증 미들웨어 추가
+ */
+
 import { NextRequest, NextResponse } from "next/server";
 import getSession from "./lib/session";
-
-/**
-File Name : middleware
-Description : 미들웨어
-Author : 임도헌
-
-History
-Date        Author   Status    Description
-2024.10.08  임도헌   Created
-2024.10.08  임도헌   Modified  인증 미들웨어 추가
-*/
 
 interface IRoutes {
   [key: string]: boolean;
@@ -44,6 +44,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|manifest.json|sw.js|workbox-*.js|images).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|manifest.json|sw.js|workbox-*.js|images).*)",
   ],
 };

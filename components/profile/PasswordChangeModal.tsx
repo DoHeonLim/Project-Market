@@ -1,5 +1,5 @@
 /**
-File Name : components/profile/PasswordChangeModal.tsx
+File Name : components/profile/PasswordChangeModal
 Description : 비밀번호 변경 모달 컴포넌트
 Author : 임도헌
 

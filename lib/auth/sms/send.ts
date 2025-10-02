@@ -1,5 +1,5 @@
 /**
- File Name : lib/auth/sms/send.ts
+ File Name : lib/auth/sms/send
  Description : 유저 SMS 전송
  Author : 임도헌
  

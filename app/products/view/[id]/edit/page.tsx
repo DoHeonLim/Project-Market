@@ -14,12 +14,13 @@ Date        Author   Status    Description
 2025.04.18  임도헌   Modified  삭제하기 버튼 마진 삭제
 2025.06.15  임도헌   Modified  제품 등록 및 편집 폼 통합
 2025.07.06  임도헌   Modified  getIsOwner함수 lib로 이동
+2025.07.30  임도헌   Modified  fetchProductCategories로 이름 변경
 */
 
 import { notFound, redirect } from "next/navigation";
 import ProductForm from "@/components/product/ProductForm";
 import { getCachedProduct } from "../actions/product";
-import { fetchCategories } from "@/lib/category/fetchCategories";
+import { fetchProductCategories } from "@/lib/category/fetchProductCategories";
 import { convertProductToFormValues } from "@/lib/product/form/convertProductToFormValues";
 import { deleteProduct } from "@/lib/product/delete/deleteProduct";
 import { updateProductAction } from "../actions/update";
@@ -35,7 +36,7 @@ export default async function EditPage({ params }: { params: { id: string } }) {
   const isOwner = await getIsOwner(product.userId);
   if (!isOwner) redirect("/home");
 
-  const categories = await fetchCategories();
+  const categories = await fetchProductCategories();
   const defaultValues = convertProductToFormValues(product);
 
   const handleDeleteProduct = async () => {

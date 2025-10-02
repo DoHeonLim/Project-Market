@@ -14,7 +14,7 @@ import Carousel from "@/components/common/Carousel";
 import { EyeIcon } from "@heroicons/react/24/solid";
 
 interface ProductDetailImagesProps {
-  images: { url: string; order: number }[];
+  images: { url: string; order?: number }[];
   views: number | null;
 }
 

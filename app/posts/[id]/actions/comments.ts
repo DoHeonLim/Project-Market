@@ -49,7 +49,7 @@ export const getComments = async (
 // 게시글 댓글 목록 캐싱 함수
 export const getCachedComments = (postId: number): Promise<PostComment[]> => {
   const cachedOperation = nextCache(getComments, ["post-comments"], {
-    tags: [`comments-${postId}`],
+    tags: [`post-comments-${postId}`],
   });
   return cachedOperation(postId);
 };
@@ -83,7 +83,7 @@ export const createComment = async (_: any, formData: FormData) => {
     });
     if (post) await checkBoardExplorerBadge(post.userId);
 
-    revalidateTag(`comments-${result.data.postId}`);
+    revalidateTag(`post-comments--${result.data.postId}`);
     return { success: true };
   } catch (e) {
     console.error(e);
@@ -95,7 +95,7 @@ export const createComment = async (_: any, formData: FormData) => {
 export const deleteComment = async (id: number, postId: number) => {
   try {
     await db.comment.delete({ where: { id } });
-    revalidateTag(`comments-${postId}`);
+    revalidateTag(`post-comments-${postId}`);
     return { success: true };
   } catch (e) {
     console.error(e);

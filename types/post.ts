@@ -1,5 +1,5 @@
 /**
- * File Name : types/post.ts
+ * File Name : types/post
  * Description : 게시글 타입 정의
  * Author : 임도헌
  *

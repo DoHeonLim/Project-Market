@@ -1,5 +1,5 @@
 /**
-File Name : types\product
+File Name : types/product
 Description : 제품 타입 정의
 Author : 임도헌
 
@@ -26,7 +26,7 @@ export type CompletenessType = (typeof COMPLETENESS_TYPES)[number];
 // 🔹 기본 이미지, 태그 타입
 export interface ProductImage {
   url: string;
-  order: number;
+  order?: number;
 }
 
 export interface ProductTag {
@@ -38,7 +38,7 @@ export interface BaseProduct {
   id: number;
   title: string;
   price: number;
-  game_type: GameType;
+  game_type: GameType | string;
   images: ProductImage[];
   search_tags: ProductTag[];
 }
@@ -63,11 +63,11 @@ export interface ProductType extends BaseProduct {
   purchase_userId: number | null;
   views: number;
   category: {
-    eng_name: string;
+    // eng_name: string;
     kor_name: string;
     icon: string | null;
     parent?: {
-      eng_name: string;
+      // eng_name: string;
       kor_name: string;
       icon: string | null;
     } | null;

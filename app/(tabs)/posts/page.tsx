@@ -23,7 +23,7 @@ import { getInitialPosts } from "./actions/init";
 import PostEmptyState from "@/components/post/PostEmptyState";
 import AddPostButton from "@/components/post/AddPostButton";
 import { searchPosts } from "./actions/search";
-import SearchBarWrapper from "@/components/post/searchBarWrapper";
+import PostSearchBarWrapper from "@/components/post/PostSearchBarWrapper";
 import PostCategoryTabs from "@/components/search/PostCategoryTabs";
 
 interface PostsPageProps {
@@ -49,7 +49,7 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
       <div className="sticky top-0 z-10 p-4 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-sm border-b border-neutral-200 dark:border-neutral-700">
         <PostCategoryTabs currentCategory={searchParams.category} />
         <div className="mt-4 flex items-center justify-between gap-4">
-          <SearchBarWrapper />
+          <PostSearchBarWrapper />
         </div>
       </div>
 

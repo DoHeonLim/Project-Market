@@ -1,5 +1,5 @@
 /**
- * File Name : components/search/PopularSearchesBox.tsx
+ * File Name : components/search/PopularSearchesBox
  * Description : 인기 검색어 목록 컴포넌트 (PC 및 모바일 공통)
  * Author : 임도헌
  *

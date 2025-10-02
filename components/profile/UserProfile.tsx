@@ -23,39 +23,14 @@ import Image from "next/image";
 import UserRating from "./UserRating";
 import { useEffect, useRef, useState } from "react";
 import { getMoreUserProducts } from "@/app/(tabs)/profile/[username]/actions";
-import ListProduct from "../product/ProductCard";
 import { ProductsSkeleton } from "@/app/(tabs)/profile/[username]/loading";
 import ProfileReviewsModal from "./ProfileReviewsModal";
 import { ListBulletIcon, Squares2X2Icon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import UserBadges from "./UserBadges";
-import FollowListModal from "../follow/FollowListModal";
-
-type Products = {
-  title: string;
-  price: number;
-  created_at: Date;
-  images: { url: string }[];
-  id: number;
-  reservation_userId: number | null;
-  purchase_userId: number | null;
-  category: {
-    kor_name: string | null;
-    icon: string | null;
-    parent: {
-      kor_name: string | null;
-      icon: string | null;
-    } | null;
-  } | null;
-  views: number;
-  game_type: string;
-  _count: {
-    product_likes: number;
-  };
-  search_tags: {
-    name: string;
-  }[];
-};
+// import FollowListModal from "../follow/FollowListModal";
+import ProductCard from "../product/productCard";
+import { ProductType } from "@/types/product";
 
 type AverageRating = {
   average: number;
@@ -101,8 +76,8 @@ interface UserProfileProps {
     }[];
   };
   initialReviews: Review[];
-  initialSellingProducts: Products[];
-  initialSoldProducts: Products[];
+  initialSellingProducts: ProductType[];
+  initialSoldProducts: ProductType[];
   averageRating: AverageRating | null;
   userBadges: {
     id: number;
@@ -136,12 +111,12 @@ export default function UserProfile({
   const [isLastSoldPage, setIsLastSoldPage] = useState(false); // 판매 완료 제품 마지막 페이지 설정
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false); // 리뷰 모달 상태 설정
   const [isFollowing, setIsFollowing] = useState(user.isFollowing ?? false);
-  const [followerCount, setFollowerCount] = useState(
-    user._count?.followers ?? 0
-  );
+  // const [followerCount, setFollowerCount] = useState(
+  //   user._count?.followers ?? 0
+  // );
   const trigger = useRef<HTMLDivElement>(null); // 무한 스크롤 트리거 설정
-  const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false);
-  const [isFollowingModalOpen, setIsFollowingModalOpen] = useState(false);
+  // const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false);
+  // const [isFollowingModalOpen, setIsFollowingModalOpen] = useState(false);
 
   const currentProducts =
     activeTab === "selling" ? sellingProducts : soldProducts; // 현재 탭에 맞는 제품 설정
@@ -158,7 +133,7 @@ export default function UserProfile({
 
       if (response.ok) {
         setIsFollowing(!isFollowing);
-        setFollowerCount((prev) => (isFollowing ? prev - 1 : prev + 1));
+        // setFollowerCount((prev) => (isFollowing ? prev - 1 : prev + 1));
       }
     } catch (error) {
       console.error("팔로우 토글 중 오류 발생:", error);
@@ -254,7 +229,7 @@ export default function UserProfile({
                 size="md"
               />
               <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                <button
+                {/* <button
                   onClick={() => setIsFollowersModalOpen(true)}
                   className="hover:text-primary dark:hover:text-primary-light"
                 >
@@ -265,7 +240,7 @@ export default function UserProfile({
                   className="hover:text-primary dark:hover:text-primary-light"
                 >
                   팔로잉 {user._count?.following ?? 0}
-                </button>
+                </button> */}
               </div>
             </div>
             <button
@@ -283,7 +258,7 @@ export default function UserProfile({
       </div>
 
       <Link
-        href={`/profile/${user.username}/streams`}
+        href={`/profile/${user.username}/channel`}
         className="btn-primary w-full max-w-md text-center py-3"
       >
         전체 방송 보기
@@ -359,11 +334,12 @@ export default function UserProfile({
             </div>
           ) : (
             <>
-              {currentProducts.map((product) => (
-                <ListProduct
+              {currentProducts.map((product, index) => (
+                <ProductCard
                   key={product.id}
-                  {...product}
+                  product={product}
                   viewMode={viewMode}
+                  isPriority={index < 3}
                 />
               ))}
               {isLoading && <ProductsSkeleton />}
@@ -389,7 +365,7 @@ export default function UserProfile({
         reviews={initialReviews}
         userId={user.id}
       />
-      <FollowListModal
+      {/* <FollowListModal
         isOpen={isFollowersModalOpen}
         onClose={() => setIsFollowersModalOpen(false)}
         users={user.followers?.map((f) => f.follower) ?? []}
@@ -402,7 +378,7 @@ export default function UserProfile({
         users={user.following?.map((f) => f.following) ?? []}
         title="팔로잉"
         followingIds={user.following?.map((f) => f.following.id) ?? []}
-      />
+      /> */}
     </div>
   );
 }

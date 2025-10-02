@@ -1,5 +1,5 @@
 /**
- File Name : components\auth\background\Seagulls
+ File Name : components/auth/background/Seagulls
  Description : 갈매기 컴포넌트
  Author : 임도헌
  

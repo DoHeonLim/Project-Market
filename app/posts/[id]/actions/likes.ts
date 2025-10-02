@@ -32,7 +32,7 @@ export const getCachedLikeStatus = async (postId: number) => {
   if (!session?.id) return { likeCount: 0, isLiked: false };
 
   const cachedOperation = nextCache(getLikeStatus, ["post-like-status"], {
-    tags: [`like-status-${postId}`],
+    tags: [`post-like-status-${postId}`],
   });
   return cachedOperation(postId, session.id);
 };
@@ -52,7 +52,7 @@ export const likePost = async (postId: number) => {
 
   await checkPopularWriterBadge(post.userId);
   await checkBoardExplorerBadge(post.userId);
-  revalidateTag(`like-status-${postId}`);
+  revalidateTag(`post-like-status-${postId}`);
 };
 
 // 게시글 좋아요 취소
@@ -61,5 +61,5 @@ export const dislikePost = async (postId: number) => {
   await db.postLike.delete({
     where: { id: { postId, userId: session.id! } },
   });
-  revalidateTag(`like-status-${postId}`);
+  revalidateTag(`post-like-status-${postId}`);
 };

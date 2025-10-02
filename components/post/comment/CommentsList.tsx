@@ -1,5 +1,5 @@
 /**
-File Name : components/post/comment/CommentList
+File Name : components/post/comment/CommentsList
 Description : 댓글 목록 컴포넌트
 Author : 임도헌
 
@@ -18,6 +18,7 @@ Date        Author   Status    Description
 2025.07.06  임도헌   Modified  AnimatePresence로 삭제 애니메이션 활성화
 2025.07.11  임도헌   Modified  낙관적 업데이트와 애니메이션 충돌, server 액션 성공 시 댓글 추가 되게 변경
 2025.07.11  임도헌   Modified  무한 스크롤 기반으로 리팩토링
+2025.08.26  임도헌   Modified  usePageVisibility + 새 useInfiniteScroll 옵션 추가
 */
 "use client";
 
@@ -26,12 +27,14 @@ import { useComment } from "./CommentContext";
 import CommentItem from "./CommentItem";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import { AnimatePresence } from "framer-motion";
+import { usePageVisibility } from "@/hooks/usePageVisibility";
 
-export default function CommentList({
+export default function CommentsList({
   currentUser,
 }: {
   currentUser: { id: number; username: string };
 }) {
+  const isVisible = usePageVisibility();
   const { comments, isLoading, isFetchingNextPage, hasNextPage, loadMore } =
     useComment();
   const triggerRef = useRef<HTMLDivElement>(null);
@@ -41,6 +44,10 @@ export default function CommentList({
     hasMore: hasNextPage,
     isLoading: isFetchingNextPage,
     onLoadMore: loadMore,
+    enabled: isVisible,
+    // 코멘트는 카드 높이가 낮으니 여유를 조금 줄인다.
+    rootMargin: "600px 0px 0px 0px",
+    threshold: 0.05,
   });
 
   return (

@@ -1,5 +1,5 @@
 /**
-File Name : components/search/ProductCategoryDropdown.tsx
+File Name : components/search/ProductCategoryDropdown
 Description : 제품 카테고리 드롭다운 컴포넌트
 Author : 임도헌
 

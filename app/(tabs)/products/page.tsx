@@ -20,6 +20,7 @@ Date        Author   Status    Description
 2025.05.30  임도헌   Modified  add-product 페이지 products/add로 이동
 2025.06.07  임도헌   Modified  검색 결과 요약, 제품 목록, 제품 추가 버튼을 컴포넌트로 분리, 구조 개선
 2025.06.18  임도헌   Modified  ProductList에 쿼리 문자열을 기준으로 key를 부여해서 제품 재렌더링
+2025.07.30  임도헌   Modified  fetchProductCategories로 이름 변경
 */
 
 import ProductList from "@/components/product/ProductList";
@@ -29,7 +30,7 @@ import AddProductButton from "@/components/product/AddProductButton";
 import SearchSection from "@/components/search/SearchSection";
 
 import { formatSearchSummary } from "@/lib/product/formatSearchParams";
-import { fetchCategories } from "@/lib/category/fetchCategories";
+import { fetchProductCategories } from "@/lib/category/fetchProductCategories";
 import { getCategoryName } from "@/lib/category/getCategoryName";
 import { searchProducts } from "./actions/search";
 import { getInitialProducts } from "./actions/init";
@@ -68,7 +69,7 @@ export default async function Products({ searchParams }: ProductsPageProps) {
             condition: searchParams.condition,
           })
         : getInitialProducts(),
-      fetchCategories(),
+      fetchProductCategories(),
       getUserSearchHistory(),
       getPopularSearches(),
     ]);

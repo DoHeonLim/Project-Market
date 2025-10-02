@@ -1,5 +1,5 @@
 /**
- File Name : components\auth\background\Waves
+ File Name : components/auth/background/Waves
  Description : 파도 컴포넌트
  Author : 임도헌
  

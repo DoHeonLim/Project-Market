@@ -1,5 +1,5 @@
 /**
- * File Name : components/common/WaveModal.tsx
+ * File Name : components/common/WaveModal
  * Description : 공통 모달 (파도 애니메이션)
  * Author : 임도헌
  *

@@ -1,5 +1,5 @@
 /**
- * File Name : components/common/NotFound.tsx
+ * File Name : components/common/NotFound
  * Description : 공통 Not Found 컴포넌트
  * Author : 임도헌
  *

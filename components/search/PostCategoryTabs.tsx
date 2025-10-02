@@ -43,7 +43,7 @@ export default function PostCategoryTabs({
   const searchParams = useSearchParams();
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null); // ✅ long press 타이머 ref
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null); // long press 타이머 ref
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
 
   const handleCategoryClick = (category?: string) => {

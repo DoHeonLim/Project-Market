@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
 
 interface SearchBarProps {
   placeholder?: string;
-  value: string; // ✅ Controlled value
+  value: string; // Controlled value
   className?: string;
   autoFocus?: boolean;
   onSearch: (keyword: string) => void;
@@ -38,7 +38,7 @@ export default function SearchBar({
   const [keyword, setKeyword] = useState(value);
   const [isPending, setIsPending] = useState(false);
 
-  // ✅ URL query value 변경 시 로컬 상태 동기화
+  // URL query value 변경 시 로컬 상태 동기화
   useEffect(() => {
     setKeyword(value);
   }, [value]);

@@ -1,5 +1,5 @@
 /**
- * File Name : components/providers/SearchProvider.tsx
+ * File Name : components/providers/SearchProvider
  * Description : 검색 상태를 관리하는 Context Provider
  * Author : 임도헌
  *

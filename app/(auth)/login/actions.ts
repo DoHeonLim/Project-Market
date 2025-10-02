@@ -58,6 +58,6 @@ export async function login(_: any, formData: FormData) {
     };
   }
 
-  // ✅ 세션 저장
+  // 세션 저장
   return saveUserSession(userId);
 }

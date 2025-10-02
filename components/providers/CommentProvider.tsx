@@ -1,5 +1,5 @@
 /**
- * File Name : components/post/comment/CommentProvider.tsx
+ * File Name : components/post/comment/CommentProvider
  * Description : 댓글 상태 관리 Provider
  * Author : 임도헌
  *

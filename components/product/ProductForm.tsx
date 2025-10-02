@@ -8,6 +8,7 @@ Date        Author   Status    Description
 2025.06.12  임도헌   Created
 2025.06.12  임도헌   Modified  제품 등록 폼 컴포넌트로 분리
 2025.06.15  임도헌   Modified  제품 편집 컴포넌트를 병합해서 등록, 편집 통합 폼으로 리팩토링 
+2025.09.10  임도헌   Modified  getUploadUrl 유니온 분기 처리로 TS 에러 해결 + File 타입 가드
 */
 
 /** 제품 수정 컴포넌트 히스토리
@@ -164,17 +165,26 @@ export default function ProductForm({
 
       if (newFiles.length > 0) {
         const uploadPromises = newFiles.map(async (file) => {
-          const { success, result } = await getUploadUrl();
-          if (!success) throw new Error("업로드 URL 생성 실패");
+          const res = await getUploadUrl();
+          if (!res.success) {
+            throw new Error(res.error || "Failed to get upload URL");
+          }
 
-          const form = new FormData();
-          form.append("file", file);
-          const res = await fetch(result.uploadURL, {
+          const { uploadURL, id } = res.result;
+
+          const cloudflareForm = new FormData();
+          cloudflareForm.append("file", file);
+
+          const response = await fetch(uploadURL, {
             method: "POST",
-            body: form,
+            body: cloudflareForm,
           });
-          if (!res.ok) throw new Error("이미지 업로드 실패");
-          return `https://imagedelivery.net/3o3hwIVwLhMgAkoMCda2JQ/${result.id}`;
+
+          if (!response.ok) {
+            throw new Error("Failed to upload image");
+          }
+
+          return `https://imagedelivery.net/3o3hwIVwLhMgAkoMCda2JQ/${id}`;
         });
         const urls = await Promise.all(uploadPromises);
         uploadedPhotoUrls.push(...urls);

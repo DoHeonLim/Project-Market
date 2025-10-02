@@ -10,6 +10,7 @@ Date        Author   Status    Description
 2025.06.26  임도헌   Created   게시글 초기 로딩 및 무한 스크롤 처리
 2025.07.04  임도헌   Modified  getMorePosts에 searchParams 추가
 2025.07.04  임도헌   Modified  전체 액션 커서 처리 통일
+2025-09-02  임도헌   Modified  TAKE 상수 POSTS_PAGE_TAKE로 변경
 */
 "use server";
 
@@ -20,8 +21,9 @@ import {
   getPostSearchCondition,
   PostSearchParams,
 } from "@/lib/queries/getPostSearchCondition";
+import { POSTS_PAGE_TAKE } from "@/lib/constants";
 
-const TAKE = 10;
+const TAKE = POSTS_PAGE_TAKE;
 /**
  * 공통 게시글 로드 로직
  */
@@ -35,7 +37,7 @@ export const fetchPosts = async (
     where,
     select: POST_SELECT,
     orderBy: { created_at: "desc" },
-    take: TAKE + 1, // ✅ 다음 페이지 여부 판단 위해 1개 더
+    take: TAKE + 1, // 다음 페이지 여부 판단 위해 1개 더
     ...(cursor && {
       skip: 1,
       cursor: { id: cursor },

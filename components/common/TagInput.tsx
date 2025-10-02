@@ -1,5 +1,5 @@
 /**
-File Name : components/common/TagInput.tsx
+File Name : components/common/TagInput
 Description : 태그 입력 컴포넌트
 Author : 임도헌
 
@@ -58,7 +58,7 @@ export default function TagInput({
 
   return (
     <div className="flex flex-col gap-2">
-      <label className="text-sm font-medium dark:text-white">
+      <label className="font-medium dark:text-white">
         태그 (최대 {maxTags}개, 쉼표 또는 엔터로 구분)
       </label>
       <div className="flex flex-wrap gap-2 mb-2">

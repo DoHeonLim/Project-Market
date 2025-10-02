@@ -308,3 +308,10 @@ export function getBadgeKoreanName(badgeType: string): string {
 
   return koreanNames[badgeType] || badgeType;
 }
+
+// 초단위 영상 시간 분 초시로 변경
+export const formatDuration = (seconds: number) => {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}분 ${s}초`;
+};

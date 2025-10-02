@@ -78,7 +78,7 @@ export const readMessageUpdateAction = async (
 ) => {
   const readIds = await readMessageUpdate(chatRoomId, userId);
 
-  // ✅ 읽음 메시지가 있을 때만 broadcast
+  // 읽음 메시지가 있을 때만 broadcast
   if (readIds.length > 0) {
     await supabase.channel(`room-${chatRoomId}`).send({
       type: "broadcast",

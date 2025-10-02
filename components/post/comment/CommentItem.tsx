@@ -1,5 +1,5 @@
 /**
- * File Name : components/post/comment/CommentItem.tsx
+ * File Name : components/post/comment/CommentItem
  * Description : 단일 댓글 항목
  * Author : 임도헌
  *

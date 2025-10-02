@@ -6,6 +6,7 @@
  * History
  * Date        Author   Status    Description
  * 2025.07.04  임도헌   Created   기존 add/page.tsx + PostEditForm 기능 통합
+ * 2025.09.10  임도헌   Modified  getUploadUrl 유니온 분기 처리로 TS 에러 해결 + File 타입 가드
  */
 "use client";
 
@@ -93,15 +94,18 @@ export default function PostForm({
     setIsUploading(true);
 
     try {
-      const newFiles = files.filter((file) => file instanceof File);
+      const newFiles = files.filter((f): f is File => f instanceof File);
       const uploadedPhotoUrls: string[] = [];
 
       if (newFiles.length > 0) {
         const uploadPromises = newFiles.map(async (file) => {
-          const { success, result } = await getUploadUrl();
-          if (!success) throw new Error("Failed to get upload URL");
+          const res = await getUploadUrl();
+          if (!res.success) {
+            throw new Error(res.error || "Failed to get upload URL");
+          }
 
-          const { uploadURL, id } = result;
+          const { uploadURL, id } = res.result;
+
           const cloudflareForm = new FormData();
           cloudflareForm.append("file", file);
 
@@ -123,12 +127,14 @@ export default function PostForm({
       const allPhotoUrls = previews
         .map((preview) => {
           if (preview.includes("imagedelivery.net")) {
-            return preview.replace("/public", ""); // 기존 Cloudflare 이미지
+            // 기존 Cloudflare 이미지
+            return preview.replace("/public", "");
           } else if (preview.startsWith("blob:")) {
+            // 새로 업로드된 이미지 URL 매칭
             const index = previews
               .filter((p) => p.startsWith("blob:"))
               .indexOf(preview);
-            return uploadedPhotoUrls[index] ?? ""; // 새로 업로드된 이미지 URL
+            return uploadedPhotoUrls[index] ?? "";
           }
           return preview;
         })

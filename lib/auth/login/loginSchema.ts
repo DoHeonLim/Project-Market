@@ -6,7 +6,7 @@
  History
  Date        Author   Status    Description
  2025.05.30  임도헌   Created
- 2025.05.30  임도헌   Modified  기존 app\(auth)\login\actions 에 있던 스키마 분리
+ 2025.05.30  임도헌   Modified  기존 app/(auth)/login/actions 에 있던 스키마 분리
 */
 
 import { z } from "zod";

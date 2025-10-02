@@ -1,5 +1,5 @@
 /**
- * File Name : components/search/SearchChips.tsx
+ * File Name : components/search/SearchChips
  * Description : 검색 필터에 따라 렌더링되는 칩 UI
  * Author : 임도헌
  *

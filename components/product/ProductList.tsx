@@ -17,6 +17,7 @@ Date        Author   Status    Description
 2025.06.07  임도헌   Modified  nextCursor 기반 페이지네이션 적용 및 props 구조 변경
 2025.06.07  임도헌   Modified  무한 스크롤 훅 useInfiniteScroll 분리 적용
 2025.06.07  임도헌   Modified  ProductCard 기반으로 구조 정리
+2025.08.26  임도헌   Modified  usePageVisibility + 새 useInfiniteScroll 옵션 추가
 */
 "use client";
 
@@ -26,6 +27,7 @@ import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import { useProductPagination } from "@/hooks/useProductPagination";
 import ProductCard from "./productCard";
 import { Products } from "@/types/product";
+import { usePageVisibility } from "@/hooks/usePageVisibility";
 
 type ProductListProps = {
   initialProducts: Products;
@@ -34,6 +36,8 @@ type ProductListProps = {
 export default function ProductList({ initialProducts }: ProductListProps) {
   const triggerRef = useRef<HTMLSpanElement>(null);
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+
+  const isVisible = usePageVisibility();
 
   const { products, isLoading, hasMore, loadMore } = useProductPagination({
     initialProducts: initialProducts.products,
@@ -45,6 +49,10 @@ export default function ProductList({ initialProducts }: ProductListProps) {
     hasMore,
     isLoading,
     onLoadMore: loadMore,
+    enabled: isVisible,
+    // 상품 카드는 이미지가 커서 넉넉하게 미리 불러온다.
+    rootMargin: "1400px 0px 0px 0px",
+    threshold: 0.01,
   });
 
   return (

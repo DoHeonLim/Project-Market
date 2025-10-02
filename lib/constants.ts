@@ -16,6 +16,11 @@ Date        Author   Status    Description
 // 패스워드 최소 값
 export const PASSWORD_MIN_LENGTH = 4;
 
+// 페이지네이션 TAKE (도메인별 분리 — 값은 도메인 특성에 맞춤)
+export const POSTS_PAGE_TAKE = 10;
+export const PRODUCTS_PAGE_TAKE = 10;
+export const STREAMS_PAGE_TAKE = 12;
+
 // 패스워드 정규표현식 체크
 export const PASSWORD_REGEX = new RegExp(
   /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).+$/
@@ -99,6 +104,14 @@ export const STREAM_VISIBILITY_DISPLAY = {
   PUBLIC: "공개",
   PRIVATE: "비공개",
   FOLLOWERS: "팔로워만",
+} as const;
+
+// 스트리밍 상태 상수 정의
+export const STREAM_STATUS = {
+  CREATED: "CREATED", // 생성됨 (방송 시작 전)
+  CONNECTED: "CONNECTED", // 연결됨 (방송 중)
+  DISCONNECTED: "DISCONNECTED", // 연결 해제됨
+  FAILED: "FAILED", // 실패
 } as const;
 
 // 스트리밍 카테고리

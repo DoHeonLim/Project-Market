@@ -1,5 +1,5 @@
 /**
- File Name : components\auth\background\Clouds
+ File Name : components/auth/background/Clouds
  Description : 구름 컴포넌트
  Author : 임도헌
  

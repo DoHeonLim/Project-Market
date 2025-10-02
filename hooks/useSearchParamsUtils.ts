@@ -1,5 +1,5 @@
 /**
- * File Name : hooks/useSearchParams.ts
+ * File Name : hooks/useSearchParams
  * Description : 검색 파라미터 조작 공통 훅
  * Author : 임도헌
  *

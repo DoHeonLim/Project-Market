@@ -7,6 +7,8 @@
  * Date        Author   Status    Description
  * 2025.06.26  임도헌   Created   게시글 목록 렌더링 컴포넌트 구현
  * 2025.07.04  임도헌   Modified  검색 조건 변경 시 상태 초기화
+ * 2025.08.26  임도헌   Modified  usePageVisibility + 새 useInfiniteScroll 옵션 추가
+ * 2025.08.26  임도헌   Modified  UI 충돌 수정(grid + flex 동시 적용 가능성)
  */
 
 "use client";
@@ -19,6 +21,7 @@ import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import { useSearchParams } from "next/navigation";
 import { ListBulletIcon, Squares2X2Icon } from "@heroicons/react/24/outline";
 import PostCard from "./postCard";
+import { usePageVisibility } from "@/hooks/usePageVisibility";
 
 interface PostListProps {
   initialPosts: PostDetail[];
@@ -28,10 +31,13 @@ interface PostListProps {
 export default function PostList({ initialPosts, nextCursor }: PostListProps) {
   const searchParams = useSearchParams();
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+
+  const isVisible = usePageVisibility();
+
   const { posts, isLoading, hasMore, loadMore, reset } = usePostPagination({
     initialPosts,
     initialCursor: nextCursor,
-    searchParams: Object.fromEntries(searchParams.entries()), // ✅ 현재 검색 조건 전달
+    searchParams: Object.fromEntries(searchParams.entries()), // 현재 검색 조건 전달
   });
 
   const triggerRef = useRef<HTMLDivElement | null>(null);
@@ -41,9 +47,12 @@ export default function PostList({ initialPosts, nextCursor }: PostListProps) {
     hasMore,
     isLoading,
     onLoadMore: loadMore,
+    enabled: isVisible, // 탭이 백그라운드면 로딩 중단
+    rootMargin: "1200px 0px 0px 0px", // 조기 프리패치 여유
+    threshold: 0.01,
   });
 
-  // ✅ 검색 조건 변경 시 상태 초기화
+  // 검색 조건 변경 시 상태 초기화
   useEffect(() => {
     reset();
   }, [searchParams, reset]);
@@ -76,9 +85,9 @@ export default function PostList({ initialPosts, nextCursor }: PostListProps) {
         </button>
       </div>
       <div
-        className={`grid gap-4 ${
-          viewMode === "grid" ? "grid grid-cols-2" : "flex flex-col"
-        }`}
+        className={
+          viewMode === "grid" ? "grid grid-cols-2 gap-4" : "flex flex-col gap-4"
+        }
       >
         {posts.map((post) => (
           <PostCard key={post.id} post={post} viewMode={viewMode} />

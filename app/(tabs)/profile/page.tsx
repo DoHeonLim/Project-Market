@@ -26,7 +26,6 @@ import {
   getUserBadges,
 } from "./actions";
 import ThemeToggle from "@/components/theme/ThemeToggle";
-import { getMyStreams } from "@/app/streams/actions";
 
 export default async function ProfilePage() {
   const user = await getUser();
@@ -34,8 +33,6 @@ export default async function ProfilePage() {
   const averageRating = await getUserAverageRating(user.id);
   const badges = await getAllBadges();
   const userBadges = await getUserBadges(user.id);
-  // 내 방송 2개만 미리보기
-  const myStreams = (await getMyStreams(user.id, 2)) || [];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-background/95 dark:from-background-dark dark:to-background-dark/95 transition-colors duration-200">
@@ -50,7 +47,7 @@ export default async function ProfilePage() {
           logOut={logOut}
           badges={badges}
           userBadges={userBadges}
-          myStreams={myStreams}
+          // myStreams={myStreams}
         />
       </div>
     </div>

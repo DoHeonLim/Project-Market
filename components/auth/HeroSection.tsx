@@ -1,5 +1,5 @@
 /**
- File Name : components\auth\HeroSection
+ File Name : components/auth/HeroSection
  Description : 메인 콘텐츠 컴포넌트
  Author : 임도헌
  

@@ -1,5 +1,5 @@
 /**
- * File Name : lib/queries/getPostSearchCondition.ts
+ * File Name : lib/queries/getPostSearchCondition
  * Description : 게시글 검색 조건 쿼리
  * Author : 임도헌
  *

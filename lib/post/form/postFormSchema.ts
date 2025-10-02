@@ -14,7 +14,7 @@ import { z } from "zod";
 import { POST_CATEGORY } from "@/lib/constants";
 
 export const postFormSchema = z.object({
-  id: z.coerce.number().optional(), // ✅ 수정 모드
+  id: z.coerce.number().optional(), // 수정 모드
   title: z
     .string({
       required_error: "제목을 적어주세요.",

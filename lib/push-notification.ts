@@ -1,5 +1,5 @@
 /**
- * File Name : lib/push-notification.ts
+ * File Name : lib/push-notification
  * Description : 푸시 알림 라이브러리
  * Author : 임도헌
  *

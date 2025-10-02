@@ -1,6 +1,6 @@
 /**
- * File Name: lib/auth/saveUserSession.ts
- * Description: 사용자 ID를 기반으로 세션을 설정, 지정된 경로로 리디렉션
+ * File Name: lib/auth/saveUserSession
+ * Description: 사용자 ID를 기반으로 세션을 설정
  * Author: 임도헌
  *
  * History:

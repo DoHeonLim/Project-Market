@@ -10,7 +10,7 @@ Date        Author   Status    Description
 2024.12.03  임도헌   Modified  리뷰 생성, 삭제 추가
 2024.12.03  임도헌   Modified  revalidateTag로 캐싱 기능 추가
 2024.12.12  임도헌   Modified  제품 대표 사진 하나 들고오기
-2024.12.25  임도헌   Modified  CreateReview 위치 변경(proifle\(product)\actions.ts)
+2024.12.25  임도헌   Modified  CreateReview 위치 변경(proifle/(product)/actions.ts)
 */
 "use server";
 

@@ -6,6 +6,7 @@
  * History
  * Date        Author   Status    Description
  * 2025.07.13  임도헌   Created   채팅 타입 분리
+ * 2025.08.01  임도헌   Modified  스트리밍 채팅 메시지 타입 정의
  */
 
 // 채팅 유저 정보 타입
@@ -52,4 +53,19 @@ export interface MessageReadPayload {
   userId: number;
   roomId: string;
   readAt: string;
+}
+
+/**
+ * 스트리밍 채팅 메시지 타입
+ */
+export interface StreamChatMessage {
+  id: number;
+  payload: string;
+  created_at: Date;
+  userId: number;
+  user: {
+    username: string;
+    avatar: string | null;
+  };
+  streamChatRoomId: number;
 }

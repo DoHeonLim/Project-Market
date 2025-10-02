@@ -18,7 +18,7 @@ export const deleteComment = async (commentId: number, postId: number) => {
       where: { id: commentId },
     });
 
-    revalidateTag(`comments-${postId}`);
+    revalidateTag(`cpost-comments-${postId}`);
     return { success: true };
   } catch (e) {
     console.error("댓글 삭제 실패:", e);

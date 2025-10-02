@@ -12,11 +12,9 @@ import { GAME_TYPE_DISPLAY } from "@/lib/constants";
 interface ProductCardHeaderProps {
   gameType: string;
   category: {
-    eng_name: string;
     kor_name: string;
     icon: string | null;
     parent?: {
-      eng_name: string;
       kor_name: string;
       icon: string | null;
     } | null;

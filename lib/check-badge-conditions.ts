@@ -1,5 +1,5 @@
 /**
-File Name : lib/check-badge-conditions.ts
+File Name : lib/check-badge-conditions
 Description : 뱃지 조건 체크 및 부여 함수
 Author : 임도헌
 
@@ -367,11 +367,14 @@ export const checkGenreMasterBadge = async (userId: number) => {
     });
 
     // 카테고리별 거래 횟수 계산
-    const categoryCounts = trades.reduce((acc, trade) => {
-      const categoryId = trade.categoryId;
-      acc[categoryId] = (acc[categoryId] || 0) + 1;
-      return acc;
-    }, {} as { [key: number]: number });
+    const categoryCounts = trades.reduce(
+      (acc, trade) => {
+        const categoryId = trade.categoryId;
+        acc[categoryId] = (acc[categoryId] || 0) + 1;
+        return acc;
+      },
+      {} as { [key: number]: number }
+    );
 
     // 각 카테고리별로 조건 체크
     for (const [categoryIdStr, count] of Object.entries(categoryCounts)) {

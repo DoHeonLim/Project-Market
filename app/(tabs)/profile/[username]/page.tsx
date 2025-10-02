@@ -20,7 +20,7 @@ import {
   getUserAverageRating,
   getUserBadges,
 } from "../actions";
-import { getisFollowing, getUserProducts, getUserProfile } from "./actions";
+import { getIsFollowing, getUserProducts, getUserProfile } from "./actions";
 import UserProfile from "@/components/profile/UserProfile";
 
 export default async function UserProfilePage({
@@ -35,7 +35,7 @@ export default async function UserProfilePage({
   // 현재 로그인한 사용자가 이 프로필의 주인을 팔로우하고 있는지 확인
   let isFollowing = false;
   if (userId) {
-    isFollowing = await getisFollowing(userId, userProfile.id);
+    isFollowing = await getIsFollowing(userId, userProfile.id);
   }
 
   const averageRating = await getUserAverageRating(userProfile.id);

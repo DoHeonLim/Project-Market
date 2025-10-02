@@ -1,5 +1,5 @@
 /**
- * File Name : lib/search/parseFiltersFromParams.ts
+ * File Name : lib/search/parseFiltersFromParams
  * Description : URL 쿼리 → 검색 필터 상태 변환 유틸
  * Author : 임도헌
  *

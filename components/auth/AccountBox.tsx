@@ -1,5 +1,5 @@
 /**
- File Name : components\auth\AccountBox
+ File Name : components/auth/AccountBox
  Description : 계정 시작 링크 컴포넌트
  Author : 임도헌
  

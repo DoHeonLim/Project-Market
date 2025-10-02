@@ -26,8 +26,8 @@ import UserRating from "./UserRating";
 import UserAvatar from "../common/UserAvatar";
 import { PushNotificationToggle } from "../common/PushNotificationToggle";
 import UserBadges from "./UserBadges";
-import StreamCard from "../live/StreamCard";
-import FollowListModal from "../follow/FollowListModal";
+// import StreamCard from "../stream/StreamCard";
+// import FollowListModal from "../follow/FollowListModal";
 import EmailVerificationModal from "./EmailVerificationModal";
 import ProfileReviewsModal from "./ProfileReviewsModal";
 import ProfileBadgesModal from "./ProfileBadgesModal";
@@ -78,23 +78,23 @@ type Badge = {
   description: string;
 };
 
-type Stream = {
-  id: number;
-  title: string;
-  thumbnail: string | null;
-  stream_id: string;
-  status: string;
-  user: {
-    username: string;
-    avatar: string | null;
-  };
-  started_at: Date | null;
-  category: {
-    kor_name: string;
-    icon: string | null;
-  };
-  tags: { name: string }[];
-};
+// type Stream = {
+//   id: number;
+//   title: string;
+//   thumbnail: string | null;
+//   stream_id: string;
+//   status: string;
+//   user: {
+//     username: string;
+//     avatar: string | null;
+//   };
+//   started_at: Date | null;
+//   category: {
+//     kor_name: string;
+//     icon: string | null;
+//   };
+//   tags: { name: string }[];
+// };
 type ProfileProps = {
   user: User;
   initialReviews: Review[];
@@ -102,7 +102,7 @@ type ProfileProps = {
   logOut: () => Promise<void>;
   badges: Badge[];
   userBadges: Badge[];
-  myStreams: Stream[];
+  // myStreams: Stream[];
 };
 
 export default function MyProfile({
@@ -112,15 +112,15 @@ export default function MyProfile({
   logOut,
   badges,
   userBadges,
-  myStreams,
+  // myStreams,
 }: ProfileProps) {
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isBadgeModalOpen, setIsBadgeModalOpen] = useState(false);
   const [isEmailVerificationModalOpen, setIsEmailVerificationModalOpen] =
     useState(false);
-  const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false);
-  const [isFollowingModalOpen, setIsFollowingModalOpen] = useState(false);
+  // const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false);
+  // const [isFollowingModalOpen, setIsFollowingModalOpen] = useState(false);
 
   return (
     <div className="flex flex-col items-center gap-4">
@@ -145,7 +145,7 @@ export default function MyProfile({
                 size="md"
               />
               <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                <button
+                {/* <button
                   onClick={() => setIsFollowersModalOpen(true)}
                   className="hover:text-primary dark:hover:text-primary-light"
                 >
@@ -156,7 +156,7 @@ export default function MyProfile({
                   className="hover:text-primary dark:hover:text-primary-light"
                 >
                   팔로잉 {user._count?.following ?? 0}
-                </button>
+                </button> */}
               </div>
             </div>
           </div>
@@ -210,13 +210,13 @@ export default function MyProfile({
         <div className="flex justify-between items-center mb-2">
           <h2 className="text-xl font-bold dark:text-white">내 방송국</h2>
           <Link
-            href={`/profile/${user.username}/streams`}
+            href={`/profile/${user.username}/channel`}
             className="btn-primary text-xs"
           >
             전체 방송 보기
           </Link>
         </div>
-        {myStreams.length === 0 ? (
+        {/* {myStreams.length === 0 ? (
           <div className="text-gray-500 dark:text-gray-400 mb-2">
             아직 방송한 내역이 없습니다.
           </div>
@@ -249,7 +249,7 @@ export default function MyProfile({
               />
             ))}
           </div>
-        )}
+        )} */}
       </div>
 
       <div className="w-full max-w-md">
@@ -340,7 +340,7 @@ export default function MyProfile({
         onClose={() => setIsEmailVerificationModalOpen(false)}
         email={user.email || ""}
       />
-      <FollowListModal
+      {/* <FollowListModal
         isOpen={isFollowersModalOpen}
         onClose={() => setIsFollowersModalOpen(false)}
         users={user.followers?.map((f) => f.follower) ?? []}
@@ -353,7 +353,7 @@ export default function MyProfile({
         users={user.following?.map((f) => f.following) ?? []}
         title="팔로잉"
         followingIds={user.following?.map((f) => f.following.id) ?? []}
-      />
+      /> */}
     </div>
   );
 }

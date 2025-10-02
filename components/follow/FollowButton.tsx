@@ -1,5 +1,5 @@
 /**
-File Name : components\follow\FollowButton.tsx
+File Name : components/follow/FollowButton
 Description : 유저 팔로우 버튼
 Author : 임도헌
 
@@ -7,9 +7,11 @@ History
 Date        Author   Status    Description
 2025.05.22  임도헌   Created
 2025.05.22  임도헌   Modified  유저 팔로우 버튼 추가
+2025.09.05  임도헌   Modified  sonner toast 기반 성공/에러 알림 적용
 */
 "use client";
 import { useState } from "react";
+import { toast } from "sonner";
 
 interface FollowButtonProps {
   targetUserId: number;
@@ -30,18 +32,28 @@ export default function FollowButton({
   const [loading, setLoading] = useState(false);
 
   const handleClick = async () => {
+    if (loading) return;
     setLoading(true);
     try {
-      const response = await fetch(`/api/users/${targetUserId}/follow`, {
-        method: isFollowing ? "DELETE" : "POST",
-      });
-      if (response.ok) {
-        setIsFollowing((prev) => !prev);
-        onFollowChange?.(!isFollowing);
+      const method = isFollowing ? "DELETE" : "POST";
+      const res = await fetch(`/api/users/${targetUserId}/follow`, { method });
+
+      if (!res.ok) {
+        const msg = await res.text();
+        throw new Error(msg || "요청을 처리하지 못했습니다.");
       }
-    } catch (error) {
-      // TODO: 에러 핸들링
-      console.log(error);
+
+      const next = !isFollowing;
+      setIsFollowing(next);
+      onFollowChange?.(next);
+
+      toast.success(next ? "팔로우했습니다." : "팔로우를 취소했습니다.");
+    } catch (error: any) {
+      console.error("[FollowButton]", error);
+      toast.error(
+        error?.message ||
+          "처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
+      );
     } finally {
       setLoading(false);
     }

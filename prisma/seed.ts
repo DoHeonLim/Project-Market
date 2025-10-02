@@ -1,5 +1,5 @@
 /**
-File Name : prisma/seed.ts
+File Name : prisma/seed
 Description : 카테고리, 뱃지 시드
 Author : 임도헌
 

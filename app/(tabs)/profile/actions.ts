@@ -17,6 +17,7 @@ import db from "@/lib/db";
 import getSession from "@/lib/session";
 import { notFound, redirect } from "next/navigation";
 import { passwordUpdateSchema } from "./schema";
+import { UserInfo } from "@/types/stream";
 
 // 유저 프로필 정보 반환
 export const getUser = async () => {
@@ -295,4 +296,83 @@ export async function getUserBadges(userId: number) {
     console.error("사용자 뱃지 조회 중 오류:", error);
     return [];
   }
+}
+
+// 공통: 페이지네이션 take
+const FOLLOW_TAKE = 30;
+
+/** 팔로워 목록 (channel owner = username 기준) */
+export async function listFollowers(
+  username: string,
+  cursor?: number | null,
+  take: number = FOLLOW_TAKE
+): Promise<{ users: UserInfo[]; nextCursor: number | null }> {
+  const decoded = decodeURIComponent(username);
+  const owner = await db.user.findUnique({
+    where: { username: decoded },
+    select: { id: true },
+  });
+  if (!owner) return { users: [], nextCursor: null };
+
+  const rows = await db.follow.findMany({
+    where: { followingId: owner.id },
+    select: {
+      id: true, // 커서 용도
+      follower: { select: { id: true, username: true, avatar: true } },
+    },
+    orderBy: { id: "desc" },
+    take: take + 1,
+    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+  });
+
+  const hasMore = rows.length > take;
+  const slice = hasMore ? rows.slice(0, take) : rows;
+  const nextCursor = hasMore ? slice[slice.length - 1].id : null;
+
+  return {
+    users: slice.map((r) => ({
+      id: r.follower.id,
+      username: r.follower.username,
+      avatar: r.follower.avatar ?? null,
+    })),
+    nextCursor,
+  };
+}
+
+/** 팔로잉 목록 (channel owner = username 기준) */
+export async function listFollowing(
+  username: string,
+  cursor?: number | null,
+  take: number = FOLLOW_TAKE
+): Promise<{ users: UserInfo[]; nextCursor: number | null }> {
+  const decoded = decodeURIComponent(username);
+  const owner = await db.user.findUnique({
+    where: { username: decoded },
+    select: { id: true },
+  });
+  if (!owner) return { users: [], nextCursor: null };
+
+  const rows = await db.follow.findMany({
+    where: { followerId: owner.id },
+    select: {
+      id: true, // 커서 용도
+      following: { select: { id: true, username: true, avatar: true } },
+    },
+    orderBy: { id: "desc" },
+    take: take + 1,
+    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+  });
+
+  const hasMore = rows.length > take;
+  const slice = hasMore ? rows.slice(0, take) : rows;
+  const nextCursor = hasMore ? slice[slice.length - 1].id : null;
+
+  return {
+    users: slice.map((r) => ({
+      id: r.following.id,
+      username: r.following.username,
+      avatar: r.following.avatar ?? null,
+    })),
+    nextCursor,
+  };
 }

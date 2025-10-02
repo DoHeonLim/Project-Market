@@ -11,7 +11,7 @@
 import { supabase } from "@/lib/supabase";
 import { ChatMessage, MessageReadPayload } from "@/types/chat";
 
-// ✅ 구독 옵션 정의
+// 구독 옵션 정의
 interface SubscribeOptions {
   userId: number; // 현재 로그인된 유저 ID
   roomIds: string[]; // 구독할 채팅방 ID 목록

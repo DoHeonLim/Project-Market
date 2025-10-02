@@ -29,7 +29,7 @@ const config: Config = {
           light: "#FDE68A",
           dark: "#F59E0B",
         },
-        // ✅ 배경 및 텍스트 색상 평면화
+        // 배경 및 텍스트 색상 평면화
         background: "#FFFFFF",
         "background-dark": "#000000",
         text: "#000000",

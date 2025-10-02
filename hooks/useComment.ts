@@ -1,5 +1,5 @@
 /**
- * File Name : hooks/useComment.ts
+ * File Name : hooks/useComment
  * Description : 댓글 CRUD + 무한 스크롤 커서 페이징 훅
  * Author : 임도헌
  *

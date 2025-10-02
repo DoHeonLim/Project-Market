@@ -91,6 +91,6 @@ export async function verifyPhoneToken(formData: FormData) {
   await db.sMSToken.delete({ where: { id: verifiedToken.id } });
   await checkVerifiedSailorBadge(verifiedToken.userId);
 
-  // ✅ 세션 저장
+  // 세션 저장
   return saveUserSession(verifiedToken.userId);
 }

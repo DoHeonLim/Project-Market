@@ -1,5 +1,5 @@
 /**
-File Name : components/product/ProductCard/partials/ProductCardPriceTag.tsx
+File Name : components/product/ProductCard/partials/ProductCardPrice
 Description : 제품 가격 및 판매 상태 뱃지 컴포넌트
 Author : 임도헌
 

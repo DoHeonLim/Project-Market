@@ -1,5 +1,5 @@
 /**
- * File Name : hooks/useSearchHistory.ts
+ * File Name : hooks/useSearchHistory
  * Description : 검색 기록 상태 및 API 관리 훅
  * Author : 임도헌
  *
@@ -16,7 +16,7 @@ import {
   deleteSearchHistory,
   deleteAllSearchHistory,
   getUserSearchHistory,
-  createSearchHistory, // ✅ 서버 저장용 wrapper
+  createSearchHistory, // 서버 저장용 wrapper
 } from "@/app/(tabs)/products/actions/history";
 
 /**
@@ -66,7 +66,7 @@ export function useSearchHistory(initialHistory: SearchHistoryItem[] = []) {
       setHistory(updated);
 
       try {
-        await createSearchHistory(trimmed); // ✅ 서버 저장 호출
+        await createSearchHistory(trimmed); // 서버 저장 호출
       } catch (err) {
         console.error("검색 기록 저장 실패", err);
       }

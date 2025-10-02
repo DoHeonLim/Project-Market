@@ -24,14 +24,15 @@ Date        Author   Status    Description
 2025.05.23  임도헌   Modified  카테고리 필드명 변경(name->kor_name)
 2025.06.12  임도헌   Modified  Form을 컴포넌트로 분리(ProductAddForm)
 2025.06.15  임도헌   Modified  제품 등록 및 편집 폼 통합
+2025.07.30  임도헌   Modified  fetchProductCategories로 이름 변경
 */
 
 import ProductForm from "@/components/product/ProductForm";
-import { fetchCategories } from "@/lib/category/fetchCategories";
+import { fetchProductCategories } from "@/lib/category/fetchProductCategories";
 import { createProductAction } from "../actions/create";
 
 export default async function AddPage() {
-  const categories = await fetchCategories();
+  const categories = await fetchProductCategories();
 
   return (
     <ProductForm

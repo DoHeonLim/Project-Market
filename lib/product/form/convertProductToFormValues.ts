@@ -21,7 +21,7 @@ export function convertProductToFormValues(
     description: product.description,
     price: product.price,
     photos: product.images.map((img) => img.url),
-    game_type: product.game_type,
+    game_type: product.game_type as productFormType["game_type"],
     min_players: product.min_players,
     max_players: product.max_players,
     play_time: product.play_time,

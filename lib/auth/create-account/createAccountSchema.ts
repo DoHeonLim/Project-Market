@@ -6,7 +6,7 @@
  History
  Date        Author   Status    Description
  2025.05.30  임도헌   Created
- 2025.05.30  임도헌   Modified  기존 app\(auth)\create-account\actions 에 있던 스키마 분리
+ 2025.05.30  임도헌   Modified  기존 app/(auth)/create-account/actions 에 있던 스키마 분리
  2025.06.07  임도헌   Modified  type 파스칼 케이스로 변경
 */
 

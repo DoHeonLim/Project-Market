@@ -1,5 +1,5 @@
 /**
- * File Name : components/search/SearchHistoryBox.tsx
+ * File Name : components/search/SearchHistoryBox
  * Description : 최근 검색어 목록 컴포넌트 (PC 및 모바일 공통)
  * Author : 임도헌
  *

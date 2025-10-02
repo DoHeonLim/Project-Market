@@ -1,4 +1,12 @@
-// components/productDetail/ProductDetailContainer.tsx
+/**
+File Name : components/productDetail/ProductDetailContainer
+Description : 제품 상세 좋아요 및 채팅 버튼 컴포넌트
+Author : 임도헌
+
+History
+Date        Author   Status    Description
+2025.06.08  임도헌   Created   제품 상세 컴포넌트
+*/
 "use client";
 
 import { ProductDetailType } from "@/types/product";

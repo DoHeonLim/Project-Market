@@ -10,84 +10,168 @@
  * 2024.12.26  임도헌   Modified  다크모드 추가
  * 2025.07.24  임도헌   Modified  스타일 변경
  * 2025.09.10  임도헌   Modified  자동 갱신(60s), 입력 타입 유연화, 시맨틱 <time>, 안전 가드, 불필요한 의존성 제거
+ * 2025.11.06  임도헌   Modified  SSR-세이프 렌더(suppressHydrationWarning)로 깜빡임 제거,
+ *                                 페이지 비가시 시 자동 일시정지, 리프레시 'auto' 주기 추가,
+ *                                 tooltipFormatter/locale 옵션 확장
  */
 
 "use client";
 
+import { useEffect, useMemo, useRef, useState } from "react";
 import { formatToTimeAgo } from "@/lib/utils";
-import { useEffect, useMemo, useState } from "react";
 
+/** 입력으로 허용하는 시간 타입 */
 type TimeInput = string | number | Date;
 
 interface TimeAgoProps {
-  date: TimeInput; // Date | timestamp(ms) | 파싱 가능한 문자열(권장: ISO)
-  refreshMs?: number; // 기본 60초
+  /** Date | timestamp(ms) | 파싱 가능한 문자열(권장: ISO) */
+  date: TimeInput;
+
+  /**
+   * 갱신 간격(ms). "auto"면 경과 시간에 따라:
+   * < 1분: 5초 / < 1시간: 30초 / < 1일: 5분 / 그 외: 1시간
+   * @default "auto"
+   */
+  refreshMs?: number | "auto";
+
+  /** 자동 갱신 off (정적 표시용) */
+  live?: boolean; // default: true
+
   className?: string;
-  tooltipTimeZone?: string; // 기본 "Asia/Seoul"
+
+  /** 툴팁 표시에 사용할 타임존 */
+  tooltipTimeZone?: string; // default: "Asia/Seoul"
+
+  /** 툴팁 문자열 직접 생성 (있으면 이게 우선) */
+  tooltipFormatter?: (d: Date) => string;
+
+  /** locale (툴팁에 사용) */
+  locale?: string; // default: "ko-KR"
+
+  /** 잘못된 날짜일 때 보여줄 대체 텍스트 */
+  fallbackText?: string; // default: "-"
 }
 
 /** 안전한 Date 변환 */
 function toValidDate(input: TimeInput): Date | null {
-  const date = input instanceof Date ? input : new Date(input);
-  return Number.isNaN(date.getTime()) ? null : date;
+  const d = input instanceof Date ? input : new Date(input);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+/** 경과 시간 기반 자동 주기 계산 */
+function computeAutoInterval(now: number, target: number): number {
+  const diff = Math.abs(now - target);
+  const s = 1000;
+  const m = 60 * s;
+  const h = 60 * m;
+
+  if (diff < 1 * m) return 5 * s; // < 1분 : 5초
+  if (diff < 60 * m) return 30 * s; // < 1시간 : 30초
+  if (diff < 24 * h) return 5 * m; // < 1일 : 5분
+  return 60 * m; // 그 외 : 1시간
 }
 
 export default function TimeAgo({
   date,
-  refreshMs = 60_000, // numeric separator(60_000 === 60000)
+  refreshMs = "auto",
+  live = true,
   className = "",
   tooltipTimeZone = "Asia/Seoul",
+  tooltipFormatter,
+  locale = "ko-KR",
+  fallbackText = "-",
 }: TimeAgoProps) {
-  const [mounted, setMounted] = useState(false);
-  const [, setTick] = useState(0); // 주기적 재렌더 트리거(값 사용 안 함)
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
-    const id = setInterval(() => setTick((t) => t + 1), refreshMs);
-    return () => clearInterval(id);
-  }, [mounted, refreshMs]);
-
-  // 모든 훅은 조건문/조기 return 전에 호출
   const parsedDate = useMemo(() => toValidDate(date), [date]);
+  const [now, setNow] = useState<number>(() => Date.now());
+  const timerRef = useRef<number | null>(null);
 
-  // 초기 마운트 전에는 아무것도 렌더하지 않아 하이드레이션 경고 회피
-  if (!mounted) return null;
+  // 현재 시점 기준 상대시간 텍스트 (클라이언트/서버 동일 계산)
+  const relative = useMemo(() => {
+    if (!parsedDate) return null;
+    // formatToTimeAgo 는 ISO 문자열을 기대하는 기존 유틸을 그대로 사용
+    return formatToTimeAgo(parsedDate.toISOString());
+  }, [parsedDate, now]);
 
+  // 툴팁(절대 시간)
+  const tooltip = useMemo(() => {
+    if (!parsedDate) return "잘못된 날짜 형식";
+    if (tooltipFormatter) return tooltipFormatter(parsedDate);
+    try {
+      return parsedDate.toLocaleString(locale, {
+        timeZone: tooltipTimeZone,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return parsedDate.toISOString();
+    }
+  }, [parsedDate, tooltipFormatter, tooltipTimeZone, locale]);
+
+  // 자동 갱신 타이머: 페이지 가시성에 따라 일시 정지
+  useEffect(() => {
+    if (!parsedDate || !live) return;
+
+    const schedule = () => {
+      const base =
+        typeof refreshMs === "number"
+          ? refreshMs
+          : computeAutoInterval(Date.now(), parsedDate.getTime());
+
+      // setTimeout으로 가변 주기 스케줄링(Interval drift 최소화)
+      timerRef.current = window.setTimeout(
+        () => {
+          setNow(Date.now());
+          schedule(); // 재귀 스케줄
+        },
+        Math.max(1000, base)
+      ); // 최소 1초
+    };
+
+    // 가시성 이벤트 핸들링
+    const onVisibility = () => {
+      // 숨김이면 타이머 중단, 보이면 재시작
+      if (document.hidden) {
+        if (timerRef.current) {
+          clearTimeout(timerRef.current);
+          timerRef.current = null;
+        }
+      } else {
+        if (!timerRef.current) schedule();
+      }
+    };
+
+    schedule();
+    document.addEventListener("visibilitychange", onVisibility, {
+      passive: true,
+    });
+
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = null;
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [parsedDate, refreshMs, live]);
+
+  // 잘못된 날짜
   if (!parsedDate) {
     return (
       <time
         className={`text-xs text-neutral-700 dark:text-neutral-300 ${className}`}
         title="잘못된 날짜 형식"
+        aria-label="잘못된 날짜 형식"
       >
-        -
+        {fallbackText}
       </time>
     );
   }
 
-  // 툴팁(절대시간) 표기
-  let tooltip = "";
-  try {
-    tooltip = parsedDate.toLocaleString("ko-KR", {
-      timeZone: tooltipTimeZone,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } catch {
-    tooltip = parsedDate.toISOString();
-  }
-
-  // 상대시간은 매 렌더에서 재계산되어 tick에 따라 갱신됨 (useMemo 불필요)
-  const relative = formatToTimeAgo(parsedDate.toISOString());
-
+  // SSR-세이프: 서버/클라 상대시간이 약간 달라도 경고 없이 수용
   return (
     <time
+      suppressHydrationWarning
       dateTime={parsedDate.toISOString()}
       className={`text-xs text-neutral-700 dark:text-neutral-300 hover:text-neutral-800 dark:hover:text-neutral-400 transition-colors ${className}`}
       title={tooltip}

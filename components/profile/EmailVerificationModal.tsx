@@ -1,29 +1,34 @@
 /**
-File Name : components/profile/EmailVerificationModal
-Description : 이메일 인증 모달
-Author : 임도헌
-
-History
-Date        Author   Status    Description
-2025.04.13  임도헌   Created
-2025.04.21  임도헌   Modified  성공상태를 감지하여 모달을 닫고 페이지를 새로고침하도록 수정
-2025.
-*/
-
+ * File Name : components/profile/EmailVerificationModal
+ * Description : 이메일 인증 모달
+ * Author : 임도헌
+ *
+ * History
+ * Date        Author   Status    Description
+ * 2025.04.13  임도헌   Created
+ * 2025.04.21  임도헌   Modified  성공상태를 감지하여 모달을 닫고 페이지를 새로고침하도록 수정
+ * 2025.10.14  임도헌   Modified  UX/타이머/토스트 개선
+ * 2025.10.29  임도헌   Modified  재전송 쿨다운 서버 고정(3분) 및 모달 닫아도 유지,
+ *                                 cooldownRemaining/sent 플래그 도입, 토스트 중복 방지,
+ *                                 입력 pattern을 [0-9]{6}으로 안전 적용
+ */
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useFormState } from "react-dom";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Input from "../common/Input";
 import Button from "../common/Button";
-import { useFormState } from "react-dom";
-import { verifyEmail } from "@/app/api/email/actions";
+import { verifyEmail } from "@/lib/auth/email/verifyEmail";
 
 const initialState = {
   token: false,
   email: "",
-  error: undefined,
+  error: undefined as { formErrors?: string[] } | undefined,
   success: false,
+  cooldownRemaining: undefined as number | undefined,
+  sent: false,
 };
 
 interface EmailVerificationModalProps {
@@ -37,66 +42,102 @@ export default function EmailVerificationModal({
   onClose,
   email,
 }: EmailVerificationModalProps) {
+  const router = useRouter();
   const [state, action] = useFormState(verifyEmail, initialState);
+
   const [countdown, setCountdown] = useState(0);
+  const successToastShown = useRef(false);
+  const lastActionRef = useRef<"auto" | "resend" | null>(null);
 
+  // 모달 닫혀도 쿨다운을 리셋하지 않음 (서버가 강제)
   useEffect(() => {
-    if (state.token) {
-      toast.success("인증 코드가 이메일로 전송되었습니다.");
-      // 3분(180초) 타이머 시작
-      setCountdown(180);
+    if (!isOpen) {
+      successToastShown.current = false; // 성공 토스트만 초기화
     }
-  }, [state.token]);
+  }, [isOpen]);
 
+  // 서버 응답에 따라 토스트/카운트다운 갱신
   useEffect(() => {
-    if (countdown > 0) {
-      const timer = setTimeout(() => {
-        setCountdown(countdown - 1);
-      }, 1000);
-      return () => clearTimeout(timer);
+    if (!state.token) return;
+
+    // 서버에서 남은 쿨다운 내려오면 동기화
+    if (typeof state.cooldownRemaining === "number") {
+      setCountdown(state.cooldownRemaining);
     }
+
+    // 최초 발송/재전송 토스트 제어
+    if (lastActionRef.current === "resend") {
+      if (state.sent) {
+        toast.success("인증 코드를 재전송했습니다.");
+      } else if (
+        typeof state.cooldownRemaining === "number" &&
+        state.cooldownRemaining > 0
+      ) {
+        const mm = Math.floor(state.cooldownRemaining / 60);
+        const ss = String(state.cooldownRemaining % 60).padStart(2, "0");
+        toast.info(`잠시만요! 재전송은 ${mm}:${ss} 후에 가능합니다.`);
+      }
+    } else if (lastActionRef.current === "auto") {
+      if (state.sent) {
+        toast.success("인증 코드가 이메일로 전송되었습니다.");
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.token, state.cooldownRemaining, state.sent]);
+
+  // 1초 카운트다운
+  useEffect(() => {
+    if (countdown <= 0) return;
+    const t = setTimeout(() => setCountdown((s) => s - 1), 1000);
+    return () => clearTimeout(t);
   }, [countdown]);
 
+  // 에러 알림
   useEffect(() => {
-    if (state.error) {
-      toast.error(state.error.formErrors?.[0] || "인증에 실패했습니다.");
+    if (state.error?.formErrors?.length) {
+      toast.error(state.error.formErrors[0] ?? "인증에 실패했습니다.");
     }
   }, [state.error]);
 
-  // email인증 성공 시 모달 닫고 새로 고침 하도록 수정
+  // 성공 처리
   useEffect(() => {
-    if (state.success) {
+    if (state.success && !successToastShown.current) {
+      successToastShown.current = true;
       toast.success("이메일 인증이 완료되었습니다.");
       onClose();
-      // 페이지 새로고침
-      window.location.reload();
+      router.refresh();
     }
-  }, [state.success, onClose]);
+  }, [state.success, onClose, router]);
 
-  const formatTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
-  };
-
-  const handleResend = async () => {
-    if (countdown > 0) return;
-
-    const formData = new FormData();
-    formData.append("email", email);
-    formData.append("resend", "true");
-
-    action(formData);
-  };
-
-  // 모달이 열릴 때 자동으로 인증 코드 보내기
+  // 모달 열릴 때 자동 발송(또는 기존 토큰/쿨다운 조회)
   useEffect(() => {
-    if (isOpen && !state.token) {
-      const formData = new FormData();
-      formData.append("email", email);
-      action(formData);
+    if (isOpen) {
+      const fd = new FormData();
+      fd.append("email", email);
+      lastActionRef.current = "auto";
+      action(fd);
     }
-  }, [isOpen, email, action, state.token]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, email]);
+
+  const maskedEmail = useMemo(() => {
+    const [id, domain] = email.split("@");
+    if (!domain) return email;
+    const head = id.slice(0, 2);
+    const tail = id.length > 4 ? id.slice(-1) : "";
+    return `${head}${"*".repeat(Math.max(1, id.length - 3))}${tail}@${domain}`;
+  }, [email]);
+
+  const formatTime = (s: number) =>
+    `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+
+  const handleResend = () => {
+    const fd = new FormData();
+    fd.append("email", email);
+    fd.append("resend", "true");
+    lastActionRef.current = "resend";
+    action(fd);
+  };
 
   if (!isOpen) return null;
 
@@ -106,16 +147,24 @@ export default function EmailVerificationModal({
         className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm"
         onClick={onClose}
       />
-
-      <div className="relative bg-white dark:bg-neutral-800 rounded-xl shadow-xl w-full max-w-md mx-4 animate-fade-in">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="email-verify-title"
+        className="relative bg-white dark:bg-neutral-800 rounded-xl shadow-xl w-full max-w-md mx-4 animate-fade-in"
+      >
         {/* 헤더 */}
         <div className="flex justify-between items-center px-6 py-4 border-b dark:border-neutral-700">
-          <h2 className="text-xl font-semibold text-primary dark:text-primary-light">
+          <h2
+            id="email-verify-title"
+            className="text-xl font-semibold text-primary dark:text-primary-light"
+          >
             이메일 인증
           </h2>
           <button
             onClick={onClose}
             className="text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 transition-colors"
+            aria-label="닫기"
           >
             ✕
           </button>
@@ -126,19 +175,21 @@ export default function EmailVerificationModal({
           <input type="hidden" name="email" value={email} />
           <div className="space-y-2">
             <p className="text-sm text-neutral-700 dark:text-neutral-200 px-2 pb-4">
-              {email}로 전송된 6자리 인증 코드를 입력해주세요.
+              {maskedEmail} 로 전송된 6자리 인증 코드를 입력해주세요.
             </p>
+
             {state.token ? (
               <>
                 <Input
                   key="token"
                   name="token"
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]{6}"
+                  maxLength={6}
                   placeholder="6자리 숫자 입력"
-                  minLength={100000}
-                  maxLength={999999}
-                  errors={state.error?.formErrors}
                   required
+                  aria-label="인증번호 6자리"
                   icon={
                     <svg
                       className="w-5 h-5"
@@ -165,6 +216,7 @@ export default function EmailVerificationModal({
                         ? "text-gray-400 dark:text-gray-500"
                         : "text-primary dark:text-primary-light hover:underline"
                     }`}
+                    aria-disabled={countdown > 0 || undefined}
                   >
                     {countdown > 0
                       ? `재전송 가능까지 ${formatTime(countdown)}`
@@ -174,7 +226,7 @@ export default function EmailVerificationModal({
               </>
             ) : (
               <div className="flex justify-center py-4">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
               </div>
             )}
           </div>

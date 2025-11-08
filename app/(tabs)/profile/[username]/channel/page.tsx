@@ -15,19 +15,19 @@
  * 2025.09.17  임도헌   Modified  캐시 태그 표준화(broadcast-list), VodAsset 단일 페이지 진입 반영
  * 2025.09.19  임도헌   Modified  getUserChannel 도입(리다이렉트 제거)
  * 2025.09.21  임도헌   Modified  모든 VOD 전개 + vodId 경로 주입
+ * 2025.10.06  임도헌   Modified  BroadcastSummary 타입 단언 수정
  */
 
 import { notFound } from "next/navigation";
-import { unstable_cache as nextCache } from "next/cache";
 import getSession from "@/lib/session";
 import db from "@/lib/db";
-import { getUserStreams } from "@/lib/stream/getUserStreams";
 import UserStreamsClient from "@/components/stream/UserStreamsClient";
-import type { BroadcastSummary, VodForGrid } from "@/types/stream";
-import { getIsFollowing, getUserChannel } from "./actions";
+import { getUserStreams } from "@/lib/stream/getUserStreams";
+import { getIsFollowing } from "@/lib/user/follow/getIsFollowing";
+import { getUserChannel } from "@/lib/user/getUserChannel";
+import type { BroadcastSummary, ViewerRole, VodForGrid } from "@/types/stream";
 
 type Params = { username: string };
-type Role = "OWNER" | "FOLLOWER" | "VISITOR";
 
 export default async function ChannelPage({ params }: { params: Params }) {
   const username = decodeURIComponent(params.username);
@@ -38,48 +38,21 @@ export default async function ChannelPage({ params }: { params: Params }) {
   const userInfo = await getUserChannel(username);
   if (!userInfo?.id) return notFound();
 
-  // 2) getUserStreams 캐시
-  const viewerKey = `viewer-${viewerId ?? "anon"}`;
-  const getUserStreamsCached = nextCache(
-    (args: { username: string; viewerId: number | null }) =>
-      getUserStreams(args),
-    [`user-broadcasts-${userInfo.id}`, viewerKey],
-    { tags: ["broadcast-list", `user-broadcasts-${userInfo.id}`] }
-  );
+  const ownerId = userInfo.id;
 
-  // 3) 병렬 조회
-  const [streamsWithRole, isFollowing, viewerFollowingRows, viewerInfo] =
-    await Promise.all([
-      getUserStreamsCached({ username, viewerId }),
-      viewerId ? getIsFollowing(viewerId, userInfo.id) : Promise.resolve(false),
-      viewerId
-        ? db.follow.findMany({
-            where: { followerId: viewerId },
-            select: { followingId: true },
-          })
-        : Promise.resolve([] as { followingId: number }[]),
-      viewerId
-        ? db.user.findUnique({
-            where: { id: viewerId },
-            select: { id: true, username: true, avatar: true },
-          })
-        : Promise.resolve(
-            null as {
-              id: number;
-              username: string;
-              avatar: string | null;
-            } | null
-          ),
-    ]);
+  // 2) 병렬 조회
+  const [streamsWithRole, isFollowing] = await Promise.all([
+    getUserStreams({ ownerId, viewerId, take: 30 }),
+    viewerId ? getIsFollowing(viewerId, ownerId) : Promise.resolve(false),
+  ]);
 
-  const { items: userStreams, role } =
-    streamsWithRole ?? ({ items: [], role: "VISITOR" } as const);
+  const { items: userStreams = [], role = "VISITOR" } = streamsWithRole ?? {};
+  const resolvedRole = role as ViewerRole;
 
-  const resolvedRole: Role = (role as Role) ?? "VISITOR";
-  const streams = (userStreams ?? []) as BroadcastSummary[];
-  const viewerFollowingIds = viewerFollowingRows.map((r) => r.followingId);
+  // BroadcastSummary 타입 단언 수정
+  const streams: BroadcastSummary[] = userStreams ?? [];
 
-  // 4) ENDED 방송들의 모든 VOD 조회 → VOD 카드로 평탄화
+  // 3) ENDED 방송들의 모든 VOD 조회 → VOD 카드로 평탄화
   const endedBroadcasts = streams.filter((s) => s.status === "ENDED");
   const endedIds = endedBroadcasts.map((s) => s.id);
 
@@ -138,8 +111,6 @@ export default async function ChannelPage({ params }: { params: Params }) {
       userInfo={{ ...userInfo, isFollowing }}
       me={resolvedRole === "OWNER"}
       viewerId={viewerId ?? undefined}
-      viewerFollowingIds={viewerFollowingIds}
-      viewerInfo={viewerInfo ?? undefined}
     />
   );
 }

@@ -17,6 +17,8 @@ import { verifyLogin } from "@/lib/auth/login/login";
 import { saveUserSession } from "@/lib/auth/saveUserSession";
 import { loginSchema } from "@/lib/auth/login/loginSchema";
 import db from "@/lib/db";
+import { sanitizeCallbackUrl } from "@/lib/auth/safeRedirect";
+import { redirect } from "next/navigation";
 
 const handleCheckEmailExists = async (email: string) => {
   const user = await db.user.findUnique({
@@ -59,5 +61,8 @@ export async function login(_: any, formData: FormData) {
   }
 
   // 세션 저장
-  return saveUserSession(userId);
+  await saveUserSession(userId);
+
+  const cb = sanitizeCallbackUrl(formData.get("callbackUrl"));
+  redirect(cb); // 항상 sanitize된 내부 경로로만 이동
 }

@@ -15,7 +15,12 @@ Date        Author   Status    Description
 
 import LoginForm from "@/components/auth/form/LoginForm";
 
-export default function LoginPage() {
+export default function LoginPage({
+  searchParams,
+}: {
+  searchParams?: { callbackUrl?: string };
+}) {
+  const callbackUrl = searchParams?.callbackUrl ?? "/profile"; // 기본값
   return (
     <div className="flex flex-col gap-6 sm:gap-8 px-4 sm:px-6 py-6 sm:py-8 bg-gradient-to-b from-background to-background/95 dark:from-background-dark dark:to-background-dark/95">
       <div className="flex flex-col gap-2 items-center">
@@ -26,7 +31,7 @@ export default function LoginPage() {
           보드포트의 바다로 돌아오신 것을 환영합니다
         </p>
       </div>
-      <LoginForm />
+      <LoginForm callbackUrl={callbackUrl} />
     </div>
   );
 }

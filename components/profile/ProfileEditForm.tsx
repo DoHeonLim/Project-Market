@@ -1,18 +1,19 @@
 /**
-File Name : components/profile/ProfileEditForm
-Description : 프로필 편집 폼 컴포넌트
-Author : 임도헌
-
-History
-Date        Author   Status    Description
-2024.11.25  임도헌   Created
-2024.11.25  임도헌   Modified  프로필 편집 폼 컴포넌트추가
-2024.11.27  임도헌   Modified  GitHub 연동한 유저의 케이스 추가
-2024.11.27  임도헌   Modified  checkDuplicates 유저 이름, 이메일 검증 코드 추가
-2024.11.28  임도헌   Modified  스키마 위치 변경
-2024.12.12  임도헌   Modified  스타일 수정
-2025.04.10  임도헌   Modified  전화번호 인증 기능 추가
-*/
+ * File Name : components/profile/ProfileEditForm
+ * Description : 프로필 편집 폼 컴포넌트
+ * Author : 임도헌
+ *
+ * History
+ * Date        Author   Status    Description
+ * 2024.11.25  임도헌   Created
+ * 2024.11.25  임도헌   Modified  프로필 편집 폼 컴포넌트추가
+ * 2024.11.27  임도헌   Modified  GitHub 연동한 유저의 케이스 추가
+ * 2024.11.27  임도헌   Modified  checkDuplicates 유저 이름, 이메일 검증 코드 추가
+ * 2024.11.28  임도헌   Modified  스키마 위치 변경
+ * 2024.12.12  임도헌   Modified  스타일 수정
+ * 2025.04.10  임도헌   Modified  전화번호 인증 기능 추가
+ * 2025.10.08  임도헌   Modified  휴대폰 인증 로직 lib로 분리(sendProfilePhoneToken/verifyProfilePhoneToken)
+ */
 
 "use client";
 
@@ -24,37 +25,44 @@ import { MAX_PHOTO_SIZE } from "@/lib/constants";
 import Input from "@/components/common/Input";
 import Button from "@/components/common/Button";
 import Link from "next/link";
+
 import {
-  profileEditSchema,
+  profileEditFormSchema,
   ProfileEditType,
-} from "@/app/(tabs)/profile/schema";
+} from "@/lib/profile/form/profileEditFormSchema";
+import { getUploadUrl } from "@/lib/cloudflare/getUploadUrl";
+import { sendProfilePhoneToken } from "@/lib/user/phone/sendProfilePhoneToken";
+import { verifyProfilePhoneToken } from "@/lib/user/phone/verifyProfilePhoneToken";
 import {
-  EditProfile,
   getExistingUserEmail,
   getExistingUsername,
-  getUploadUrl,
-  sendPhoneVerification,
-  verifyPhoneToken,
-} from "@/app/(tabs)/profile/edit/actions";
+} from "@/lib/user/duplicates";
+import type {
+  EditProfileAction,
+  EditProfileActionResult,
+} from "@/lib/profile/update/editProfile";
 
 interface IuserProps {
   user: {
     username: string;
     email: string | null;
-    password: string | null;
+
     avatar: string | null;
     phone: string | null;
     id: number;
     github_id: string | null;
     created_at: Date;
     updated_at: Date;
+    emailVerified: boolean;
+    isSocialLogin: boolean;
+    needsPasswordSetup: boolean;
   };
+  action: EditProfileAction;
 }
 
-export default function ProfileEditForm({ user }: IuserProps) {
+export default function ProfileEditForm({ user, action }: IuserProps) {
   // 소셜 로그인 여부
-  const isSocialLogin =
-    (!!user.github_id && !!!user.email) || (!!user.phone && !!!user.email);
+  const isSocialLogin = user.isSocialLogin;
 
   // 패스워드 입력 시 보이게 하는 토글 버튼
   const [showPassword, setShowPassword] = useState(false);
@@ -76,6 +84,9 @@ export default function ProfileEditForm({ user }: IuserProps) {
   const [phoneVerificationError, setPhoneVerificationError] = useState("");
   const [originalPhone] = useState(user.phone || "");
 
+  // 제출 상태
+  const [submitting, setSubmitting] = useState(false);
+
   //react hook form 사용
   const {
     register,
@@ -85,8 +96,7 @@ export default function ProfileEditForm({ user }: IuserProps) {
     watch,
     formState: { errors },
   } = useForm<ProfileEditType>({
-    resolver: zodResolver(profileEditSchema(isSocialLogin)),
-    // 초깃값 세팅
+    resolver: zodResolver(profileEditFormSchema(isSocialLogin)),
     defaultValues: {
       username: user.username,
       email: user.email,
@@ -134,27 +144,47 @@ export default function ProfileEditForm({ user }: IuserProps) {
     const {
       target: { files },
     } = event;
-    if (!files) {
+    if (!files) return;
+
+    const nextFile = files[0];
+
+    // MIME 가드
+    if (!nextFile.type.startsWith("image/")) {
+      setError("avatar", {
+        type: "manual",
+        message: "이미지 파일만 업로드할 수 있습니다.",
+      });
+      event.target.value = "";
       return;
     }
-    const file = files[0];
-
     // 이미지 크기 제한 검사
-    if (file.size > MAX_PHOTO_SIZE) {
-      alert("이미지는 3MB 이하로 올려주세요.");
+    if (nextFile.size > MAX_PHOTO_SIZE) {
+      setError("avatar", {
+        type: "manual",
+        message: "이미지는 3MB 이하로 올려주세요.",
+      });
       event.target.value = "";
       return;
     }
 
-    const url = URL.createObjectURL(file);
+    const url = URL.createObjectURL(nextFile);
     // 미리보기 세팅
     setPreview(url);
     // 이미지 파일 세팅
-    setFile(file);
+    setFile(nextFile);
     // 클라우드 플레어 업로드 이미지 링크 가져오기
-    const { success, result } = await getUploadUrl();
-    if (success) {
-      const { id, uploadURL } = result;
+    const res = await getUploadUrl();
+    if (!res.success) {
+      // 파일/프리뷰 롤백
+      setPreview("");
+      setFile(null);
+      setError("avatar", {
+        type: "manual",
+        message: res.error ?? "업로드 URL을 가져오지 못했습니다.",
+      });
+      return;
+    } else if (res.success) {
+      const { id, uploadURL } = res.result;
       setUploadUrl(uploadURL);
       setValue(
         "avatar",
@@ -162,6 +192,7 @@ export default function ProfileEditForm({ user }: IuserProps) {
       );
     }
   };
+
   // 폼 리셋
   const reset = () => {
     setPreview("");
@@ -183,13 +214,16 @@ export default function ProfileEditForm({ user }: IuserProps) {
     }
 
     try {
-      const result = await sendPhoneVerification(phoneValue);
-      if (result.success) {
+      const form = new FormData();
+      form.append("phone", phoneValue);
+
+      const res = await sendProfilePhoneToken(form);
+      if (res.success) {
         setPhoneVerificationSent(true);
         setPhoneVerificationError("");
       } else {
         setPhoneVerificationError(
-          result.error || "인증 코드 전송에 실패했습니다."
+          res.error || "인증 코드 전송에 실패했습니다."
         );
       }
     } catch {
@@ -205,12 +239,16 @@ export default function ProfileEditForm({ user }: IuserProps) {
     }
 
     try {
-      const result = await verifyPhoneToken(phoneValue || "", phoneToken);
-      if (result.success) {
+      const form = new FormData();
+      form.append("phone", phoneValue || "");
+      form.append("token", phoneToken);
+
+      const res = await verifyProfilePhoneToken(form);
+      if (res.success) {
         setPhoneVerified(true);
         setPhoneVerificationError("");
       } else {
-        setPhoneVerificationError(result.error || "인증에 실패했습니다.");
+        setPhoneVerificationError(res.error || "인증에 실패했습니다.");
       }
     } catch {
       setPhoneVerificationError("인증 중 오류가 발생했습니다.");
@@ -248,6 +286,7 @@ export default function ProfileEditForm({ user }: IuserProps) {
     return errors; // 오류 객체 반환
   };
 
+  // 제출 핸들러 (기존 주석 유지: onValid → 내부에서 handleSubmit 사용)
   const onSubmit = handleSubmit(async (data: ProfileEditType) => {
     // 전화번호가 변경되었는데 인증이 되지 않은 경우
     if (data.phone && data.phone !== originalPhone && !phoneVerified) {
@@ -273,6 +312,7 @@ export default function ProfileEditForm({ user }: IuserProps) {
       });
       return; // 오류가 있으면 폼 제출을 중단
     }
+
     // 새 이미지가 있는 경우에만 업로드
     if (file) {
       //클라우드 플레어에 이미지 업로드
@@ -282,39 +322,62 @@ export default function ProfileEditForm({ user }: IuserProps) {
         method: "POST",
         body: cloudflareForm,
       });
-      if (response.status !== 200) {
-        alert("이미지 업로드에 실패했습니다.");
+      if (!response.ok) {
+        setError("avatar", {
+          type: "manual",
+          message: "이미지 업로드에 실패했습니다.",
+        });
         return;
       }
     } else {
       // 이미지가 변경되지 않았다면 기존 이미지 경로 사용
       data.avatar = currentPhoto;
     }
+
     // 이미지가 업로드 되면 formData의 photo를 교체
     const formData = new FormData();
     formData.append("username", data.username);
     formData.append("email", data.email ?? "");
     formData.append("phone", data.phone ?? "");
     formData.append("avatar", data.avatar ?? "");
-    if (isSocialLogin && !(user.email && user.password)) {
+    if (user.needsPasswordSetup) {
       formData.append("password", data.password ?? "");
       formData.append("confirmPassword", data.confirmPassword ?? "");
     }
 
-    // editProduct를 리턴한다.
-    return EditProfile(formData);
+    setSubmitting(true);
+    try {
+      const result = (await action(formData)) as EditProfileActionResult;
+      if (result?.success === false && result.errors) {
+        Object.entries(result.errors.fieldErrors ?? {}).forEach(([k, arr]) => {
+          const msg = Array.isArray(arr) ? arr[0] : undefined;
+          if (msg) {
+            setError(k as keyof ProfileEditType, {
+              type: "server",
+              message: msg,
+            });
+          }
+        });
+      }
+    } finally {
+      setSubmitting(false);
+    }
   });
 
+  // 기존 onValid 시그니처 유지(내부에서 onSubmit 호출)
   const onValid = async () => {
+    if (submitting) return;
     await onSubmit();
   };
+
   return (
     <div>
       <span className="flex justify-center mt-4 text-2xl font-semibold">
         프로필 수정
       </span>
-      <form action={onValid} className="flex flex-col p-5">
-        <label htmlFor="username" className="my-2">
+      {/* 기존: form action={onValid} → 제출 상태 제어를 위해 onSubmit으로 변경 */}
+      <form onSubmit={onValid} className="flex flex-col p-5" noValidate>
+        <label htmlFor="username" className="my-2 dark:text-white">
           선원 닉네임
         </label>
         <Input
@@ -326,6 +389,7 @@ export default function ProfileEditForm({ user }: IuserProps) {
           errors={[errors.username?.message ?? ""]}
           minLength={3}
           maxLength={10}
+          aria-invalid={!!errors.username}
           icon={
             <svg
               className="w-5 h-5"
@@ -342,14 +406,14 @@ export default function ProfileEditForm({ user }: IuserProps) {
             </svg>
           }
         />
-        {isSocialLogin && (
+        {user.needsPasswordSetup && (
           <span className="text-lg text-rose-500 my-2">
             소셜 또는 SMS 연동 유저는 초기에 이메일과 패스워드 설정을 완료해야
             됩니다.
           </span>
         )}
 
-        <label htmlFor="email" className="my-2">
+        <label htmlFor="email" className="my-2 dark:text-white">
           선원 이메일
         </label>
         <Input
@@ -358,6 +422,7 @@ export default function ProfileEditForm({ user }: IuserProps) {
           placeholder={"선원 이메일"}
           {...register("email")}
           errors={[errors.email?.message ?? ""]}
+          aria-invalid={!!errors.email}
           icon={
             <svg
               className="w-5 h-5"
@@ -376,7 +441,7 @@ export default function ProfileEditForm({ user }: IuserProps) {
         />
         {isSocialLogin && (
           <>
-            <label htmlFor="password" className="my-2">
+            <label htmlFor="password" className="my-2 dark:text-white">
               비밀 항해 코드
             </label>
             <div className="relative">
@@ -386,6 +451,7 @@ export default function ProfileEditForm({ user }: IuserProps) {
                 placeholder="소문자, 대문자, 숫자, 특수문자를 포함해야 합니다."
                 {...register("password")}
                 errors={[errors.password?.message ?? ""]}
+                aria-invalid={!!errors.password}
                 icon={
                   <svg
                     className="w-5 h-5"
@@ -406,6 +472,7 @@ export default function ProfileEditForm({ user }: IuserProps) {
                 type="button"
                 onClick={() => handlePasswordToggle("password")}
                 className="absolute right-3 top-5 transform -translate-y-1/2 text-neutral-200"
+                aria-label={showPassword ? "비밀번호 숨기기" : "비밀번호 보기"}
               >
                 {showPassword ? (
                   <EyeIcon className="size-4" />
@@ -415,7 +482,7 @@ export default function ProfileEditForm({ user }: IuserProps) {
               </button>
             </div>
 
-            <label htmlFor="confirmPassword" className="my-2">
+            <label htmlFor="confirmPassword" className="my-2 dark:text-white">
               비밀 항해 코드 확인
             </label>
             <div className="relative">
@@ -425,6 +492,7 @@ export default function ProfileEditForm({ user }: IuserProps) {
                 placeholder="비밀 항해 코드 확인"
                 {...register("confirmPassword")}
                 errors={[errors.confirmPassword?.message ?? ""]}
+                aria-invalid={!!errors.confirmPassword}
                 icon={
                   <svg
                     className="w-5 h-5"
@@ -445,6 +513,11 @@ export default function ProfileEditForm({ user }: IuserProps) {
                 type="button"
                 onClick={() => handlePasswordToggle("confirmPassword")}
                 className="absolute right-3 top-5 transform -translate-y-1/2 text-neutral-200"
+                aria-label={
+                  showConfirmPassword
+                    ? "비밀번호 확인 숨기기"
+                    : "비밀번호 확인 보기"
+                }
               >
                 {showConfirmPassword ? (
                   <EyeIcon className="size-4" />
@@ -456,10 +529,10 @@ export default function ProfileEditForm({ user }: IuserProps) {
           </>
         )}
 
-        <span className="flex justify-center font-semibold text-md mt-4">
+        <span className="flex justify-center font-semibold text-md dark:text-white mt-4">
           선택사항
         </span>
-        <label htmlFor="phone" className="my-2">
+        <label htmlFor="phone" className="my-2 dark:text-white">
           전화번호 (선택사항)
         </label>
         <div className="flex flex-col">
@@ -471,6 +544,7 @@ export default function ProfileEditForm({ user }: IuserProps) {
               placeholder="선원 연락처(phone) 01012345678"
               {...register("phone")}
               errors={[errors.phone?.message ?? ""]}
+              aria-invalid={!!errors.phone}
               icon={
                 <svg
                   className="w-5 h-5"
@@ -491,7 +565,8 @@ export default function ProfileEditForm({ user }: IuserProps) {
               <button
                 type="button"
                 onClick={handleSendVerification}
-                className="w-1/3 px-4 py-2 text-xs text-white bg-blue-500 rounded-md hover:bg-blue-600"
+                disabled={submitting}
+                className="w-1/3 px-4 py-2 text-xs text-white bg-blue-500 rounded-md hover:bg-blue-600 disabled:opacity-60"
               >
                 💫 등대 신호 보내기
               </button>
@@ -506,11 +581,13 @@ export default function ProfileEditForm({ user }: IuserProps) {
                 value={phoneToken}
                 onChange={(e) => setPhoneToken(e.target.value)}
                 errors={[phoneVerificationError]}
+                aria-invalid={!!phoneVerificationError}
               />
               <button
                 type="button"
                 onClick={handleVerifyToken}
-                className="w-1/3 px-4 py-2 text-white text-xs bg-green-500 rounded-md hover:bg-green-600"
+                disabled={submitting}
+                className="w-1/3 px-4 py-2 text-white text-xs bg-green-500 rounded-md hover:bg-green-600 disabled:opacity-60"
               >
                 🔍 신호 확인
               </button>
@@ -552,12 +629,16 @@ export default function ProfileEditForm({ user }: IuserProps) {
           />
         </div>
 
-        <Button text="수정 완료" />
+        <Button
+          text={submitting ? "수정 중..." : "수정 완료"}
+          disabled={submitting}
+        />
         <div className="flex gap-2 mt-2">
           <button
             type="reset"
             onClick={reset}
-            className="flex items-center justify-center flex-1 h-10 font-semibold text-white transition-colors bg-indigo-300 rounded-md px-auto hover:bg-indigo-400"
+            disabled={submitting}
+            className="flex items-center justify-center flex-1 h-10 font-semibold text-white transition-colors bg-indigo-300 rounded-md px-auto hover:bg-indigo-400 disabled:opacity-60"
           >
             초기화
           </button>

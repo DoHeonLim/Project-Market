@@ -40,6 +40,7 @@
 // 2025.05.22  임도헌   Modified   Follow 모델 추가
 // 2025.09.06  임도헌   Modified   StreamMessage모델에 인덱스를 추가
 // 2025.09.15  임도헌   Modified   라이브 스트리밍 관련 모델 전면 재구성
+// 2025.10.29  임도헌   Modified   Follow 키셋 페이지네이션 최적화용 복합 인덱스 추가([followerId,id], [followingId,id])
 
 generator client {
   provider = "prisma-client-js"
@@ -104,17 +105,19 @@ model Badge {
 // 제품 리뷰 모델
 // Prisma에서 enum 사용 불가능 하기때문에 서버쪽에 제약조건 추가
 model Review {
-  id        Int     @id @default(autoincrement())
-  user      User    @relation(fields: [userId], references: [id]) //작성자
-  userId    Int
-  product   Product @relation(fields: [productId], references: [id]) // 어떤 제품에 리뷰 했는가?
-  productId Int
-  payload   String //리뷰 내용
-  rate      Int //리뷰 별점
+  id         Int      @id @default(autoincrement())
+  user       User     @relation(fields: [userId], references: [id]) //작성자
+  userId     Int
+  product    Product  @relation(fields: [productId], references: [id]) // 어떤 제품에 리뷰 했는가?
+  productId  Int
+  payload    String //리뷰 내용
+  rate       Int //리뷰 별점
+  created_at DateTime @default(now())
 
   @@index([productId]) // 제품별 리뷰
   @@index([userId]) // 사용자별 리뷰
   @@index([rate]) // 평점 기준 정렬
+  @@index([created_at])
 }
 
 // SMS 인증 모델
@@ -154,6 +157,9 @@ model Follow {
   @@unique([followerId, followingId]) // 한 유저는 다른 유저를 한 번만 팔로우할 수 있음
   @@index([followerId])
   @@index([followingId])
+  // 키셋 커서 최적화
+  @@index([followerId, id])
+  @@index([followingId, id])
 }
 
 // 제품 모델

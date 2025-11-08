@@ -1,37 +1,40 @@
 /**
-File Name : app/(tabs)/profile/(product)/my-purchases/page
-Description : 프로필 나의 구매 제품 페이지
-Author : 임도헌
-
-History
-Date        Author   Status    Description
-2024.11.30  임도헌   Created
-2024.11.30  임도헌   Modified  프로필 나의 구매 제품 페이지 추가
-2024.12.12  임도헌   Modified  뒤로가기 버튼 추가
-*/
+ * File Name : app/(tabs)/profile/(product)/my-purchases/page
+ * Description : 프로필 나의 구매 제품 페이지 (커서 기반 선로딩)
+ * Author : 임도헌
+ *
+ * History
+ * Date        Author   Status    Description
+ * 2024.11.30  임도헌   Created
+ * 2024.11.30  임도헌   Modified  프로필 나의 구매 제품 페이지 추가
+ * 2024.12.12  임도헌   Modified  뒤로가기 버튼 추가
+ * 2025.10.17  임도헌   Modified  커서 기반 공용 액션(getInitialUserProducts) 사용 + 캐시 태그 분리
+ * 2025.10.23  임도헌   Modified  캐시 리팩토링 적용: per-id 태그 + lib 캐시 래퍼 사용
+ * 2025.11.06  임도헌   Modified  미로그인 가드(redirect) 추가
+ */
 
 import getSession from "@/lib/session";
-import { unstable_cache as nextCache } from "next/cache";
-import { getPurchasedProducts } from "./actions";
-import MyPurchasesList from "@/components/product/MyPurchasesList";
+import { getCachedInitialUserProducts } from "@/lib/product/getUserProducts";
 import BackButton from "@/components/common/BackButton";
+import MyPurchasesList from "@/components/product/MyPurchasesList";
+import { redirect } from "next/navigation";
 
-// 상태 유저에 대한 리뷰 기능 추가해야됨
 export default async function MyPurchasesPage() {
   const session = await getSession();
-  const getCachedPurchasedProducts = nextCache(
-    getPurchasedProducts,
-    ["purchased-product-list"],
-    {
-      tags: ["purchased-product-list", "selling-product-list"],
-    }
-  );
-  const purchasedProducts = await getCachedPurchasedProducts(session.id!);
+  if (!session?.id) {
+    redirect("/login?callbackUrl=/profile/(product)/my-purchases");
+  }
+  const userId = session.id;
+
+  const initialPurchased = await getCachedInitialUserProducts({
+    type: "PURCHASED",
+    userId,
+  });
 
   return (
     <>
       <BackButton className="" />
-      <MyPurchasesList products={purchasedProducts} />
+      <MyPurchasesList userId={userId} initialPurchased={initialPurchased} />
     </>
   );
 }

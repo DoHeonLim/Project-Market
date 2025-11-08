@@ -73,7 +73,7 @@ export default function CommentsList({
           ⬇️
         </span>
       )}
-      {!isLoading && <div ref={triggerRef} />}
+      {!isLoading && <div ref={triggerRef} aria-hidden="true" tabIndex={-1} />}
     </div>
   );
 }

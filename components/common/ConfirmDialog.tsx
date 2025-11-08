@@ -15,7 +15,7 @@ import { useEffect, useRef } from "react";
 interface ConfirmDialogProps {
   open: boolean;
   title: string;
-  description?: string;
+  description?: React.ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
   onConfirm: () => void;
@@ -119,12 +119,12 @@ export default function ConfirmDialog({
         </h3>
 
         {description && (
-          <p
+          <div
             id={descId}
             className="mt-2 text-sm text-neutral-600 dark:text-neutral-400"
           >
             {description}
-          </p>
+          </div>
         )}
 
         <div className="mt-6 flex justify-end gap-2">

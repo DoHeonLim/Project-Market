@@ -57,9 +57,14 @@ export const productFormSchema = z.object({
   has_manual: z.boolean({
     required_error: "설명서 포함 여부를 선택해주세요.",
   }),
-  categoryId: z.coerce.number({
-    required_error: "카테고리를 선택해주세요.",
-  }),
+  categoryId: z.coerce
+    .number({
+      required_error: "카테고리를 선택해주세요.",
+      invalid_type_error: "카테고리를 선택해주세요.",
+    })
+    .int()
+    .positive()
+    .or(z.literal("").transform(() => undefined)),
   tags: z
     .array(z.string())
     .max(5, "태그는 최대 5개까지 입력 가능합니다.")

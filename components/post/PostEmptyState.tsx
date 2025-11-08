@@ -29,7 +29,7 @@ export default function PostEmptyState({
   } else if (keyword) {
     message = `검색어 '${keyword}'에 대한 게시글이 없습니다.`;
   } else if (category) {
-    message = `카테고리 '${category}'에 게시글이 없습니다.`;
+    message = `카테고리 '${POST_CATEGORY[category as keyof typeof POST_CATEGORY]}'에 게시글이 없습니다.`;
   }
 
   return (

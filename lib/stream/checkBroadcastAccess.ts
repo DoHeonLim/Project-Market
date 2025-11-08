@@ -12,8 +12,8 @@
  */
 
 import "server-only";
-import { getViewerRole, type ViewerRole } from "./getViewerRole";
-import type { StreamVisibility } from "@/types/stream";
+import { getViewerRole } from "./getViewerRole";
+import type { StreamVisibility, ViewerRole } from "@/types/stream";
 
 /** UI 오버레이/가드 사유 코드 (표준화) */
 export const EXCLUSION = {

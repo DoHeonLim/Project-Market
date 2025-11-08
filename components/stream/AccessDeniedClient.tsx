@@ -4,8 +4,8 @@
  * Author : 임도헌
  *
  * History
- * Date        Author   Status    Description
  * 2025.09.06  임도헌   Created
+ * 2025.11.01  임도헌   Modified  로그인 파라미터 callbackUrl 통일, useFollowToggle 호출 정합
  */
 
 "use client";
@@ -20,33 +20,44 @@ type Reason = "PRIVATE" | "FOLLOWERS_ONLY" | "UNKNOWN";
 export default function AccessDeniedClient({
   reason,
   username,
-  next,
+  callbackUrl,
   streamId,
   ownerId,
 }: {
   reason: Reason;
   username: string;
-  next: string;
+  callbackUrl: string; // ← 통일
   streamId?: number;
   ownerId?: number;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const { follow, isPending } = useFollowToggle();
+
+  // 이전 코드: const { follow, isPending } = useFollowToggle();
+  // 우리 훅 시그니처 기준(최근 리팩토링): toggle / isPending
+  const { toggle, isPending } = useFollowToggle();
+
   const pending = typeof ownerId === "number" ? isPending(ownerId) : false;
 
-  const goLogin = () => router.push(`/login?next=${encodeURIComponent(next)}`);
+  const goLogin = () =>
+    router.push(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
+
   const goProfileForFollow = () =>
-    router.push(`/@${encodeURIComponent(username)}`);
+    router.push(`/profile/${encodeURIComponent(username)}`); // 경로 일관화
 
   const doFollow = async () => {
     if (!ownerId) return goProfileForFollow();
-    await follow(ownerId, {
-      refresh: false, // 훅 내부 refresh 끄기
-      onRequireLogin: () => goLogin(), // 401이면 로그인으로
+
+    // 403 FOLLOWERS_ONLY는 보통 '현재 미팔로우' 상황이므로 was=false 가정
+    const was = false;
+
+    await toggle(ownerId, was, {
+      refresh: false,
+      onRequireLogin: () => goLogin(),
     });
+
     // 팔로우 성공 시 접근 가드 재평가
-    router.replace(next);
+    router.replace(callbackUrl);
   };
 
   return (
@@ -103,7 +114,7 @@ export default function AccessDeniedClient({
               </button>
             ) : (
               <button
-                onClick={() => router.push(next)}
+                onClick={() => router.push(callbackUrl)}
                 className="px-4 py-2 rounded-md bg-amber-600 text-white hover:bg-amber-700"
               >
                 시청 페이지로 이동
@@ -122,7 +133,7 @@ export default function AccessDeniedClient({
               open={open}
               onOpenChange={setOpen}
               streamId={streamId}
-              redirectHref={next}
+              redirectHref={callbackUrl} // 통일
             />
           )}
         </>
@@ -134,7 +145,7 @@ export default function AccessDeniedClient({
             접근 권한을 확인할 수 없습니다.
           </p>
           <button
-            onClick={() => router.push(next)}
+            onClick={() => router.push(callbackUrl)}
             className="px-4 py-2 rounded-md bg-neutral-800 text-white hover:bg-neutral-900"
           >
             돌아가기

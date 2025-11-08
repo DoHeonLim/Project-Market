@@ -11,27 +11,40 @@
  * 2025.09.08  임도헌   Modified  viewerId/viewerFollowingIds/onViewerFollowChange 지원
  * 2025.09.14  임도헌   Modified  a11y/UX 보강(Esc 닫기, 포커스 관리, 스크롤 잠금, 스크롤 영역 일관화)
  * 2025.09.19  임도헌   Modified  유저 팔로우, 팔로잉 무한스크롤 기능 추가
+ * 2025.10.12  임도헌   Modified  users 타입 정합(FollowListUser), useInfiniteScroll rootRef 적용,
+ *                                isFollowing 계산(followingSet 우선, 없으면 user.isFollowedByViewer)
+ * 2025.10.12  임도헌   Modified  viewerFollowingIds/Set/compute 제거, isFollowedByViewer만 사용
+ * 2025.10.29  임도헌   Modified  Tab 포커스 트랩, 무한스크롤 hasMore 가드, 로우 버튼 a11y(aria-busy/pressed) 전달 보강
  */
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
-import { UserInfo } from "@/types/stream";
 import FollowListItem from "./FollowListItem";
-import useInfiniteScroll from "@/hooks/useInfiniteScroll";
+import type { FollowListUser } from "@/types/profile";
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 
 interface FollowListModalProps {
   isOpen: boolean;
   onClose: () => void;
-  users: UserInfo[];
-  title: string; // "팔로워" | "팔로잉"
-  viewerId?: number; // 현재 로그인 사용자 id
-  viewerFollowingIds?: number[]; // 현재 사용자가 팔로우 중인 사용자 id 목록
-  onViewerFollowChange?: (targetUserId: number, nowFollowing: boolean) => void; // 상향 콜백
-  isLoading?: boolean;
+  users: FollowListUser[]; // { id, username, avatar, isFollowedByViewer }
+  title: string;
+  kind: "followers" | "following";
+  viewerId?: number;
+  onViewerFollowChange: (user: FollowListUser, now: boolean) => void;
 
-  hasMore?: boolean;
-  onLoadMore?: () => void | Promise<void>;
-  loadingMore?: boolean;
+  // 페이지네이션
+  isLoading: boolean;
+  hasMore: boolean;
+  onLoadMore: () => Promise<void>;
+  loadingMore: boolean;
+
+  // 행 단위 토글/펜딩(선택)
+  onToggleItem?: (
+    user: FollowListUser,
+    was: boolean,
+    h: { onOptimistic: () => void; onRollback: () => void }
+  ) => Promise<void>;
+  isPendingById?: (id: number) => boolean;
 }
 
 export default function FollowListModal({
@@ -39,30 +52,41 @@ export default function FollowListModal({
   onClose,
   users,
   title,
+  kind,
   viewerId,
-  viewerFollowingIds = [],
   onViewerFollowChange,
   isLoading = false,
   hasMore = false,
   onLoadMore,
   loadingMore = false,
+  onToggleItem,
+  isPendingById,
 }: FollowListModalProps) {
-  const isFollowerModal = title === "팔로워";
+  const isFollowerModal = kind === "followers";
 
-  // 버튼 상태 계산을 위한 Set (파생값)
-  const followingSet = useMemo(
-    () => new Set<number>(viewerFollowingIds),
-    [viewerFollowingIds]
-  );
-
-  // 팔로워 모달일 때만 맞팔/추천으로 나누고, 팔로잉 모달은 전체 리스트
+  // viewerId를 고려해 '나'는 무조건 맞팔로잉으로 보내고, 추천에선 제외
   const { mutualFollowers, recommendedFollowers } = useMemo(() => {
-    if (!isFollowerModal)
-      return { mutualFollowers: [], recommendedFollowers: [] };
-    const mutual = users.filter((u) => followingSet.has(u.id));
-    const recommend = users.filter((u) => !followingSet.has(u.id));
+    if (!isFollowerModal) {
+      return {
+        mutualFollowers: [] as FollowListUser[],
+        recommendedFollowers: [] as FollowListUser[],
+      };
+    }
+
+    const selfId = viewerId ?? -1;
+
+    // 자기 자신이면 무조건 mutual 로 분류
+    const mutual = users.filter(
+      (u) => u.id === selfId || !!u.isFollowedByViewer
+    );
+
+    // 추천에서는 자기 자신을 제외
+    const recommend = users.filter(
+      (u) => u.id !== selfId && !u.isFollowedByViewer
+    );
+
     return { mutualFollowers: mutual, recommendedFollowers: recommend };
-  }, [isFollowerModal, users, followingSet]);
+  }, [isFollowerModal, users, viewerId]);
 
   // a11y & UX: 포커스 / ESC / body scroll lock
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -74,43 +98,68 @@ export default function FollowListModal({
 
   useEffect(() => {
     if (!isOpen) return;
-
-    // 포커스 저장 & 진입
     previouslyFocused.current = document.activeElement as HTMLElement | null;
     dialogRef.current?.focus();
 
-    // ESC 닫기
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
 
-    // body 스크롤 잠금
     const original = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
     return () => {
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = original;
-      // 포커스 복귀
       previouslyFocused.current?.focus?.();
     };
   }, [isOpen, onClose]);
 
-  // 공통 훅으로 무한스크롤 연결
+  // Tab 포커스 트랩 (모달 내부 순환)
+  useEffect(() => {
+    if (!isOpen || !dialogRef.current) return;
+
+    const dialog = dialogRef.current;
+    const getFocusables = () =>
+      dialog.querySelectorAll<HTMLElement>(
+        'a, button, input, textarea, select, [tabindex]:not([tabindex="-1"])'
+      );
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Tab") return;
+      const focusables = getFocusables();
+      if (!focusables.length) return;
+
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
+    dialog.addEventListener("keydown", onKeyDown);
+    return () => dialog.removeEventListener("keydown", onKeyDown);
+  }, [isOpen]);
+
+  // 무한스크롤: hasMore=false면 옵저버 비활성
   useInfiniteScroll({
     triggerRef: sentinelRef,
     hasMore,
-    isLoading: loadingMore, // 최초 로딩과 구분
-    onLoadMore: onLoadMore ?? (() => {}),
-    enabled: isOpen,
-    root: scrollAreaRef.current, // 모달 내부 스크롤 영역
-    rootMargin: "400px 0px 0px 0px", // 적당한 프리페치 여유
+    isLoading: loadingMore,
+    onLoadMore: onLoadMore ?? (async () => {}),
+    enabled: isOpen && hasMore,
+    rootRef: scrollAreaRef,
+    rootMargin: "400px 0px 0px 0px",
     threshold: 0.1,
   });
 
   if (!isOpen) return null;
-
   const titleId = "followlistmodal-title";
 
   return (
@@ -150,34 +199,43 @@ export default function FollowListModal({
               <p
                 className="py-4 text-center text-gray-500 dark:text-gray-400"
                 role="status"
+                aria-busy="true"
               >
                 불러오는 중...
               </p>
             ) : users.length === 0 ? (
               <p className="py-4 text-center text-gray-500 dark:text-gray-400">
-                {title === "팔로워"
+                {isFollowerModal
                   ? "팔로워가 없습니다."
                   : "팔로우 중인 사용자가 없습니다."}
               </p>
             ) : isFollowerModal ? (
               <div className="space-y-4">
                 {mutualFollowers.length > 0 && (
-                  <section>
-                    <div className="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-200">
+                  <section aria-labelledby="mutual-section-title">
+                    <div
+                      id="mutual-section-title"
+                      className="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-200"
+                    >
                       맞팔로잉
                     </div>
                     <div className="space-y-2">
-                      {mutualFollowers.map((user) => (
+                      {mutualFollowers.map((u) => (
                         <FollowListItem
-                          key={user.id}
-                          user={user}
+                          key={u.id}
+                          user={u}
                           viewerId={viewerId}
                           isFollowing={true}
-                          onChange={(now) =>
-                            onViewerFollowChange?.(user.id, now)
-                          }
-                          buttonVariant="outline"
+                          onChange={(u, now) => onViewerFollowChange?.(u, now)}
+                          onToggle={onToggleItem}
+                          pending={isPendingById?.(u.id) ?? false}
+                          buttonVariant="primary"
                           buttonSize="sm"
+                          // 접근성 힌트 전달(선택: FollowListItem에 지원 추가)
+                          a11yProps={{
+                            "aria-busy": isPendingById?.(u.id) ?? false,
+                            "aria-pressed": true,
+                          }}
                         />
                       ))}
                     </div>
@@ -185,22 +243,29 @@ export default function FollowListModal({
                 )}
 
                 {recommendedFollowers.length > 0 && (
-                  <section>
-                    <div className="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-200">
+                  <section aria-labelledby="recommend-section-title">
+                    <div
+                      id="recommend-section-title"
+                      className="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-200"
+                    >
                       추천
                     </div>
                     <div className="space-y-2">
-                      {recommendedFollowers.map((user) => (
+                      {recommendedFollowers.map((u) => (
                         <FollowListItem
-                          key={user.id}
-                          user={user}
+                          key={u.id}
+                          user={u}
                           viewerId={viewerId}
                           isFollowing={false}
-                          onChange={(now) =>
-                            onViewerFollowChange?.(user.id, now)
-                          }
+                          onChange={(u, now) => onViewerFollowChange?.(u, now)}
+                          onToggle={onToggleItem}
+                          pending={isPendingById?.(u.id) ?? false}
                           buttonVariant="primary"
                           buttonSize="sm"
+                          a11yProps={{
+                            "aria-busy": isPendingById?.(u.id) ?? false,
+                            "aria-pressed": false,
+                          }}
                         />
                       ))}
                     </div>
@@ -209,21 +274,26 @@ export default function FollowListModal({
               </div>
             ) : (
               <div className="space-y-2">
-                {users.map((user) => (
+                {users.map((u) => (
                   <FollowListItem
-                    key={user.id}
-                    user={user}
+                    key={u.id}
+                    user={u}
                     viewerId={viewerId}
-                    isFollowing={followingSet.has(user.id)}
-                    onChange={(now) => onViewerFollowChange?.(user.id, now)}
-                    buttonVariant="outline"
+                    isFollowing={!!u.isFollowedByViewer}
+                    onChange={(u, now) => onViewerFollowChange?.(u, now)}
+                    onToggle={onToggleItem}
+                    pending={isPendingById?.(u.id) ?? false}
+                    buttonVariant="primary"
                     buttonSize="sm"
+                    a11yProps={{
+                      "aria-busy": isPendingById?.(u.id) ?? false,
+                      "aria-pressed": !!u.isFollowedByViewer,
+                    }}
                   />
                 ))}
               </div>
             )}
 
-            {/* 무한스크롤 센티넬 */}
             <div ref={sentinelRef} aria-hidden="true" className="h-8" />
             {loadingMore && (
               <p

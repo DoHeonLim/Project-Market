@@ -9,7 +9,7 @@
  2025.05.30  임도헌   Modified  getAccessToken, getGithubProfile 함수로 분리
  */
 
-// accessToken 요청 함수수
+// accessToken 요청 함수
 export async function getAccessToken(code: string): Promise<string> {
   const accessTokenParams = new URLSearchParams({
     client_id: process.env.GITHUB_CLIENT_ID!,

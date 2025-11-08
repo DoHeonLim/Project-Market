@@ -35,10 +35,12 @@ export default async function AddPage() {
   const categories = await fetchProductCategories();
 
   return (
-    <ProductForm
-      mode="create"
-      action={createProductAction}
-      categories={categories}
-    />
+    <>
+      <ProductForm
+        mode="create"
+        action={createProductAction}
+        categories={categories}
+      />
+    </>
   );
 }

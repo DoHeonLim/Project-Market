@@ -83,7 +83,7 @@ export const createComment = async (_: any, formData: FormData) => {
     });
     if (post) await checkBoardExplorerBadge(post.userId);
 
-    revalidateTag(`post-comments--${result.data.postId}`);
+    revalidateTag(`post-comments-${result.data.postId}`);
     return { success: true };
   } catch (e) {
     console.error(e);

@@ -126,7 +126,7 @@ export default function PrivateAccessModal({
         switch (code) {
           case "NOT_LOGGED_IN": {
             close();
-            router.push(`/login?next=${encodeURIComponent(targetHref)}`);
+            router.push(`/login?callbackUrl=${encodeURIComponent(targetHref)}`);
             return;
           }
           case "STREAM_NOT_FOUND": {

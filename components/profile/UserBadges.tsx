@@ -49,7 +49,7 @@ export default function UserBadges({
               sizes="(max-width: 48px) 100vw, 48px"
             />
           </div>
-          <span className="text-xs text-center">
+          <span className="text-xs dark:text-white text-center">
             {getBadgeKoreanName(badge.name)}
           </span>
         </div>

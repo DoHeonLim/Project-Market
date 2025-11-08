@@ -53,7 +53,7 @@ export default function UserAvatar({
         <Image
           width={size === "lg" ? 200 : 40}
           height={size === "lg" ? 200 : 40}
-          className={`rounded-full ${sizes[size]} object-cover`}
+          className={`rounded-full ${sizes[size]} object-cover bg-white`}
           src={`${avatar}/public`}
           alt={username}
         />

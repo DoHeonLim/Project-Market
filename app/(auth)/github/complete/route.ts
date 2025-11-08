@@ -13,7 +13,7 @@ Date        Author   Status    Description
 import { getAccessToken, getGithubProfile } from "@/lib/auth/github/oauth";
 import { saveUserSession } from "@/lib/auth/saveUserSession";
 import db from "@/lib/db";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -30,7 +30,8 @@ export async function GET(request: NextRequest) {
   });
 
   if (existingUser) {
-    return saveUserSession(existingUser.id);
+    await saveUserSession(existingUser.id);
+    return redirect("/profile");
   }
   const newUser = await db.user.create({
     data: {
@@ -42,5 +43,6 @@ export async function GET(request: NextRequest) {
       id: true,
     },
   });
-  return saveUserSession(newUser.id);
+  await saveUserSession(newUser.id);
+  return redirect("/profile");
 }

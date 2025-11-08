@@ -22,21 +22,17 @@ import SocialLogin from "@/components/common/SocialLogin";
 import { loginSchema } from "@/lib/auth/login/loginSchema";
 import { login } from "@/app/(auth)/login/actions";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 
 type FormData = z.infer<typeof loginSchema>;
 
-export default function LoginForm() {
+export default function LoginForm({ callbackUrl }: { callbackUrl: string }) {
   const {
     register,
     handleSubmit,
     setError,
     formState: { errors },
-  } = useForm<FormData>({
-    resolver: zodResolver(loginSchema),
-  });
+  } = useForm<FormData>({ resolver: zodResolver(loginSchema) });
 
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   const onSubmit = (data: FormData) => {
@@ -44,24 +40,20 @@ export default function LoginForm() {
       const formData = new FormData();
       formData.append("email", data.email);
       formData.append("password", data.password);
+      formData.append("callbackUrl", callbackUrl); // ★ 중요
 
-      const result = await login(null, formData);
+      const result = await login(undefined, formData);
       if (result?.fieldErrors) {
         const fieldErrors = result.fieldErrors as Partial<
           Record<keyof FormData, string[]>
         >;
-
         (Object.keys(fieldErrors) as (keyof FormData)[]).forEach((key) => {
           const message = fieldErrors[key]?.[0];
-          if (message) {
-            setError(key, { message });
-          }
+          if (message) setError(key, { message });
         });
       } else {
-        toast.success(
-          "⛵ 환영합니다, 선원님! 보드포트의 바다로 입항하셨습니다."
-        );
-        router.push("/profile");
+        toast.success("⛵ 환영합니다, 선원님!");
+        // 서버 액션에서 redirect가 발생하므로 여기서는 추가 이동 불필요
       }
     });
   };

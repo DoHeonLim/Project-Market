@@ -1,58 +1,68 @@
-// 유저 프로필 스켈레톤
-export function ProfileSkeleton() {
-  return (
-    <div className="flex flex-col items-center gap-4 my-4 px-4 animate-pulse">
-      <div className="h-8 w-48 bg-neutral-600 rounded-lg" />
+/**
+ * File Name : app/(tabs)/profile/[username]/loading
+ * Description : 유저 프로필 페이지 로딩 스켈레톤
+ * Author : 임도헌
+ *
+ * History
+ * Date        Author   Status    Description
+ * 2025.10.07  임도헌   Created   로딩 스켈레톤 추가
+ */
 
-      <div className="flex gap-10 rounded-xl border-[2px] border-neutral-500 w-full py-10">
-        <div className="w-full md:flex-row md:mr-10 flex flex-col justify-around items-center space-y-6">
-          <div className="md:flex-row flex flex-col items-center justify-center w-full gap-6">
-            <div className="rounded-full w-52 h-52 bg-neutral-600" />
-            <div className="flex flex-col items-center md:items-start justify-center gap-4">
-              <div className="h-6 w-32 bg-neutral-600 rounded-lg" />
-              <div className="h-4 w-48 bg-neutral-600 rounded-lg" />
-              <div className="h-5 w-40 bg-neutral-600 rounded-lg" />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// 제품 리스트 스켈레톤
-export function ProductsSkeleton() {
-  return (
-    <div className="flex flex-col gap-4 animate-pulse">
-      {[1, 2, 3, 4].map((item) => (
-        <div
-          key={item}
-          className="flex gap-5 p-4 transition-colors rounded-xl bg-transparent"
-        >
-          <div className="relative overflow-hidden rounded-md size-28 bg-neutral-600" />
-          <div className="flex flex-col gap-3 flex-1">
-            <div className="h-6 w-3/4 bg-neutral-600 rounded-lg" />
-            <div className="h-4 w-1/3 bg-neutral-600 rounded-lg" />
-            <div className="h-6 w-1/4 bg-neutral-600 rounded-lg" />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// 기본 export는 전체 페이지 로딩
 export default function Loading() {
   return (
-    <>
-      <ProfileSkeleton />
-      <div className="w-full max-w-5xl mt-8 px-4">
-        <div className="flex justify-center gap-4 mb-6">
-          <div className="h-10 w-24 bg-neutral-600 rounded-md animate-pulse" />
-          <div className="h-10 w-24 bg-neutral-600 rounded-md animate-pulse" />
+    <div className="min-h-screen bg-white dark:bg-neutral-900 transition-colors">
+      <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:py-8">
+        {/* Header */}
+        <div className="flex items-center gap-4">
+          <div className="h-20 w-20 rounded-full bg-neutral-200 dark:bg-neutral-800 animate-pulse" />
+          <div className="flex-1 space-y-3">
+            <div className="h-6 w-48 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse" />
+            <div className="h-4 w-64 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse" />
+          </div>
+          <div className="hidden sm:flex gap-2">
+            <div className="h-10 w-24 bg-neutral-200 dark:bg-neutral-800 rounded-xl animate-pulse" />
+            <div className="h-10 w-28 bg-neutral-200 dark:bg-neutral-800 rounded-xl animate-pulse" />
+          </div>
         </div>
-        <ProductsSkeleton />
+
+        {/* Follow counts / badge row */}
+        <div className="mt-6 flex flex-wrap gap-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="h-6 w-24 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse"
+            />
+          ))}
+          <div className="h-6 w-20 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse" />
+          <div className="h-6 w-16 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse" />
+        </div>
+
+        {/* Tabs */}
+        <div className="mt-8 flex gap-4">
+          {["Overview", "Streams", "Posts", "Products", "Reviews"].map((k) => (
+            <div
+              key={k}
+              className="h-9 w-24 bg-neutral-200 dark:bg-neutral-800 rounded-lg animate-pulse"
+            />
+          ))}
+        </div>
+
+        {/* Overview grid */}
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div
+              key={i}
+              className="rounded-2xl overflow-hidden border border-neutral-200/70 dark:border-neutral-800"
+            >
+              <div className="aspect-video bg-neutral-200 dark:bg-neutral-800 animate-pulse" />
+              <div className="p-4 space-y-3">
+                <div className="h-5 w-3/4 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse" />
+                <div className="h-4 w-2/5 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse" />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
-    </>
+    </div>
   );
 }

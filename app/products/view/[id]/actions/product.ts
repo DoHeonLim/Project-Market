@@ -65,26 +65,6 @@ export const getProduct = async (
  */
 export const getCachedProduct = (id: number) => {
   return nextCache(() => getProduct(id), [`product-detail-${id}`], {
-    tags: ["product-detail", `product-views-${id}`],
+    tags: [`product-detail-id-${id}`, `product-views-${id}`],
   })();
 };
-
-// /**
-//  * 제품 제목을 가져오는 함수 (메타데이터용)
-//  */
-// export const getProductTitle = async (id: number) => {
-//   const product = await db.product.findUnique({
-//     where: { id },
-//     select: { title: true },
-//   });
-//   return product;
-// };
-
-// /**
-//  * 제품 제목 캐싱 함수
-//  */
-// export const getCachedProductTitle = (id: number) => {
-//   return nextCache(() => getProductTitle(id), [`product-title-${id}`], {
-//     tags: ["product-title"],
-//   })();
-// };

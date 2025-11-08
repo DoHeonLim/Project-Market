@@ -96,7 +96,7 @@ export default function PostList({ initialPosts, nextCursor }: PostListProps) {
 
       {isLoading && <PostListSkeleton viewMode={viewMode} />}
 
-      <div ref={triggerRef} className="h-4" />
+      <div ref={triggerRef} className="h-4" aria-hidden="true" tabIndex={-1} />
     </>
   );
 }

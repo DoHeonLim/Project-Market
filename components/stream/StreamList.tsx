@@ -168,7 +168,7 @@ export default function StreamList({
       )}
 
       {/* 인터섹션 센티넬 */}
-      <div ref={triggerRef} className="h-8" aria-hidden="true" />
+      <div ref={triggerRef} className="h-8" aria-hidden="true" tabIndex={-1} />
     </>
   );
 }

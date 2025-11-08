@@ -34,7 +34,7 @@ Date        Author   Status    Description
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Category } from "@prisma/client";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import ImageUploader from "@/components/image/ImageUploader";
@@ -77,11 +77,31 @@ export default function ProductForm({
   cancelHref = "/products",
 }: ProductFormProps) {
   const router = useRouter();
-  const [selectedMainCategory, setSelectedMainCategory] = useState<
-    number | null
-  >(null);
   const [resetSignal, setResetSignal] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+
+  const initialMainCategory = useMemo<number | null>(() => {
+    if (!defaultValues?.categoryId) return null;
+    return (
+      categories.find((c) => c.id === defaultValues.categoryId)?.parentId ??
+      null
+    );
+  }, [categories, defaultValues?.categoryId]);
+
+  const [selectedMainCategory, setSelectedMainCategory] = useState<
+    number | null
+  >(initialMainCategory);
+
+  // 대/소분류 옵션
+  const mainCategories = useMemo(
+    () => categories.filter((c) => !c.parentId),
+    [categories]
+  );
+  const subCategories = useMemo(
+    () => categories.filter((c) => c.parentId === selectedMainCategory),
+    [categories, selectedMainCategory]
+  );
+  const subDisabled = !selectedMainCategory;
 
   const {
     register,
@@ -92,6 +112,7 @@ export default function ProductForm({
     control,
     formState: { errors },
     getValues,
+    resetField,
   } = useForm<productFormType>({
     resolver: zodResolver(productFormSchema),
     defaultValues: {
@@ -107,7 +128,7 @@ export default function ProductForm({
       condition: defaultValues.condition || "NEW",
       completeness: defaultValues.completeness || "PERFECT",
       has_manual: defaultValues.has_manual ?? true,
-      categoryId: defaultValues.categoryId || 0,
+      categoryId: defaultValues.categoryId ?? undefined,
       tags: defaultValues.tags || [],
     },
   });
@@ -209,9 +230,16 @@ export default function ProductForm({
         formData.append("id", productId);
       }
       Object.entries(data).forEach(([key, value]) => {
-        if (key === "tags") formData.append(key, JSON.stringify(value));
-        else if (key !== "photos" && key !== "id")
-          formData.append(key, value.toString());
+        if (key === "tags") {
+          formData.append(key, JSON.stringify(value));
+          return;
+        }
+        if (key === "photos" || key === "id") return;
+
+        // 추가: 안전 가드
+        if (value === undefined || value === null) return;
+
+        formData.append(key, value.toString());
       });
       allPhotos.forEach((url) => formData.append("photos[]", url));
 
@@ -243,7 +271,11 @@ export default function ProductForm({
     setSelectedMainCategory(null);
   };
 
-  const selectedCategoryId = watch("categoryId");
+  const handleMainCategoryChange = (value: string) => {
+    const id = value ? Number(value) : null;
+    setSelectedMainCategory(id);
+    resetField("categoryId");
+  };
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-5 p-5">
@@ -364,39 +396,41 @@ export default function ProductForm({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Select
           label="대분류"
-          onChange={(e) => {
-            const value = e.target.value;
-            setSelectedMainCategory(value === "" ? null : Number(value));
-            setValue("categoryId", 0);
-          }}
           value={selectedMainCategory?.toString() || ""}
+          onChange={(e) => handleMainCategoryChange(e.target.value)}
+          errors={errors.categoryId?.message ? [errors.categoryId.message] : []}
         >
           <option value="">대분류 선택</option>
-          {categories
-            .filter((cat) => !cat.parentId)
-            .map((category) => (
-              <option key={category.id} value={category.id.toString()}>
-                {category.icon} {category.kor_name}
-              </option>
-            ))}
+          {mainCategories.map((c) => (
+            <option key={c.id} value={String(c.id)}>
+              {c.icon} {c.kor_name}
+            </option>
+          ))}
         </Select>
 
-        <Select
-          label="소분류"
-          {...register("categoryId")}
-          errors={[errors.categoryId?.message ?? ""]}
-          disabled={!selectedMainCategory}
-          value={selectedCategoryId?.toString()}
+        <div
+          className={
+            subDisabled ? "opacity-60 pointer-events-none select-none" : ""
+          }
+          aria-disabled={subDisabled}
         >
-          <option value="">소분류 선택</option>
-          {categories
-            .filter((cat) => cat.parentId === selectedMainCategory)
-            .map((category) => (
-              <option key={category.id} value={category.id.toString()}>
-                {category.icon} {category.kor_name}
+          <Select
+            label="소분류"
+            {...register("categoryId", {
+              setValueAs: (v) => (v === "" ? undefined : Number(v)),
+            })}
+            errors={
+              errors.categoryId?.message ? [errors.categoryId.message] : []
+            }
+          >
+            <option value="">소분류 선택</option>
+            {subCategories.map((c) => (
+              <option key={c.id} value={String(c.id)}>
+                {c.icon} {c.kor_name}
               </option>
             ))}
-        </Select>
+          </Select>
+        </div>
       </div>
 
       <TagInput

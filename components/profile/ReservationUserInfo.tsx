@@ -9,41 +9,37 @@ Date        Author   Status    Description
 2024.12.04  임도헌   Modified  예약자 정보 컴포넌트 추가
 2024.12.07  임도헌   Modified  프로필 이미지 컴포넌트 분리
 2024.12.22  임도헌   Modified  함수명 변경
+2025.11.02  임도헌   Modified  프리뷰(fallback) 옵션 추가
 */
 "use client";
-import { getUserInfo } from "@/app/(tabs)/profile/(product)/my-sales/actions";
 import { useEffect, useState } from "react";
 import UserAvatar from "../common/UserAvatar";
-
-interface User {
-  username: string;
-  avatar: string | null;
-}
+import { getUserInfo } from "@/lib/user/getUserInfo";
 
 export default function ReservationUserInfo({
   userId,
+  fallback, // 카드에서 내려보낸 프리뷰(있으면 fetch 생략)
 }: {
   userId: number | null;
+  fallback?: { username: string; avatar: string | null } | null;
 }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState(fallback ?? null);
   useEffect(() => {
-    if (!userId) return;
-
-    const fetchUser = async () => {
-      const user = await getUserInfo(userId);
-      setUser(user);
+    if (!userId || user) return;
+    let mounted = true;
+    (async () => {
+      const info = await getUserInfo(userId);
+      if (mounted && info) setUser(info);
+    })();
+    return () => {
+      mounted = false;
     };
-
-    fetchUser();
-  }, [userId]);
+  }, [userId, user]);
   if (!user) return null;
-
   return (
-    <>
-      <div className="flex items-center gap-3">
-        <span>예약자</span>
-        <UserAvatar avatar={user.avatar} username={user.username} size="md" />
-      </div>
-    </>
+    <div className="flex items-center gap-3">
+      <span className="dark:text-white">예약자</span>
+      <UserAvatar avatar={user.avatar} username={user.username} size="md" />
+    </div>
   );
 }

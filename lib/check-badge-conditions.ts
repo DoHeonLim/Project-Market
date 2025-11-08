@@ -452,11 +452,21 @@ export const checkBoardExplorerBadge = async (userId: number) => {
  * - 조건: 전화번호가 인증 됐을 때때
  * - 호출 시점:
  *   1. 전화번호 인증 완료 시
- * 전화번호 인증이 된 순간 함수를 불러와서 바로 뱃지 부여
+ *   2. 이메일 인증 완료 시
+ * 전화번호 및 이메일 인증이 된 순간 함수를 불러와서 바로 뱃지 부여
  */
 export const checkVerifiedSailorBadge = async (userId: number) => {
   try {
-    await awardBadge(userId, "VERIFIED_SAILOR");
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      select: { id: true, phone: true, email: true },
+    });
+    if (!user) return;
+    if (user.phone && user.email) {
+      await awardBadge(userId, "VERIFIED_SAILOR");
+    } else {
+      return;
+    }
   } catch (error) {
     console.error("VERIFIED_SAILOR 뱃지 체크 중 오류:", error);
   }

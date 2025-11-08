@@ -8,8 +8,7 @@
  * 2025.08.09  임도헌   Created   OWNER/FOLLOWER/VISITOR 판별
  */
 import db from "@/lib/db";
-
-export type ViewerRole = "OWNER" | "FOLLOWER" | "VISITOR";
+import type { ViewerRole } from "@/types/stream";
 
 export async function getViewerRole(
   viewerId: number | null,

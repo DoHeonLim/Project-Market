@@ -6,7 +6,7 @@
  * History
  * Date        Author   Status    Description
  * 2025.09.15  임도헌   Created   기본 삭제 라우트
- * 2025.09.17  임도헌   Modified  비즈니스 로직 분리(refactor): deleteBroadcastTx 호출 구조
+ * 2025.09.17  임도헌   Modified  비즈니스 로직 분리: deleteBroadcastTx 호출 구조
  */
 
 import { NextRequest, NextResponse } from "next/server";

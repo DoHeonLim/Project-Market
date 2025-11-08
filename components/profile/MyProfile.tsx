@@ -1,126 +1,91 @@
 /**
-File Name : components/profile/MyProfile
-Description : 내 프로필 클라이언트 코드
-Author : 임도헌
-
-History
-Date        Author   Status    Description
-2024.11.28  임도헌   Created
-2024.11.28  임도헌   Modified  프로필 페이지에서 클라이언트 코드 분리
-2024.11.30  임도헌   Modified  프로필 페이지 디자인 변경
-2024.12.07  임도헌   Modified  프로필 페이지 디자인 다시 변경
-2024.12.07  임도헌   Modified  프로필 이미지 컴포넌트 분리
-2024.12.17  임도헌   Modified  프로필 페이지 디자인 변경
-2024.12.20  임도헌   Modified  푸시 알림 토글 컴포넌트 추가
-2024.12.31  임도헌   Modified  이메일 인증 기능 추가
-2025.05.16  임도헌   Modified  내 방송국 기능 추가
-2025.05.22  임도헌   Modified  팔로우 기능 추가
-*/
+ * File Name : components/profile/MyProfile
+ * Description : 내 프로필 클라이언트 코드
+ * Author : 임도헌
+ *
+ * History
+ * Date        Author   Status     Description
+ * 2024.11.28  임도헌   Created
+ * 2024.11.28  임도헌   Modified   프로필 페이지에서 클라이언트 코드 분리
+ * 2024.11.30  임도헌   Modified   프로필 페이지 디자인 변경
+ * 2024.12.07  임도헌   Modified   프로필 페이지 디자인 다시 변경
+ * 2024.12.07  임도헌   Modified   프로필 이미지 컴포넌트 분리
+ * 2024.12.17  임도헌   Modified   프로필 페이지 디자인 변경
+ * 2024.12.20  임도헌   Modified   푸시 알림 토글 컴포넌트 추가
+ * 2024.12.31  임도헌   Modified   이메일 인증 기능 추가
+ * 2025.05.22  임도헌   Modified   내 방송국 기능 추가
+ * 2025.10.05  임도헌   Modified   averageRating 타입 최신 스키마로 정합(averageRating/reviewCount)
+ * 2025.10.05  임도헌   Modified   FollowListModal prop 이름 변경(followingIds → viewerFollowingIds)
+ * 2025.10.05  임도헌   Modified   myStreams 안전 가드 추가(length/map)
+ * 2025.10.06  임도헌   Modified   BroadcastSummary 타입 단언 수정
+ * 2025.10.12  임도헌   Modified   팔로워/팔로잉 로딩/커서/중복 제거 공용 훅 적용, Set 시드/병합
+ * 2025.10.14  임도헌   Modified   FollowSection 도입: 팔로우/모달/페이지네이션 로직 제거
+ * 2025.10.29  임도헌   Modified   날짜 포맷 유틸/모달 지연 로드/a11y 개선으로 UX·성능 보강
+ */
 
 "use client";
 
+import dynamic from "next/dynamic";
+
 import { useState } from "react";
 import Link from "next/link";
-import PasswordChangeModal from "./PasswordChangeModal";
+
+import { PushNotificationToggle } from "../common/PushNotificationToggle";
 import UserRating from "./UserRating";
 import UserAvatar from "../common/UserAvatar";
-import { PushNotificationToggle } from "../common/PushNotificationToggle";
 import UserBadges from "./UserBadges";
-// import StreamCard from "../stream/StreamCard";
-// import FollowListModal from "../follow/FollowListModal";
-import EmailVerificationModal from "./EmailVerificationModal";
-import ProfileReviewsModal from "./ProfileReviewsModal";
-import ProfileBadgesModal from "./ProfileBadgesModal";
+import StreamCard from "../stream/StreamCard";
+import FollowSection from "../follow/FollowSection";
 
-type User = {
-  id: number;
-  username: string;
-  avatar: string | null;
-  email: string | null;
-  created_at: Date;
-  emailVerified: boolean;
-  _count?: {
-    followers: number;
-    following: number;
-  };
-  followers?: {
-    follower: {
-      id: number;
-      username: string;
-      avatar: string | null;
-    };
-  }[];
-  following?: {
-    following: {
-      id: number;
-      username: string;
-      avatar: string | null;
-    };
-  }[];
-};
+const ProfileReviewsModal = dynamic(() => import("./ProfileReviewsModal"), {
+  ssr: false,
+});
+const ProfileBadgesModal = dynamic(() => import("./ProfileBadgesModal"), {
+  ssr: false,
+});
+const PasswordChangeModal = dynamic(() => import("./PasswordChangeModal"), {
+  ssr: false,
+});
+const EmailVerificationModal = dynamic(
+  () => import("./EmailVerificationModal"),
+  { ssr: false }
+);
 
-type Review = {
-  id: number;
-  userId: number;
-  productId: number;
-  payload: string;
-  rate: number;
-  user: {
-    username: string;
-    avatar: string | null;
-  };
-};
+import type { BroadcastSummary } from "@/types/stream";
+import type {
+  Badge,
+  ProfileAverageRating,
+  ProfileReview,
+  UserProfile,
+} from "@/types/profile";
+import TimeAgo from "../common/TimeAgo";
 
-type Badge = {
-  id: number;
-  name: string;
-  icon: string;
-  description: string;
-};
-
-// type Stream = {
-//   id: number;
-//   title: string;
-//   thumbnail: string | null;
-//   stream_id: string;
-//   status: string;
-//   user: {
-//     username: string;
-//     avatar: string | null;
-//   };
-//   started_at: Date | null;
-//   category: {
-//     kor_name: string;
-//     icon: string | null;
-//   };
-//   tags: { name: string }[];
-// };
-type ProfileProps = {
-  user: User;
-  initialReviews: Review[];
-  averageRating: { average: number; total: number } | null;
-  logOut: () => Promise<void>;
+type Props = {
+  user: UserProfile;
+  initialReviews: ProfileReview[];
+  averageRating: ProfileAverageRating | null;
   badges: Badge[];
   userBadges: Badge[];
-  // myStreams: Stream[];
+  myStreams?: BroadcastSummary[];
+  viewerId?: number;
+  logOut: () => Promise<void>;
 };
 
 export default function MyProfile({
   user,
   initialReviews,
   averageRating,
-  logOut,
   badges,
   userBadges,
-  // myStreams,
-}: ProfileProps) {
+  myStreams,
+  viewerId,
+  logOut,
+}: Props) {
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isBadgeModalOpen, setIsBadgeModalOpen] = useState(false);
   const [isEmailVerificationModalOpen, setIsEmailVerificationModalOpen] =
     useState(false);
-  // const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false);
-  // const [isFollowingModalOpen, setIsFollowingModalOpen] = useState(false);
 
   return (
     <div className="flex flex-col items-center gap-4">
@@ -131,37 +96,35 @@ export default function MyProfile({
             username={user.username}
             size="lg"
             showUsername={false}
-            disabled={true}
+            disabled
           />
           <div className="flex flex-col items-center md:items-start justify-center gap-2">
-            <span className="text-lg">{user.username}</span>
+            <span className="dark:text-white text-lg">{user.username}</span>
             <span className="text-sm text-gray-400">
-              가입일: {new Date(user.created_at).toLocaleDateString()}
+              가입일: <TimeAgo date={user.created_at} />
             </span>
             <div className="flex justify-center items-center gap-4">
               <UserRating
-                rating={averageRating?.average}
-                totalReviews={averageRating?.total}
+                average={averageRating?.averageRating ?? 0}
+                totalReviews={averageRating?.reviewCount ?? 0}
                 size="md"
               />
-              <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                {/* <button
-                  onClick={() => setIsFollowersModalOpen(true)}
-                  className="hover:text-primary dark:hover:text-primary-light"
-                >
-                  팔로워 {user._count?.followers ?? 0}
-                </button>
-                <button
-                  onClick={() => setIsFollowingModalOpen(true)}
-                  className="hover:text-primary dark:hover:text-primary-light"
-                >
-                  팔로잉 {user._count?.following ?? 0}
-                </button> */}
-              </div>
+              <FollowSection
+                ownerId={user.id}
+                ownerUsername={user.username}
+                initialIsFollowing={false} // 내 프로필이므로 의미 없음
+                initialFollowerCount={user._count.followers}
+                initialFollowingCount={user._count.following}
+                viewerId={viewerId}
+                showFollowButton={false} // 내 프로필은 버튼 숨김
+                variant="regular"
+              />
             </div>
           </div>
         </div>
       </div>
+
+      {/* 액션/설정 영역 */}
       <div className="flex flex-col md:flex-row items-center justify-center gap-6 w-full max-w-md">
         <Link
           href="/profile/edit"
@@ -176,6 +139,7 @@ export default function MyProfile({
           비밀 항해 코드 수정
         </button>
       </div>
+
       <div className="flex flex-col md:flex-row items-center justify-center gap-6 w-full max-w-md">
         {!user.emailVerified ? (
           <button
@@ -205,6 +169,7 @@ export default function MyProfile({
           <PushNotificationToggle />
         </div>
       </div>
+
       {/* 내 방송국 섹션 */}
       <div className="w-full max-w-md mt-2 gap-2">
         <div className="flex justify-between items-center mb-2">
@@ -216,13 +181,13 @@ export default function MyProfile({
             전체 방송 보기
           </Link>
         </div>
-        {/* {myStreams.length === 0 ? (
-          <div className="text-gray-500 dark:text-gray-400 mb-2">
+        {(myStreams?.length ?? 0) === 0 ? (
+          <div className="text-gray-500 dark:text-gray-400">
             아직 방송한 내역이 없습니다.
           </div>
         ) : (
-          <div className="flex gap-4 mb-2">
-            {myStreams.map((stream) => (
+          <div className="flex gap-4 overflow-x-auto pb-2">
+            {(myStreams ?? []).map((stream) => (
               <StreamCard
                 key={stream.id}
                 id={stream.id}
@@ -231,27 +196,30 @@ export default function MyProfile({
                 isLive={stream.status === "CONNECTED"}
                 streamer={{
                   username: stream.user.username,
-                  avatar: stream.user.avatar,
+                  avatar: stream.user.avatar ?? undefined,
                 }}
-                startedAt={
-                  stream.started_at ? stream.started_at.toString() : undefined
-                }
+                startedAt={stream.started_at ?? undefined}
                 category={
                   stream.category
                     ? {
+                        id: stream.category.id,
                         kor_name: stream.category.kor_name,
                         icon: stream.category.icon ?? undefined,
                       }
                     : undefined
                 }
                 tags={stream.tags}
-                shortDescription={true}
+                followersOnlyLocked={stream.followersOnlyLocked}
+                requiresPassword={stream.requiresPassword}
+                visibility={stream.visibility}
+                shortDescription
               />
             ))}
           </div>
-        )} */}
+        )}
       </div>
 
+      {/* 거래 정보/후기/뱃지/로그아웃은 기존 유지 */}
       <div className="w-full max-w-md">
         <div className="text-lg font-semibold mb-4 dark:text-white">
           거래 정보
@@ -279,13 +247,6 @@ export default function MyProfile({
           받은 거래 후기
         </div>
         <div className="flex flex-col gap-3">
-          {averageRating && (
-            <UserRating
-              rating={averageRating.average}
-              totalReviews={averageRating.total}
-              size="lg"
-            />
-          )}
           <button
             onClick={() => setIsReviewModalOpen(true)}
             className="btn-primary w-full text-lg py-2.5"
@@ -313,21 +274,19 @@ export default function MyProfile({
       <form action={logOut} className="w-full max-w-md mt-4">
         <button
           type="submit"
+          aria-label="로그아웃"
           className="w-full py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-md transition-colors dark:bg-red-600 dark:hover:bg-red-500"
         >
           로그아웃
         </button>
       </form>
 
+      {/* 모달들 */}
       <ProfileReviewsModal
         isOpen={isReviewModalOpen}
         onClose={() => setIsReviewModalOpen(false)}
         reviews={initialReviews}
         userId={user.id}
-      />
-      <PasswordChangeModal
-        isOpen={isPasswordModalOpen}
-        onClose={() => setIsPasswordModalOpen(false)}
       />
       <ProfileBadgesModal
         isOpen={isBadgeModalOpen}
@@ -340,20 +299,10 @@ export default function MyProfile({
         onClose={() => setIsEmailVerificationModalOpen(false)}
         email={user.email || ""}
       />
-      {/* <FollowListModal
-        isOpen={isFollowersModalOpen}
-        onClose={() => setIsFollowersModalOpen(false)}
-        users={user.followers?.map((f) => f.follower) ?? []}
-        title="팔로워"
-        followingIds={user.following?.map((f) => f.following.id) ?? []}
+      <PasswordChangeModal
+        isOpen={isPasswordModalOpen}
+        onClose={() => setIsPasswordModalOpen(false)}
       />
-      <FollowListModal
-        isOpen={isFollowingModalOpen}
-        onClose={() => setIsFollowingModalOpen(false)}
-        users={user.following?.map((f) => f.following) ?? []}
-        title="팔로잉"
-        followingIds={user.following?.map((f) => f.following.id) ?? []}
-      /> */}
     </div>
   );
 }

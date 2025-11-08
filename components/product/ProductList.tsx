@@ -26,23 +26,25 @@ import { Squares2X2Icon, ListBulletIcon } from "@heroicons/react/24/outline";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import { useProductPagination } from "@/hooks/useProductPagination";
 import ProductCard from "./productCard";
-import { Products } from "@/types/product";
+import type { Paginated, ProductType } from "@/types/product";
 import { usePageVisibility } from "@/hooks/usePageVisibility";
 
 type ProductListProps = {
-  initialProducts: Products;
+  initialProducts: Paginated<ProductType>;
 };
 
 export default function ProductList({ initialProducts }: ProductListProps) {
-  const triggerRef = useRef<HTMLSpanElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
 
   const isVisible = usePageVisibility();
 
-  const { products, isLoading, hasMore, loadMore } = useProductPagination({
-    initialProducts: initialProducts.products,
-    initialCursor: initialProducts.nextCursor,
-  });
+  const { products, isLoading, hasMore, loadMore } =
+    useProductPagination<ProductType>({
+      mode: "product",
+      initialProducts: initialProducts.products,
+      initialCursor: initialProducts.nextCursor,
+    });
 
   useInfiniteScroll({
     triggerRef,
@@ -113,9 +115,16 @@ export default function ProductList({ initialProducts }: ProductListProps) {
           </div>
 
           {hasMore && (
-            <span
+            <button
               ref={triggerRef}
-              className="mb-96 text-sm font-medium bg-primary/10 dark:bg-primary-light/10 text-primary dark:text-primary-light w-fit mx-auto px-4 py-2 rounded-full hover:bg-primary/20 dark:hover:bg-primary-light/20 active:scale-95 transition-all cursor-pointer flex items-center gap-2"
+              type="button"
+              onClick={() => {
+                if (!isLoading) loadMore();
+              }}
+              disabled={isLoading}
+              aria-busy={isLoading || undefined}
+              aria-live="polite"
+              className="mb-96 text-sm font-medium bg-primary/10 dark:bg-primary-light/10 text-primary dark:text-primary-light w-fit mx-auto px-4 py-2 rounded-full hover:bg-primary/20 dark:hover:bg-primary-light/20 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <>
@@ -126,7 +135,7 @@ export default function ProductList({ initialProducts }: ProductListProps) {
                   <span>⚓</span> 더 많은 보드게임 찾기
                 </>
               )}
-            </span>
+            </button>
           )}
         </>
       )}

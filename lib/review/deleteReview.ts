@@ -1,0 +1,42 @@
+/**
+ * File Name : lib/review/deleteReview.ts
+ * Description : 리뷰 단건 삭제 + 관련 캐시 태그 재검증
+ * Author : 임도헌
+ *
+ * History
+ * Date        Author   Status     Description
+ * 2025.10.17  임도헌    Moved     lib/review/deleteReview로 이동(server-only) + 기존 revalidateTag 정책 유지
+ * 2025.11.05  임도헌   Modified  세션 기반 권한(작성자/상품소유자) 검증 추가
+ */
+
+"use server";
+
+import { revalidateTag } from "next/cache";
+import db from "../db";
+import getSession from "@/lib/session";
+
+export const deleteReview = async (reviewId: number) => {
+  const session = await getSession();
+  if (!session?.id) throw new Error("로그인이 필요합니다.");
+
+  const rev = await db.review.findUnique({
+    where: { id: reviewId },
+    select: { userId: true, product: { select: { userId: true } } },
+  });
+  if (!rev) throw new Error("리뷰를 찾을 수 없습니다.");
+
+  const isAuthor = rev.userId === session.id;
+  const isProductOwner = rev.product?.userId === session.id;
+  if (!isAuthor && !isProductOwner) {
+    throw new Error("리뷰를 삭제할 권한이 없습니다.");
+  }
+
+  await db.review.delete({ where: { id: reviewId } });
+
+  if (rev.product?.userId) {
+    revalidateTag(`user-average-rating-id-${rev.product.userId}`);
+    revalidateTag(`user-reviews-initial-id-${rev.product.userId}`);
+  }
+
+  return { success: true };
+};

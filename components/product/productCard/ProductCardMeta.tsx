@@ -16,7 +16,7 @@ import TimeAgo from "@/components/common/TimeAgo";
 interface ProductCardMetaProps {
   views: number;
   likes: number;
-  createdAt: Date;
+  createdAt: Date | string;
 }
 
 export default function ProductCardMeta({

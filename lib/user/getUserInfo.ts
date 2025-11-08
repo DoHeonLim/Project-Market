@@ -8,6 +8,7 @@
  * 2025.07.13  임도헌   Created   유저 프로필 조회 로직 분리
  * 2025.07.15  임도헌   Modified  userId 옵션 추가
  */
+"use server";
 import db from "@/lib/db";
 import getSession from "@/lib/session";
 

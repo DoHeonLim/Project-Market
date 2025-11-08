@@ -11,6 +11,7 @@
  */
 
 // 공통 원시 타입
+export type ViewerRole = "OWNER" | "FOLLOWER" | "VISITOR";
 export const STREAM_VISIBILITY = {
   PUBLIC: "PUBLIC",
   FOLLOWERS: "FOLLOWERS",
@@ -88,7 +89,7 @@ export interface BroadcastSummary {
 
   title: string;
   thumbnail: string | null;
-  isLive: boolean;
+  isLive?: boolean;
   status: StreamStatus;
   visibility: StreamVisibility;
 

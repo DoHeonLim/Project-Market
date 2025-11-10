@@ -24,17 +24,14 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { UserIcon } from "@heroicons/react/24/solid";
-import { ListBulletIcon, Squares2X2Icon } from "@heroicons/react/24/outline";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
-import UserRating from "./UserRating";
+import ProfileHeader from "./ProfileHeader";
 import ProfileReviewsModal from "./ProfileReviewsModal";
 import UserBadges from "./UserBadges";
-import FollowSection from "../follow/FollowSection";
 import ProductCard from "../product/productCard";
+import { ListBulletIcon, Squares2X2Icon } from "@heroicons/react/24/outline";
 
 import type { Paginated, ProductType, ViewMode } from "@/types/product";
 import type {
@@ -53,8 +50,8 @@ type ProductStatus = "selling" | "sold";
 interface UserProfileProps {
   user: UserProfileType & { isFollowing?: boolean };
   initialReviews: ProfileReview[];
-  initialSellingProducts: Paginated<ProductType>; // { products: ProductType[]; nextCursor: number | null }
-  initialSoldProducts: Paginated<ProductType>; // { products: ProductType[]; nextCursor: number | null }
+  initialSellingProducts: Paginated<ProductType>;
+  initialSoldProducts: Paginated<ProductType>;
   averageRating: ProfileAverageRating | null;
   userBadges: Badge[];
   viewerId?: number;
@@ -116,60 +113,26 @@ export default function UserProfile({
   });
 
   return (
-    <div className="flex flex-col items-center gap-6 mx-auto p-4">
-      {/* 헤더 */}
-      <div className="w-full bg-white dark:bg-neutral-800 rounded-xl p-8">
-        <div className="flex flex-col md:flex-row items-center gap-8">
-          <div className="relative size-40 md:size-52">
-            {user.avatar ? (
-              <Image
-                src={`${user.avatar}/avatar`}
-                alt={user.username}
-                fill
-                className="rounded-full object-cover"
-              />
-            ) : (
-              <UserIcon className="size-full text-gray-300 dark:text-neutral-600" />
-            )}
-          </div>
-
-          <div className="flex flex-col items-center md:items-start gap-4">
-            <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">
-              {user.username}님의 프로필
-            </h1>
-            <span className="text-sm text-gray-400">
-              가입일: {new Date(user.created_at).toLocaleDateString()}
-            </span>
-
-            <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
-              <div className="flex flex-col items-center gap-2">
-                <FollowSection
-                  ownerId={user.id}
-                  ownerUsername={user.username}
-                  initialIsFollowing={!!user.isFollowing}
-                  initialFollowerCount={user._count?.followers ?? 0}
-                  initialFollowingCount={user._count?.following ?? 0}
-                  viewerId={viewerId}
-                  showFollowButton={viewerId !== user.id}
-                  variant="compact"
-                  className="justify-center gap-3"
-                  onRequireLogin={() =>
-                    router.push(
-                      `/login?callbackUrl=${encodeURIComponent(next)}`
-                    )
-                  }
-                />
-
-                <UserRating
-                  average={averageRating?.averageRating ?? 0}
-                  totalReviews={averageRating?.reviewCount ?? 0}
-                  size="md"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
+    <div className="flex flex-col items-center gap-4 mx-auto p-4">
+      {/* ▼ MyProfile과 동일한 헤더 레이아웃로 통일 */}
+      <div className="flex gap-10 rounded-xl w-full pt-10 relative">
+        <ProfileHeader
+          ownerId={user.id}
+          ownerUsername={user.username}
+          createdAt={user.created_at}
+          averageRating={averageRating}
+          followerCount={user._count?.followers ?? 0}
+          followingCount={user._count?.following ?? 0}
+          viewerId={viewerId}
+          initialIsFollowing={!!user.isFollowing}
+          avatarUrl={user.avatar ?? null}
+          showFollowButton
+          onRequireLogin={() =>
+            router.push(`/login?callbackUrl=${encodeURIComponent(next)}`)
+          }
+        />
       </div>
+      {/* ▲ 헤더 끝 — 나머지 섹션은 기존과 동일 */}
 
       <Link
         href={`/profile/${user.username}/channel`}
@@ -184,6 +147,14 @@ export default function UserProfile({
       >
         전체 후기 보기
       </button>
+      <div className="w-full max-w-md">
+        <div className="flex items-center justify-between mb-4">
+          <div className="text-lg font-semibold dark:text-white">
+            획득한 뱃지
+          </div>
+        </div>
+        <UserBadges badges={userBadges} max={20} />
+      </div>
 
       {/* 판매 제품 탭 */}
       <div className="w-full bg-white dark:bg-neutral-800 rounded-xl p-6">
@@ -286,25 +257,11 @@ export default function UserProfile({
                 )}
               </button>
             )}
-            {!current.hasMore && currentProducts.length > 0 && (
-              <p className="py-6 text-center text-sm opacity-60">
-                마지막 페이지입니다.
-              </p>
-            )}
           </>
         )}
       </div>
 
-      <div className="w-full max-w-md">
-        <div className="flex items-center justify-between mb-4">
-          <div className="text-lg font-semibold dark:text-white">
-            획득한 뱃지
-          </div>
-        </div>
-        <UserBadges badges={userBadges} max={20} />
-      </div>
-
-      {/* 모달들 */}
+      {/* 모달 */}
       <ProfileReviewsModal
         isOpen={isReviewModalOpen}
         onClose={() => setIsReviewModalOpen(false)}

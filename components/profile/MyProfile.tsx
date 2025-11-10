@@ -21,6 +21,7 @@
  * 2025.10.12  임도헌   Modified   팔로워/팔로잉 로딩/커서/중복 제거 공용 훅 적용, Set 시드/병합
  * 2025.10.14  임도헌   Modified   FollowSection 도입: 팔로우/모달/페이지네이션 로직 제거
  * 2025.10.29  임도헌   Modified   날짜 포맷 유틸/모달 지연 로드/a11y 개선으로 UX·성능 보강
+ * 2025.11.10  임도헌   Modified
  */
 
 "use client";
@@ -30,12 +31,10 @@ import dynamic from "next/dynamic";
 import { useState } from "react";
 import Link from "next/link";
 
-import { PushNotificationToggle } from "../common/PushNotificationToggle";
-import UserRating from "./UserRating";
-import UserAvatar from "../common/UserAvatar";
+import ProfileHeader from "./ProfileHeader";
 import UserBadges from "./UserBadges";
 import StreamCard from "../stream/StreamCard";
-import FollowSection from "../follow/FollowSection";
+import { PushNotificationToggle } from "../common/PushNotificationToggle";
 
 const ProfileReviewsModal = dynamic(() => import("./ProfileReviewsModal"), {
   ssr: false,
@@ -58,7 +57,6 @@ import type {
   ProfileReview,
   UserProfile,
 } from "@/types/profile";
-import TimeAgo from "../common/TimeAgo";
 
 type Props = {
   user: UserProfile;
@@ -90,38 +88,20 @@ export default function MyProfile({
   return (
     <div className="flex flex-col items-center gap-4">
       <div className="flex gap-10 rounded-xl w-full pt-10 relative">
-        <div className="md:flex-row flex flex-col items-center justify-center w-full gap-6">
-          <UserAvatar
-            avatar={user.avatar}
-            username={user.username}
-            size="lg"
-            showUsername={false}
-            disabled
-          />
-          <div className="flex flex-col items-center md:items-start justify-center gap-2">
-            <span className="dark:text-white text-lg">{user.username}</span>
-            <span className="text-sm text-gray-400">
-              가입일: <TimeAgo date={user.created_at} />
-            </span>
-            <div className="flex justify-center items-center gap-4">
-              <UserRating
-                average={averageRating?.averageRating ?? 0}
-                totalReviews={averageRating?.reviewCount ?? 0}
-                size="md"
-              />
-              <FollowSection
-                ownerId={user.id}
-                ownerUsername={user.username}
-                initialIsFollowing={false} // 내 프로필이므로 의미 없음
-                initialFollowerCount={user._count.followers}
-                initialFollowingCount={user._count.following}
-                viewerId={viewerId}
-                showFollowButton={false} // 내 프로필은 버튼 숨김
-                variant="regular"
-              />
-            </div>
-          </div>
-        </div>
+        {/* ▼ 기존 헤더 블록 전체 대체 */}
+        <ProfileHeader
+          ownerId={user.id}
+          ownerUsername={user.username}
+          createdAt={user.created_at}
+          averageRating={averageRating}
+          followerCount={user._count?.followers ?? 0}
+          followingCount={user._count?.following ?? 0}
+          viewerId={viewerId}
+          avatarUrl={user.avatar ?? null}
+          // 내 프로필은 버튼 자동 숨김(FollowSection 내부 규칙)
+          showFollowButton={false}
+        />
+        {/* ▲ 대체 끝 */}
       </div>
 
       {/* 액션/설정 영역 */}
@@ -161,7 +141,7 @@ export default function MyProfile({
         </div>
         <div className="flex items-center justify-between p-4 bg-white dark:bg-neutral-800 rounded-lg border border-gray-200 dark:border-neutral-700">
           <div>
-            <h3 className="font-medium">푸시 알림</h3>
+            <h3 className="font-medium dark:text-white">푸시 알림</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               새로운 메시지나 거래 알림을 받아보세요
             </p>

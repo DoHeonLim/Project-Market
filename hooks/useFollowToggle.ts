@@ -120,6 +120,7 @@ export function useFollowToggle() {
         emitFollowDelta({
           targetUserId: userId,
           delta: (delta > 0 ? 1 : delta < 0 ? -1 : 0) as 1 | -1 | 0,
+          server: { isFollowing: !!isFollowing, counts },
         });
 
         // 2) 예상과 다르면(멱등/경합): 낙관 원복 + 서버 기준 정합 보정

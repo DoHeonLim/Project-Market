@@ -5,8 +5,9 @@
  *
  * History
  * 2025.08.09  임도헌   Created
- * 2025.09.09  임도헌   Modified  [LOG] 팔로우 버튼 클릭/대기상태 로깅
- * 2025.10.14  임도헌   Refactor  FollowSection 내장, 콜백/상태 관리 제거
+ * 2025.09.09  임도헌   Modified  팔로우 버튼 클릭/대기상태 로깅
+ * 2025.10.14  임도헌   Modified  FollowSection 내장, 콜백/상태 관리 제거
+ * 2025.11.10  임도헌   Modified  변경된 FollowSection에 맞게 수정
  */
 "use client";
 
@@ -26,10 +27,7 @@ interface Props {
   isMe: boolean;
   viewerId?: number;
 
-  // 로그인 필요시 동작 (예: 라우팅)
   onRequireLogin?: () => void;
-
-  // 상위가 팔로우 상태를 필요로 하면(채널 내 다른 컴포넌트 갱신용)
   onFollowingChange?: (now: boolean) => void;
 }
 
@@ -54,14 +52,17 @@ export default function UserChannelHeader({
             <FollowSection
               ownerId={ownerId}
               ownerUsername={username}
-              initialIsFollowing={initialIsFollowing}
-              initialFollowerCount={initialFollowerCount}
-              initialFollowingCount={initialFollowingCount}
-              viewerId={viewerId}
-              showFollowButton={!isMe}
-              variant="compact"
+              initial={{
+                isFollowing: !!initialIsFollowing,
+                followerCount: initialFollowerCount,
+                followingCount: initialFollowingCount,
+              }}
+              viewer={{ id: viewerId }}
+              showButton={!isMe}
+              size="compact"
+              align="center"
               onRequireLogin={onRequireLogin}
-              onFollowingChange={onFollowingChange} // ← 채널 내 다른 컴포넌트 동기화용
+              onFollowingChange={onFollowingChange}
             />
           </div>
         </div>

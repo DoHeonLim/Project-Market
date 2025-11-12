@@ -1,25 +1,23 @@
 /**
-File Name : hooks/usePushNotification
-Description : 푸시 알림 커스텀 훅
-Author : 임도헌
-
-History
-Date        Author   Status    Description
-2024.12.20  임도헌   Created
-2024.12.20  임도헌   Modified  푸시 알림 커스텀 훅 추가
-2024.12.31  임도헌   Modified  푸시 알림 코드 리팩토링
-*/
+ * File Name : hooks/usePushNotification
+ * Description : 푸시 알림 커스텀 훅 (next-pwa 자동 등록 전제)
+ * Author : 임도헌
+ *
+ * History
+ * Date        Author   Status    Description
+ * 2024.12.20  임도헌   Created
+ * 2024.12.20  임도헌   Modified  푸시 알림 커스텀 훅 추가
+ * 2024.12.31  임도헌   Modified  푸시 알림 코드 리팩토링
+ * 2025.11.10  임도헌   Modified  next-pwa 자동 SW 사용(수동 register 제거), 가드/토스트 보강
+ */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 interface PushSubscriptionData {
   endpoint: string;
-  keys: {
-    p256dh: string;
-    auth: string;
-  };
+  keys: { p256dh: string; auth: string };
 }
 
 export function usePushNotification() {
@@ -29,213 +27,200 @@ export function usePushNotification() {
   const [isSupported, setIsSupported] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isPrivateMode, setIsPrivateMode] = useState(false);
-  const [serviceWorkerRegistration, setServiceWorkerRegistration] =
-    useState<ServiceWorkerRegistration | null>(null);
 
-  // 초기 지원 여부 설정
+  // 지원 여부 초기화
   useEffect(() => {
-    const supported = checkSupport();
-    setIsSupported(supported);
+    setIsSupported(checkSupport());
   }, []);
 
-  // 구독 상태 확인
+  // 현재 구독 상태 확인
   useEffect(() => {
     if (!isSupported) return;
 
     let mounted = true;
     const controller = new AbortController();
-    // 현재 구독 상태 확인
-    const checkSubscription = async () => {
+
+    const check = async () => {
       try {
         // Private 모드 감지
         try {
-          localStorage.setItem("test", "test");
-          localStorage.removeItem("test");
+          localStorage.setItem("bp_push_probe", "1");
+          localStorage.removeItem("bp_push_probe");
           if (mounted) setIsPrivateMode(false);
-        } catch (event) {
-          console.log("Private browsing mode detected", event);
+        } catch {
           if (mounted) setIsPrivateMode(true);
           return;
         }
 
+        // next-pwa가 등록한 서비스워커 준비 대기
         const registration = await navigator.serviceWorker.ready;
         if (!mounted) return;
 
-        if (registration) {
-          setServiceWorkerRegistration(registration);
-          const subscription = await registration.pushManager.getSubscription();
-
-          if (!mounted) return;
-          // 서버 측 검증 로직 추가
-          if (subscription) {
-            try {
-              // 서버에서 실제 구독 상태 확인
-              const response = await fetch("/api/push/check-subscription", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ endpoint: subscription.endpoint }),
-                signal: controller.signal,
-              });
-
-              if (!mounted) return;
-
-              if (response.ok) {
-                const { isValid } = await response.json();
-                if (!mounted) return;
-
-                setIsSubscribed(isValid);
-                if (isValid) {
-                  setSubscription(
-                    subscription.toJSON() as PushSubscriptionData
-                  );
-                } else {
-                  // 유효하지 않은 구독은 제거
-                  await subscription.unsubscribe();
-                }
-              }
-            } catch (error) {
-              if (!mounted) return;
-              console.error("Subscription validation failed:", error);
-              setIsSubscribed(false);
-            }
-          } else {
-            if (mounted) setIsSubscribed(false);
-          }
-        }
-      } catch (error) {
+        const current = await registration.pushManager.getSubscription();
         if (!mounted) return;
-        console.error("Failed to check push subscription:", error);
+
+        if (!current) {
+          setIsSubscribed(false);
+          return;
+        }
+
+        // 서버 검증
+        const res = await fetch("/api/push/check-subscription", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ endpoint: current.endpoint }),
+          signal: controller.signal,
+        });
+
+        if (!mounted) return;
+
+        if (res.ok) {
+          const { isValid } = await res.json();
+          if (!mounted) return;
+
+          setIsSubscribed(!!isValid);
+          if (isValid) {
+            setSubscription(current.toJSON() as PushSubscriptionData);
+          } else {
+            // 유효하지 않으면 브라우저 구독 제거
+            await current.unsubscribe();
+          }
+        } else {
+          setIsSubscribed(false);
+        }
+      } catch (e) {
+        if (!mounted) return;
+        console.error("[push] check failed:", e);
         setIsSubscribed(false);
       }
     };
 
-    checkSubscription();
+    check();
 
     return () => {
       mounted = false;
-      controller.abort(); // 진행 중인 fetch 요청 취소
+      controller.abort();
     };
   }, [isSupported]);
 
-  // 브라우저 지원 여부 확인
-  const checkSupport = () => {
-    try {
-      const supported =
-        "serviceWorker" in navigator &&
-        "PushManager" in window &&
-        "Notification" in window;
-      console.log("Push API supported:", supported);
-      return supported;
-    } catch (error) {
-      console.error("Support check failed:", error);
-      return false;
-    }
-  };
+  // ────────────────────────────────────────────────────────────────────────────────
+  // API
+  // ────────────────────────────────────────────────────────────────────────────────
 
-  // 서비스 워커 등록
-  const registerServiceWorker = async () => {
-    try {
-      const registration =
-        await navigator.serviceWorker.register("/service-worker.js");
-      console.log("Service Worker registered:", registration);
-      return registration;
-    } catch (error) {
-      console.error("Service Worker registration failed:", error);
-      return null;
-    }
-  };
-
-  // 푸시 알림 구독
   const subscribe = async () => {
     try {
+      if (!isSupported) {
+        toast.error("이 브라우저는 푸시 알림을 지원하지 않습니다.");
+        return;
+      }
       if (isPrivateMode) {
-        toast.error(
-          "프라이빗 모드에서는 푸시 알림을 사용할 수 없습니다. 일반 모드로 전환해주세요."
-        );
+        toast.error("프라이빗 모드에서는 푸시 알림을 사용할 수 없습니다.");
+        return;
+      }
+      if (!navigator.onLine) {
+        toast.error("오프라인 상태입니다. 인터넷 연결 후 다시 시도해주세요.");
         return;
       }
 
-      let registration = serviceWorkerRegistration;
-      if (!registration) {
-        registration = await registerServiceWorker();
-        if (!registration) {
-          throw new Error("Service Worker 등록에 실패했습니다.");
-        }
-        setServiceWorkerRegistration(registration);
-      }
-
-      // 푸시 알림 권한 요청 전에 사용자에게 설명
+      // 권한 안내
       toast.info(
-        "푸시 알림을 활성화하면 새로운 메시지나 거래 알림을 받을 수 있습니다."
+        "푸시 알림을 활성화하면 새 메시지/거래 알림을 받을 수 있어요."
       );
+
+      // 이미 거부된 경우 빠른 종료
+      if (Notification.permission === "denied") {
+        toast.error(
+          "브라우저 알림 권한이 차단되어 있습니다. 사이트 권한을 허용해주세요."
+        );
+        return;
+      }
 
       const permission = await Notification.requestPermission();
       if (permission !== "granted") {
         toast.error(
-          "알림 권한이 거부되었습니다. 브라우저 설정에서 권한을 허용해주세요."
+          "알림 권한이 거부되었습니다. 브라우저 설정에서 허용해주세요."
         );
         return;
       }
 
-      // VAPID 키를 Uint8Array로 변환
-      const convertedVapidKey = urlBase64ToUint8Array(
-        process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!
-      );
+      // next-pwa가 등록한 SW가 ready 상태여야 함
+      const registration = await navigator.serviceWorker.ready;
 
-      // 구독 생성
+      const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+      if (!publicKey) {
+        toast.error("VAPID 공개키가 설정되지 않았습니다.");
+        return;
+      }
+
+      // 기존 구독이 있으면 재사용(서버 동기화만)
+      const existing = await registration.pushManager.getSubscription();
+      if (existing) {
+        const reused = existing.toJSON() as PushSubscriptionData;
+        const resReuse = await fetch("/api/push/subscribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(reused),
+        });
+        if (!resReuse.ok) {
+          throw new Error(`서버 구독 동기화 실패(${resReuse.status})`);
+        }
+        setSubscription(reused);
+        setIsSubscribed(true);
+        toast.success("푸시 알림이 활성화되었습니다. (기존 구독 재사용)");
+        return;
+      }
+
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: convertedVapidKey,
+        applicationServerKey: urlBase64ToUint8Array(publicKey),
       });
-      console.log("Push subscription created:", subscription);
 
-      const subscriptionData = subscription.toJSON() as PushSubscriptionData;
+      const payload = subscription.toJSON() as PushSubscriptionData;
 
-      // 서버에 구독 정보 전송
-      const response = await fetch("/api/push/subscribe", {
+      const res = await fetch("/api/push/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(subscriptionData),
+        body: JSON.stringify(payload),
       });
 
-      if (!response.ok) throw new Error("Failed to subscribe");
+      if (!res.ok) {
+        await subscription.unsubscribe().catch(() => {});
+        throw new Error(`서버 구독 등록 실패(${res.status})`);
+      }
 
-      setSubscription(subscriptionData);
+      setSubscription(payload);
       setIsSubscribed(true);
       toast.success("푸시 알림이 활성화되었습니다.");
-    } catch (error) {
-      console.error("Push subscription error:", error);
-      if (error instanceof Error) {
-        toast.error(`푸시 알림 설정 실패: ${error.message}`);
-      } else {
-        toast.error("푸시 알림 설정에 실패했습니다.");
-      }
+    } catch (e: any) {
+      console.error("[push] subscribe failed:", e);
+      toast.error(`푸시 알림 설정 실패: ${e?.message ?? "알 수 없는 오류"}`);
     }
   };
 
-  // 푸시 알림 구독 해제
   const unsubscribe = async () => {
     try {
-      const registration = await navigator.serviceWorker.ready;
-      const subscription = await registration.pushManager.getSubscription();
+      if (!isSupported) return;
 
-      if (subscription) {
-        // 서버에서 구독 정보 삭제
+      const registration = await navigator.serviceWorker.ready;
+      const current = await registration.pushManager.getSubscription();
+
+      if (current) {
+        // 서버 구독 삭제
         await fetch("/api/push/unsubscribe", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ endpoint: subscription.endpoint }),
-        });
+          body: JSON.stringify({ endpoint: current.endpoint }),
+        }).catch(() => {});
 
-        // 브라우저에서 구독 해제
-        await subscription.unsubscribe();
+        // 브라우저 구독 해제
+        await current.unsubscribe();
       }
 
       setSubscription(null);
       setIsSubscribed(false);
       toast.success("푸시 알림이 비활성화되었습니다.");
-    } catch (error) {
-      console.error("Push unsubscription error:", error);
+    } catch (e) {
+      console.error("[push] unsubscribe failed:", e);
       toast.error("푸시 알림 해제에 실패했습니다.");
     }
   };
@@ -250,18 +235,26 @@ export function usePushNotification() {
   };
 }
 
-// VAPID 키 변환 함수 추가
+// ────────────────────────────────────────────────────────────────────────────────
+// utils
+// ────────────────────────────────────────────────────────────────────────────────
+function checkSupport() {
+  try {
+    return (
+      "serviceWorker" in navigator &&
+      "PushManager" in window &&
+      "Notification" in window
+    );
+  } catch {
+    return false;
+  }
+}
+
 function urlBase64ToUint8Array(base64String: string) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding)
-    .replace(/\-/g, "+")
-    .replace(/_/g, "/");
-
-  const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
-  }
-  return outputArray;
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = atob(base64);
+  const out = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+  return out;
 }

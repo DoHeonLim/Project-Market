@@ -1,11 +1,12 @@
 /**
  * File Name : lib/chat/messages/createMessage
- * Description : 채팅 메시지 저장 및 실시간 브로드캐스트/푸시알림
+ * Description : 채팅 메시지 저장 및 실시간 브로드캐스트/푸시알림 (tag/renotify 적용)
  * Author : 임도헌
  *
  * History
  * Date        Author   Status    Description
  * 2025.07.13  임도헌   Created   메시지 저장 및 실시간 브로드캐스트
+ * 2025.11.10  임도헌   Modified  푸시 tag/renotify 적용(채팅방 단위 덮어쓰기)
  */
 
 import db from "@/lib/db";
@@ -17,9 +18,6 @@ import { sendPushNotification } from "@/lib/push-notification";
  * - 채팅 메시지를 DB에 저장
  * - Supabase로 실시간 브로드캐스트
  * - 수신자에게 알림 생성 및 푸시 전송
- * payload - 메시지 내용
- * chatRoomId - 채팅방 ID
- * senderId - 보낸 사람 ID
  */
 export async function createMessage(
   payload: string,
@@ -27,7 +25,7 @@ export async function createMessage(
   senderId: number
 ) {
   try {
-    // 1단계: 메시지 저장
+    // 1) 메시지 저장
     const message = await db.productMessage.create({
       data: {
         payload,
@@ -39,7 +37,7 @@ export async function createMessage(
       },
     });
 
-    // 2단계: Supabase 브로드캐스트 (해당 채널에 메시지 전송)
+    // 2) 실시간 브로드캐스트
     await supabase.channel(`room-${chatRoomId}`).send({
       type: "broadcast",
       event: "message",
@@ -57,7 +55,7 @@ export async function createMessage(
       },
     });
 
-    // 3단계: 수신자 찾기 (해당 채팅방의 나 외의 사용자)
+    // 3) 수신자 찾기 (채팅방의 나 외 상대)
     const receiver = await db.user.findFirst({
       where: {
         product_chat_rooms: { some: { id: chatRoomId } },
@@ -66,14 +64,16 @@ export async function createMessage(
       select: {
         id: true,
         username: true,
-        notification_preferences: true,
         avatar: true,
+        notification_preferences: true, // pushEnabled, chat 등 포함
       },
     });
 
-    // 4단계: 알림 수신 설정이 켜져 있을 경우
-    if (receiver?.notification_preferences?.chat) {
-      // 알림 생성 (DB에 저장)
+    // 4) 알림/푸시 (수신자 설정 확인)
+    if (
+      receiver?.notification_preferences?.chat &&
+      receiver?.notification_preferences?.pushEnabled !== false
+    ) {
       const notification = await db.notification.create({
         data: {
           userId: receiver.id,
@@ -86,8 +86,8 @@ export async function createMessage(
         },
       });
 
-      // Supabase 알림 브로드캐스트
-      await supabase.channel("notifications").send({
+      // 🔁 유저 전용 채널로 변경 + 이미지 포함
+      await supabase.channel(`user-${receiver.id}-notifications`).send({
         type: "broadcast",
         event: "notification",
         payload: {
@@ -96,16 +96,18 @@ export async function createMessage(
           body: notification.body,
           link: notification.link,
           type: notification.type,
+          image: notification.image, // 포함
         },
       });
 
-      // 푸시 알림 전송
-      sendPushNotification({
+      // 푸시 전송 동일
+      await sendPushNotification({
         targetUserId: receiver.id,
         title: notification.title,
         message: notification.body,
         url: notification.link || "",
         type: "CHAT",
+        image: notification.image || "",
       }).then(async (result) => {
         if (result.success) {
           await db.notification.update({
@@ -116,7 +118,6 @@ export async function createMessage(
       });
     }
 
-    // 최종 응답 반환
     return { success: true, message };
   } catch (error) {
     console.error("saveMessage 실패:", error);

@@ -16,7 +16,7 @@ import db from "@/lib/db";
 
 // VAPID 설정
 webPush.setVapidDetails(
-  "mailto:test@email.com",
+  "mailto:admin@board-port.com",
   process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
   process.env.VAPID_PRIVATE_KEY!
 );
@@ -78,7 +78,7 @@ export async function POST(req: Request) {
         body: "푸시 알림 설정이 완료되었습니다.",
         type: "SYSTEM",
         link: "/settings/notifications",
-        isPushSent: true,
+        isPushSent: false,
         sentAt: new Date(),
       },
     });
@@ -88,11 +88,17 @@ export async function POST(req: Request) {
       subscription,
       JSON.stringify({
         title: notification.title,
-        message: notification.body,
-        url: notification.link,
+        body: notification.body,
+        link: notification.link,
+        image: notification.image,
         tag: "welcome",
       })
     );
+
+    await db.notification.update({
+      where: { id: notification.id },
+      data: { isPushSent: true, sentAt: new Date() },
+    });
 
     return NextResponse.json(
       { message: "Successfully subscribed to push notifications" },

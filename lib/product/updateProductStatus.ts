@@ -10,6 +10,7 @@
  * 2025.10.19  임도헌   Modified   badge 판별 버그 수정 등
  * 2025.11.02  임도헌   Modified   권한검증 추가, SELLING 캐시 무효화 버그 수정, selectUserId 검증 보강,
  *                                이미지 URL 안전화, 알림 링크 경로 통일(/products/view/:id)
+ * 2025.11.10  임도헌   Modified   Supabase 공용 채널→유저 전용 채널 전환, 실시간 payload에 image 포함
  */
 
 "use server";
@@ -114,10 +115,17 @@ export async function updateProductStatus(
       });
 
       await Promise.all([
-        supabase.channel("notifications").send({
+        supabase.channel(`user-${selectUserId}-notifications`).send({
           type: "broadcast",
           event: "notification",
-          payload: notification,
+          payload: {
+            userId: selectUserId,
+            title: notification.title,
+            body: notification.body,
+            link: notification.link,
+            type: notification.type,
+            image: notification.image,
+          },
         }),
         sendPushNotification({
           targetUserId: selectUserId,
@@ -126,6 +134,11 @@ export async function updateProductStatus(
           url: notification.link || "",
           type: "TRADE",
           image: notification.image || "",
+          // 동일 상품 알림은 하나로 교체
+          tag: `bp-trade-${productId}`,
+          // 예약 전환은 인지 필요 → 소리/진동 허용
+          renotify: true,
+          topic: `bp-trade-${productId}`,
         }),
       ]);
 
@@ -253,16 +266,33 @@ export async function updateProductStatus(
       ]);
 
       await Promise.all([
-        supabase.channel("notifications").send({
+        // 유저 전용 채널 브로드캐스트(판매자)
+        supabase.channel(`user-${info.user.id}-notifications`).send({
           type: "broadcast",
           event: "notification",
-          payload: sellerNotification,
+          payload: {
+            userId: info.user.id,
+            title: sellerNotification.title,
+            body: sellerNotification.body,
+            link: sellerNotification.link,
+            type: sellerNotification.type,
+            image: sellerNotification.image,
+          },
         }),
-        supabase.channel("notifications").send({
+        // 유저 전용 채널 브로드캐스트(구매자)
+        supabase.channel(`user-${info.reservation_userId}-notifications`).send({
           type: "broadcast",
           event: "notification",
-          payload: buyerNotification,
+          payload: {
+            userId: info.reservation_userId,
+            title: buyerNotification.title,
+            body: buyerNotification.body,
+            link: buyerNotification.link,
+            type: buyerNotification.type,
+            image: buyerNotification.image,
+          },
         }),
+        // 푸시(판매자/구매자)
         sendPushNotification({
           targetUserId: info.user.id,
           title: sellerNotification.title,
@@ -270,6 +300,9 @@ export async function updateProductStatus(
           url: sellerNotification.link || "",
           type: "TRADE",
           image: sellerNotification.image || "",
+          tag: `bp-trade-${productId}`,
+          renotify: true,
+          topic: `bp-trade-${productId}`,
         }),
         sendPushNotification({
           targetUserId: info.reservation_userId,
@@ -278,6 +311,9 @@ export async function updateProductStatus(
           url: buyerNotification.link || "",
           type: "TRADE",
           image: buyerNotification.image || "",
+          tag: `bp-trade-${productId}`,
+          renotify: true,
+          topic: `bp-trade-${productId}`,
         }),
       ]);
 

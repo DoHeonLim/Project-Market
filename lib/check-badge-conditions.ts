@@ -1,18 +1,19 @@
 /**
-File Name : lib/check-badge-conditions
-Description : 뱃지 조건 체크 및 부여 함수
-Author : 임도헌
-
-History
-Date        Author   Status    Description
-2024.12.23  임도헌   Created
-2024.12.24  임도헌   Modified  뱃지 체크 조건 함수 추가
-2025.01.12  임도헌   Modified  뱃지 획득시 이미지 보이게 변경
-2025.03.02  임도헌   Modified  checkRuleSageBadge를 onPostCreate에서 제거
-2025.03.29  임도헌   Modified  checkBoardExplorer함수 로직 변경
-2025.04.10  임도헌   Modified  인증된 선원 뱃지 간소화
-2025.04.13  임도헌   Modified  구성품 관리자를 품질의 달인으로 변경, 조건 수정
-*/
+ * File Name : lib/check-badge-conditions
+ * Description : 뱃지 조건 체크 및 부여 함수
+ * Author : 임도헌
+ *
+ * History
+ * Date        Author   Status    Description
+ * 2024.12.23  임도헌   Created
+ * 2024.12.24  임도헌   Modified  뱃지 체크 조건 함수 추가
+ * 2025.01.12  임도헌   Modified  뱃지 획득시 이미지 보이게 변경
+ * 2025.03.02  임도헌   Modified  checkRuleSageBadge를 onPostCreate에서 제거
+ * 2025.03.29  임도헌   Modified  checkBoardExplorer함수 로직 변경
+ * 2025.04.10  임도헌   Modified  인증된 선원 뱃지 간소화
+ * 2025.04.13  임도헌   Modified  구성품 관리자를 품질의 달인으로 변경, 조건 수정
+ * 2025.11.11  임도헌   Modified  awardBadge함수 구조 개선
+ */
 
 import db from "@/lib/db";
 import {
@@ -35,81 +36,78 @@ import { sendPushNotification } from "./push-notification";
  */
 async function awardBadge(userId: number, badgeName: string) {
   try {
-    // 이미 해당 뱃지를 가지고 있는지 체크
-    const existingBadge = await db.badge.findFirst({
+    // 배지 메타 조회
+    const badge = await db.badge.findFirst({
+      where: { name: badgeName },
+      select: { id: true, icon: true, name: true },
+    });
+    if (!badge?.id) return;
+
+    // 유저가 이미 보유했는지
+    const hasBadge = await db.user.count({
       where: {
-        name: badgeName,
-        users: {
-          some: {
-            id: userId,
-          },
-        },
+        id: userId,
+        badges: { some: { id: badge.id } },
       },
     });
 
-    // 새로운 뱃지인 경우에만 부여
-    if (!existingBadge) {
-      const badge = await db.badge.findFirst({
-        where: {
-          name: badgeName,
-        },
-      });
+    if (hasBadge > 0) return;
 
-      // 유저와 뱃지 연결
-      await db.user.update({
-        where: {
-          id: userId,
-        },
-        data: {
-          badges: {
-            connect: {
-              id: badge?.id,
-            },
-          },
-        },
-      });
+    // 연결(중복 connect는 안전하나, 위에서 미리 체크하여 알림 중복 방지)
+    await db.user.update({
+      where: { id: userId },
+      data: {
+        badges: { connect: { id: badge.id } },
+      },
+    });
 
-      // 알림 생성
-      const notification = await db.notification.create({
-        data: {
-          userId,
-          title: "새로운 뱃지 획득!",
-          body: `축하합니다! "${getBadgeKoreanName(
-            badgeName
-          )}" 뱃지를 획득하셨습니다!`,
-          type: "BADGE",
-          link: "/profile",
-          image: `${badge?.icon}/public`,
-          isPushSent: false,
-        },
-      });
+    const imageUrl = badge.icon ? `${badge.icon}/public` : undefined;
 
-      // 실시간 알림 전송
-      await Promise.all([
-        // Supabase 실시간 알림
-        supabase.channel("notifications").send({
-          type: "broadcast",
-          event: "notification",
-          payload: notification,
-        }),
-        // 푸시 알림 전송
-        sendPushNotification({
-          targetUserId: userId,
-          title: notification.title,
-          message: notification.body,
-          url: notification.link || "", // 프로필 페이지로 이동
-          type: "BADGE",
-          image: notification.image || "",
-        }).then(async (result) => {
-          if (result.success) {
-            await db.notification.update({
-              where: { id: notification.id },
-              data: { isPushSent: true, sentAt: new Date() },
-            });
-          }
-        }),
-      ]);
-    }
+    // 알림 생성
+    const notification = await db.notification.create({
+      data: {
+        userId,
+        title: "새로운 뱃지 획득!",
+        body: `축하합니다! "${getBadgeKoreanName(badgeName)}" 뱃지를 획득하셨습니다!`,
+        type: "BADGE",
+        link: "/profile",
+        image: imageUrl,
+        isPushSent: false,
+      },
+    });
+
+    // 실시간 브로드캐스트(유저 전용 채널)
+    await supabase.channel(`user-${userId}-notifications`).send({
+      type: "broadcast",
+      event: "notification",
+      payload: {
+        userId,
+        title: notification.title,
+        body: notification.body,
+        link: notification.link,
+        type: notification.type,
+        image: notification.image,
+      },
+    });
+
+    // 푸시: 같은 뱃지는 하나만 남도록 tag 적용
+    await sendPushNotification({
+      targetUserId: userId,
+      title: notification.title,
+      message: notification.body,
+      url: notification.link || "",
+      type: "BADGE",
+      image: notification.image || "",
+      tag: `bp-badge-${badgeName.toLowerCase()}`,
+      renotify: true,
+    }).then(async (result) => {
+      if (result.success) {
+        await db.notification.update({
+          where: { id: notification.id },
+          data: { isPushSent: true, sentAt: new Date() },
+        });
+      }
+    });
   } catch (error) {
     console.error(`${badgeName} 뱃지 부여 중 오류:`, error);
   }

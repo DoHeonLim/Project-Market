@@ -5,7 +5,6 @@ import ThemeProvider from "@/components/providers/ThemeProvider";
 import { Toaster } from "sonner";
 import NotificationListener from "@/components/common/NotificationListener";
 import getSession from "@/lib/session";
-import ServiceWorkerRegistration from "@/components/common/ServiceWorkerRegistration";
 import AppWrapper from "@/components/layout/AppWrapper";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -72,7 +71,6 @@ export default async function RootLayout({
               }}
             />
             {session.id && <NotificationListener userId={session.id} />}
-            <ServiceWorkerRegistration />
             {children}
           </ThemeProvider>
         </AppWrapper>

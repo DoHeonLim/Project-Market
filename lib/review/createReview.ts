@@ -14,6 +14,7 @@
  * 2025.10.19  임도헌   Moved      app/(tabs)/profile/(product)/actions → lib/review/createReview 로 파일 이동
  * 2025.10.19  임도헌   Modified   도메인 정리 및 import 정리
  * 2025.11.05  임도헌   Modified   세션 기반 userId 강제, 자격 검증, 중복 방지, rate/payload 검증, null-safe 알림
+ * 2025.11.10  임도헌   Modified   유저 전용 채널 브로드캐스트, push tag/renotify 적용, payload에 image 포함
  */
 
 "use server";
@@ -154,11 +155,20 @@ export async function createReview(
         });
 
         await Promise.all([
-          supabase.channel("notifications").send({
+          // 유저 전용 채널로 실시간 브로드캐스트 (이미지 포함)
+          supabase.channel(`user-${targetUserId}-notifications`).send({
             type: "broadcast",
             event: "notification",
-            payload: notification,
+            payload: {
+              userId: targetUserId,
+              title: notification.title,
+              body: notification.body,
+              link: notification.link,
+              type: notification.type,
+              image: notification.image,
+            },
           }),
+          // 푸시(리뷰 단위로 덮어쓰기 가능하도록 태그 부여)
           sendPushNotification({
             targetUserId,
             title: notification.title,
@@ -166,6 +176,9 @@ export async function createReview(
             url: notification.link || "",
             type: "REVIEW",
             image: notification.image || "",
+            tag: `bp-review-${productId}`,
+            // 리뷰 알림은 교체 시에도 재알림(사운드/진동) 허용
+            renotify: true,
           }),
         ]);
       }

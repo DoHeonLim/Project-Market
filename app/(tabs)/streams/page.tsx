@@ -18,9 +18,10 @@
  * 2025.08.25  임도헌   Modified  StreamListSection 래퍼 도입(onRequestFollow 복구, router.refresh)
  * 2025.08.25  임도헌   Modified  URL 스코프 기반 초기 로딩 + 클라이언트 무한스크롤 연결
  * 2025.09.09  임도헌   Modified  a11y(nav/role=tablist), scope 정규화 변수, 주석 보강
+ * 2025.11.21  임도헌   Modified  스트리밍 리스트 페이지 캐싱 제거(dynamic SSR로 변경)
  */
+
 import Link from "next/link";
-import { unstable_cache as nextCache } from "next/cache";
 import getSession from "@/lib/session";
 
 import { getInitialStreams } from "./actions/init";
@@ -33,6 +34,8 @@ import AddStreamButton from "@/components/stream/AddStreamButton";
 import StreamListSection from "@/components/stream/StreamListSection";
 import LiveStatusRealtimeSubscriber from "@/components/stream/LiveStatusRealtimeSubscriber";
 
+export const dynamic = "force-dynamic"; // 명시적으로 동적 페이지 선언
+
 interface StreamsPageProps {
   searchParams: {
     keyword?: string;
@@ -44,7 +47,6 @@ interface StreamsPageProps {
 export default async function StreamsPage({ searchParams }: StreamsPageProps) {
   const session = await getSession();
   const viewerId = session?.id ?? null;
-  const viewerKey = `viewer-${viewerId ?? "anon"}`;
 
   // 스코프 정규화
   const scope: "all" | "following" =
@@ -55,46 +57,18 @@ export default async function StreamsPage({ searchParams }: StreamsPageProps) {
     !!searchParams.keyword || !!searchParams.category || scope !== "all";
 
   /**
-   * 캐시 래퍼는 오직 인자로만 동작(쿠키 접근 금지)
-   *  - tags: ["broadcast-list"]
-   *  - key: viewerKey/스코프/카테고리/키워드 포함 → 사용자/쿼리별 결과 분리
+   * 리스트 페이지는 캐시 미사용
+   * - 스트리밍 상태/팔로우 상태 등 실시간/개인화 의존도가 높음
+   * - Supabase Realtime + router.refresh()로 최신 상태 반영
    */
-  const cachedSearch = nextCache(
-    (args: {
-      scope: "all" | "following";
-      category?: string;
-      keyword?: string;
-      viewerId: number | null;
-    }) => searchStreams(args),
-    [
-      "streams-search",
-      viewerKey,
-      scope,
-      searchParams.category ?? "",
-      searchParams.keyword ?? "",
-    ],
-    { tags: ["broadcast-list"] }
-  );
-
-  const cachedGetInitial = nextCache(
-    (args: {
-      scope: "all" | "following";
-      category?: string;
-      keyword?: string;
-      viewerId: number | null;
-    }) => getInitialStreams(args),
-    ["streams-initial", viewerKey, "all"],
-    { tags: ["broadcast-list"] }
-  );
-
   const initial = hasSearchParams
-    ? await cachedSearch({
+    ? await searchStreams({
         scope,
         category: searchParams.category,
         keyword: searchParams.keyword,
         viewerId,
       })
-    : await cachedGetInitial({
+    : await getInitialStreams({
         scope: "all",
         category: undefined,
         keyword: undefined,
@@ -117,26 +91,42 @@ export default async function StreamsPage({ searchParams }: StreamsPageProps) {
       <LiveStatusRealtimeSubscriber />
 
       {/* 상단: 카테고리 탭 + 검색 + 스코프 탭 */}
-      <div className="sticky top-0 z-10 border-b border-neutral-200 bg-white/80 p-4 backdrop-blur-sm dark:border-neutral-700 dark:bg-neutral-900/80">
+      <div
+        className="
+          sticky top-0 z-10 border-b border-neutral-200 
+         bg-white/80 backdrop-blur-sm dark:border-neutral-700 dark:bg-neutral-900/80
+          p-3 sm:p-4           
+        "
+      >
         <StreamCategoryTabs currentCategory={searchParams.category} />
 
-        <div className="mt-4 flex items-center justify-between gap-4">
+        <div className="mt-3 sm:mt-4 flex items-center justify-between gap-3 sm:gap-4">
           <StreamSearchBarWrapper />
 
           {/* 스코프 전환: 링크 탭 역할 */}
           <nav aria-label="스트리밍 보기 범위" role="tablist">
-            <div className="inline-flex items-center rounded-2xl border border-neutral-200/60 bg-white/50 p-1 backdrop-blur dark:border-neutral-700/60 dark:bg-neutral-900/40">
+            <div
+              className="
+                inline-flex items-center rounded-2xl border border-neutral-200/60
+                bg-white/50 backdrop-blur dark:border-neutral-700/60 dark:bg-neutral-900/40
+                p-[3px] sm:p-1                        
+              "
+            >
               <Link
                 href={buildHref("all")}
                 role="tab"
                 aria-selected={scope === "all"}
                 aria-current={scope === "all" ? "page" : undefined}
-                className={`inline-flex h-11 min-w-[84px] items-center justify-center rounded-xl px-4 text-sm font-semibold transition
+                className={`
+                  inline-flex items-center justify-center rounded-xl
+                  h-9 min-w-[60px] px-3 text-xs sm:h-11 sm:min-w-[80px] sm:px-4 sm:text-sm
+                  font-semibold transition
                   ${
                     scope === "all"
                       ? "bg-neutral-900 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)] dark:bg-white dark:text-neutral-900"
                       : "text-neutral-700 hover:bg-black/5 dark:text-neutral-300 dark:hover:bg-white/5"
-                  }`}
+                  }
+                `}
               >
                 전체
               </Link>
@@ -146,12 +136,16 @@ export default async function StreamsPage({ searchParams }: StreamsPageProps) {
                 role="tab"
                 aria-selected={scope === "following"}
                 aria-current={scope === "following" ? "page" : undefined}
-                className={`inline-flex h-11 min-w-[84px] items-center justify-center rounded-xl px-4 text-sm font-semibold transition
+                className={`
+                  inline-flex items-center justify-center rounded-xl
+                  h-9 min-w-[60px] px-3 text-xs sm:h-11 sm:min-w-[80px] sm:px-4 sm:text-sm
+                  font-semibold transitio80
                   ${
                     scope === "following"
                       ? "bg-neutral-900 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)] dark:bg-white dark:text-neutral-900"
                       : "text-neutral-700 hover:bg-black/5 dark:text-neutral-300 dark:hover:bg-white/5"
-                  }`}
+                  }
+                `}
               >
                 팔로잉
               </Link>

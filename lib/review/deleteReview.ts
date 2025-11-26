@@ -6,7 +6,8 @@
  * History
  * Date        Author   Status     Description
  * 2025.10.17  임도헌    Moved     lib/review/deleteReview로 이동(server-only) + 기존 revalidateTag 정책 유지
- * 2025.11.05  임도헌   Modified  세션 기반 권한(작성자/상품소유자) 검증 추가
+ * 2025.11.05  임도헌   Modified   세션 기반 권한(작성자/상품소유자) 검증 추가
+ * 2025.11.19  임도헌   Modified   리뷰 삭제 시 판매자 평균 평점, 리뷰 목록 및 해당 제품 상세 최신화
  */
 
 "use server";
@@ -21,7 +22,10 @@ export const deleteReview = async (reviewId: number) => {
 
   const rev = await db.review.findUnique({
     where: { id: reviewId },
-    select: { userId: true, product: { select: { userId: true } } },
+    select: {
+      userId: true,
+      product: { select: { userId: true, id: true } },
+    },
   });
   if (!rev) throw new Error("리뷰를 찾을 수 없습니다.");
 
@@ -36,6 +40,9 @@ export const deleteReview = async (reviewId: number) => {
   if (rev.product?.userId) {
     revalidateTag(`user-average-rating-id-${rev.product.userId}`);
     revalidateTag(`user-reviews-initial-id-${rev.product.userId}`);
+  }
+  if (rev.product?.id) {
+    revalidateTag(`product-detail-id-${rev.product.id}`);
   }
 
   return { success: true };

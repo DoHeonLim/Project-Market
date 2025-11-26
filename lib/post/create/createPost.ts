@@ -16,7 +16,6 @@
 
 import db from "@/lib/db";
 import getSession from "@/lib/session";
-import { revalidatePath } from "next/cache";
 import { postFormSchema } from "@/lib/post/form/postFormSchema";
 import {
   badgeChecks,
@@ -101,8 +100,6 @@ export async function createPost(formData: FormData) {
     } else if (results.data.category === "LOG") {
       await checkBoardExplorerBadge(session.id);
     }
-
-    revalidatePath("/posts");
 
     // 게시글 ID 반환
     return { success: true, postId: post.id };

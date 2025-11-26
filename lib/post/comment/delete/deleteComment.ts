@@ -6,6 +6,7 @@
  * History
  * Date        Author   Status    Description
  * 2024.07.06  임도헌   Created
+ * 2025.11.20  임도헌   Modified  revalidate 태그 네이밍 통일
  */
 "use server";
 
@@ -18,7 +19,7 @@ export const deleteComment = async (commentId: number, postId: number) => {
       where: { id: commentId },
     });
 
-    revalidateTag(`post-comments-${postId}`);
+    revalidateTag(`post-comments-id-${postId}`);
     return { success: true };
   } catch (e) {
     console.error("댓글 삭제 실패:", e);

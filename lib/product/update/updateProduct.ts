@@ -6,13 +6,14 @@
  * History
  * Date        Author   Status    Description
  * 2025.06.15  임도헌   Created   제품 수정 로직을 actions에서 분리하여 lib로 이동
+ * 2025.11.19  임도헌   Modified  제품 상세 및 프로필 판매 탭/카운트 캐시 무효화 추가
  */
 
 "use server";
 
 import db from "@/lib/db";
 import getSession from "@/lib/session";
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidateTag } from "next/cache";
 import { productFormSchema } from "../form/productFormSchema";
 import { ProductFormResponse } from "@/types/product";
 
@@ -119,9 +120,18 @@ export async function updateProduct(
       )
     );
 
-    // 캐시 무효화
-    revalidatePath("/products");
-    revalidateTag("product-detail");
+    // 제품 상세 및 프로필 판매 탭/카운트 캐시 무효화
+    revalidateTag(`product-detail-id-${updated.id}`);
+    revalidateTag(`user-products-SELLING-id-${updated.userId}`);
+    revalidateTag(`user-products-RESERVED-id-${updated.userId}`);
+    revalidateTag(`user-products-SOLD-id-${updated.userId}`);
+    revalidateTag(`user-products-counts-id-${updated.userId}`);
+
+    // SOLD 상품을 수정했다면, 구매자 my-purchases 리스트/카운트도 최신화
+    if (updated.purchase_userId) {
+      revalidateTag(`user-products-PURCHASED-id-${updated.purchase_userId}`);
+      revalidateTag(`user-products-counts-id-${updated.purchase_userId}`);
+    }
 
     return {
       success: true,

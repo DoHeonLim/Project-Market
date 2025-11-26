@@ -28,7 +28,7 @@ export default function ProductDetailMeta({
     <div className="flex items-center justify-between p-4 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800/50">
       <div className="flex items-center gap-2">
         <span className="text-sm text-neutral-500">⚓ 판매 선원</span>
-        <UserAvatar avatar={avatar} username={username} size="md" />
+        <UserAvatar avatar={avatar} username={username} size="sm" />
       </div>
       <TimeAgo date={created_at} />
     </div>

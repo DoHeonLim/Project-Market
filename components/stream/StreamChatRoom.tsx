@@ -1,10 +1,9 @@
 /**
  * File Name : components/stream/StreamChatRoom
- * Description : 스트리밍 채팅방 컴포넌트
+ * Description : 스트리밍 채팅방 컴포넌트(Topbar 이벤트로 열고 닫기 위임)
  * Author : 임도헌
  *
  * History
- * Date        Author   Status    Description
  * 2024.11.21  임도헌   Created
  * 2024.11.21  임도헌   Modified  스트리밍 채팅방 컴포넌트
  * 2024.11.23  임도헌   Modified  스크롤 및 useRef로 최신 메시지 수신 시 하단 고정
@@ -17,33 +16,45 @@
  * 2025.09.09  임도헌   Modified  초기 스크롤 맨 아래, 중복 메시지 방지(Set),
  *                               쿨다운 자동 해제 타이머, a11y(role=log),
  *                               전송 버튼 aria-label/문구 수정
- * 2025.09.30  임도헌   Modified  채팅 토글 버튼 추가, 데스크톱, 모바일 UI 변경
+ * 2025.09.30  임도헌   Modified  데스크톱/모바일 UI 정리
+ * 2025.11.16  임도헌   Modified  라이트/다크 테마 스타일 개편 + Topbar 이벤트로 열고 닫기
+ * 2025.11.16  임도헌   Modified  레이아웃 유연화: 부모 컨테이너 높이를 채울 수 있게 옵션/클래스 지원, 카메라 아이콘 Host 뱃지로 대체
+ * 2025.11.21  임도헌   Modified  채널 중복 사용 제거
+ * 2025.11.22  임도헌   Modified  내 클라이언트에 한해 낙관 렌더 재도입
  */
 
 "use client";
 
 import { useRef, useEffect, useState } from "react";
-import Image from "next/image";
-import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import type { StreamChatMessage } from "@/types/chat";
 import { useStreamChatSubscription } from "@/hooks/useStreamChatSubscription";
 import { sendStreamMessageAction } from "@/app/streams/[id]/actions";
-import TimeAgo from "../common/TimeAgo";
-import { toast } from "sonner";
+import UserAvatar from "../common/UserAvatar";
+import TimeAgo from "@/components/common/TimeAgo";
 import {
   PaperAirplaneIcon,
-  UserIcon,
-  VideoCameraIcon,
+  ArrowsPointingOutIcon,
+  ArrowsPointingInIcon,
 } from "@heroicons/react/24/solid";
-import Link from "next/link";
 
 interface Props {
   initialStreamMessage: StreamChatMessage[]; // 최근 20개, ASC 정렬
   streamChatRoomId: number;
-  streamChatRoomhost: number;
+  streamChatRoomhost: number; // 방송자 userId
   userId: number;
-  username: string;
+  username: string; // 내 유저명 (fallback)
+
+  /** (모바일/본문영역) 부모 높이를 꽉 채워야 할 때 true */
+  fillParent?: boolean;
+  /** 바깥 래퍼에 추가 클래스(선택) */
+  containerClassName?: string;
+
+  /** 모바일 전용: 채팅 확대/축소 토글 */
+  onToggleExpand?: () => void;
+  isExpanded?: boolean;
+  showExpandToggle?: boolean;
 }
 
 const MAX_ITEMS = 500;
@@ -54,19 +65,46 @@ export default function StreamChatRoom({
   streamChatRoomhost,
   userId,
   username,
+  fillParent = false,
+  containerClassName = "",
+  onToggleExpand,
+  isExpanded,
+  showExpandToggle = false,
 }: Props) {
+  /** 메시지/입력 상태 */
   const [messages, setMessages] =
     useState<StreamChatMessage[]>(initialStreamMessage);
   const [message, setMessage] = useState("");
+
+  /** UI/스크롤 상태 */
   const chatRef = useRef<HTMLDivElement | null>(null);
   const atBottomRef = useRef<boolean>(true);
   const seenIdsRef = useRef<Set<string | number>>(new Set());
   const [cooldownUntil, setCooldownUntil] = useState<number>(0);
 
-  // UI state: PC에서 열기/닫기
-  const [collapsed, setCollapsed] = useState<boolean>(false);
+  /** 열림/닫힘 — Topbar가 제어 (기본 true) */
+  const [isOpen, setIsOpen] = useState(true);
 
-  // 초기 메시지 세팅
+  // 다른 인스턴스/Topbar에서 보낸 상태 변경 이벤트를 구독
+  useEffect(() => {
+    const handleState = (event: Event) => {
+      const { detail } = event as CustomEvent<{ open?: boolean }>;
+      if (typeof detail?.open === "boolean") {
+        setIsOpen(detail.open);
+      }
+    };
+
+    window.addEventListener("stream:chat:state", handleState as EventListener);
+
+    return () => {
+      window.removeEventListener(
+        "stream:chat:state",
+        handleState as EventListener
+      );
+    };
+  }, []);
+
+  /** 최초 메시지/스크롤 초기화 */
   useEffect(() => {
     setMessages(initialStreamMessage);
     const s = new Set<string | number>();
@@ -79,24 +117,10 @@ export default function StreamChatRoom({
     });
   }, [streamChatRoomId, initialStreamMessage]);
 
-  // 전송 채널
+  /** 전송용 채널 */
   const sendChannelRef = useRef<RealtimeChannel | null>(null);
-  useEffect(() => {
-    const channel = supabase.channel(`room-${streamChatRoomId}`);
-    sendChannelRef.current = channel;
-    channel.subscribe();
-    return () => {
-      try {
-        channel.unsubscribe();
-      } catch {}
-      try {
-        supabase.removeChannel(channel);
-      } catch {}
-      sendChannelRef.current = null;
-    };
-  }, [streamChatRoomId]);
 
-  // 스크롤 감지
+  /** 스크롤 바닥 여부 추적 */
   useEffect(() => {
     const el = chatRef.current;
     if (!el) return;
@@ -110,7 +134,7 @@ export default function StreamChatRoom({
     return () => el.removeEventListener("scroll", onScroll);
   }, []);
 
-  // 새 메시지 수신 시: 바닥일 때만 자동 스크롤
+  /** 새 메시지 수신 시 바닥일 때만 자동 스크롤 */
   useEffect(() => {
     if (!chatRef.current || !atBottomRef.current) return;
     requestAnimationFrame(() => {
@@ -119,7 +143,7 @@ export default function StreamChatRoom({
     });
   }, [messages]);
 
-  // 쿨다운 자동 해제 타이머
+  /** 쿨다운 자동 해제 */
   useEffect(() => {
     if (!cooldownUntil) return;
     const ms = cooldownUntil - Date.now();
@@ -131,8 +155,8 @@ export default function StreamChatRoom({
     return () => clearTimeout(t);
   }, [cooldownUntil]);
 
-  // 실시간 수신 (기존 훅 사용)
-  useStreamChatSubscription({
+  /** 실시간 구독(브로드캐스트 수신) */
+  const sendChannel = useStreamChatSubscription({
     streamChatRoomId,
     userId,
     ignoreSelf: false,
@@ -148,7 +172,14 @@ export default function StreamChatRoom({
     },
   });
 
-  // 전송
+  // 훅에서 생성한 채널을 전송용 ref로 공유
+  useEffect(() => {
+    if (sendChannel) {
+      sendChannelRef.current = sendChannel;
+    }
+  }, [sendChannel]);
+
+  /** 전송 */
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (Date.now() < cooldownUntil) return;
@@ -160,7 +191,6 @@ export default function StreamChatRoom({
     }
 
     try {
-      // 1) 서버 저장 → 전체 메시지 객체 획득
       const res = await sendStreamMessageAction(text, streamChatRoomId);
       if (!res.success) {
         const ERR_MAP: Record<string, string> = {
@@ -173,18 +203,33 @@ export default function StreamChatRoom({
             "메시지 전송에 실패했습니다. 잠시 후 다시 시도해주세요.",
         };
         toast.error(ERR_MAP[res.error] ?? "메시지 전송 실패");
-        if (res.error === "RATE_LIMITED") setCooldownUntil(Date.now() + 2000);
+        if (res.error === "RATE_LIMITED") {
+          setCooldownUntil(Date.now() + 2000);
+        }
         return;
       }
 
-      // 2) 서버가 반환한 메시지를 그대로 브로드캐스트
+      const sent = res.message;
+
+      // 1) 로컬에 먼저 추가 + seenIds에 등록해둔다 (이후 브로드캐스트 중복 방지)
+      setMessages((prev) => {
+        const next = [...prev, sent];
+        seenIdsRef.current.add(sent.id);
+
+        if (next.length > MAX_ITEMS) {
+          return next.slice(next.length - MAX_ITEMS);
+        }
+        return next;
+      });
+
+      // 2) 다른 클라이언트에게 브로드캐스트
       await sendChannelRef.current?.send({
         type: "broadcast",
         event: "message",
-        payload: res.message,
+        payload: sent,
       });
 
-      // 3) 입력창 초기화 (렌더는 실시간 구독으로 처리)
+      // 3) 입력창 리셋
       setMessage("");
     } catch (err) {
       console.error("메시지 전송 실패", err);
@@ -192,133 +237,174 @@ export default function StreamChatRoom({
     }
   };
 
+  /** ---- Topbar 연동: 이벤트 버스 ---- */
+  // Topbar가 보내는 "채팅 열기" 이벤트 수신
+  useEffect(() => {
+    const onOpen = () => {
+      setIsOpen(true);
+      window.dispatchEvent(
+        new CustomEvent("stream:chat:state", { detail: { open: true } })
+      );
+    };
+    window.addEventListener("stream:chat:open", onOpen);
+    // 최초 진입 시 상태 동기화(열림)
+    window.dispatchEvent(
+      new CustomEvent("stream:chat:state", { detail: { open: true } })
+    );
+    return () => window.removeEventListener("stream:chat:open", onOpen);
+  }, []);
+
+  // 닫기(헤더 버튼에서 호출)
+  const closeChat = () => {
+    setIsOpen(false);
+    window.dispatchEvent(
+      new CustomEvent("stream:chat:state", { detail: { open: false } })
+    );
+  };
+
+  /** 전송 버튼 disabled 조건 */
   const sendDisabled =
     Date.now() < cooldownUntil || message.trim().length === 0;
 
-  if (collapsed) {
-    return (
-      <div className="w-full rounded-xl border border-neutral-700 bg-neutral-900 text-white p-3 shadow-lg">
-        <button
-          onClick={() => setCollapsed(false)}
-          aria-expanded={false}
-          className="w-full text-sm md:text-base px-3 py-2 rounded bg-neutral-800 hover:bg-neutral-700 transition-colors font-medium"
-          title="채팅 열기"
-        >
-          💬 채팅 열기
-        </button>
-      </div>
-    );
-  }
+  /** 닫힘 상태면 렌더X — Topbar에서 “채팅 열기” 버튼만 노출 */
+  if (!isOpen) return null;
 
   return (
     <div
-      className="w-full flex flex-col rounded-xl border border-neutral-700 bg-neutral-900 text-white p-3 shadow-lg
-         h-[calc(100vh-256px)] xl:h-[calc(100vh-96px)]"
+      className={[
+        "flex flex-col min-h-0 rounded-xl border bg-white text-neutral-900 shadow-lg",
+        "dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100",
+        "overflow-hidden max-h-full",
+        "xl:h-[calc(100vh-96px)]",
+        // fillParent면 부모 높이 꽉 채우되, 위 max-h 제한 안에서만
+        fillParent ? "h-full flex-1" : "sm:min-h-[40vh]",
+        containerClassName,
+      ].join(" ")}
     >
-      <div className="flex items-center justify-between pb-2 border-b border-neutral-800 mb-2 px-1">
+      {/* Header */}
+      <div className="flex items-center justify-between px-3 py-2 border-b bg-neutral-50 text-neutral-800 dark:border-neutral-800 dark:bg-neutral-900/60 dark:text-neutral-100 rounded-t-xl">
         <div className="text-sm md:text-base font-semibold">채팅</div>
-
-        {/* 채팅 토글 버튼*/}
-        <div>
+        <div className="flex items-center gap-2">
+          {showExpandToggle && (
+            <button
+              type="button"
+              onClick={onToggleExpand}
+              className="inline-flex xl:hidden items-center justify-center rounded-md bg-neutral-200 hover:bg-neutral-300 dark:bg-neutral-800 dark:hover:bg-neutral-700 px-2 py-1 text-xs transition-colors"
+              aria-label={isExpanded ? "채팅 축소" : "채팅 확대"}
+              title={isExpanded ? "채팅 축소" : "채팅 확대"}
+            >
+              {isExpanded ? (
+                <ArrowsPointingInIcon className="h-4 w-4" />
+              ) : (
+                <ArrowsPointingOutIcon className="h-4 w-4" />
+              )}
+            </button>
+          )}
           <button
-            onClick={() => setCollapsed((v) => !v)}
-            aria-expanded={!collapsed}
-            className="text-sm px-2 py-1 rounded bg-neutral-800 hover:bg-neutral-700"
-            title={collapsed ? "채팅 열기" : "채팅 닫기"}
+            onClick={closeChat}
+            className="text-xs md:text-sm px-2 py-1 rounded-md bg-neutral-200 hover:bg-neutral-300 dark:bg-neutral-800 dark:hover:bg-neutral-700 transition-colors"
+            title="채팅 닫기"
+            aria-label="채팅 닫기"
           >
-            {collapsed ? "열기" : "닫기"}
+            닫기
           </button>
         </div>
       </div>
 
+      {/* Log */}
       <div
-        className={`flex-1 overflow-auto px-1 py-2 space-y-3 custom-scrollbar
-          ${/* 모바일 고정높이: 화면에서 일정 영역 차지 */ ""} block md:block`}
         ref={chatRef}
         role="log"
         aria-live="polite"
         aria-relevant="additions"
+        className="flex-1 min-h-0 overflow-auto px-3 py-3 space-y-3 scrollbar bg-white dark:bg-neutral-900"
       >
         {messages.length === 0 ? (
-          <div className="h-full flex items-center justify-center text-neutral-500 text-sm md:text-base">
+          <div className="h-full flex items-center justify-center text-neutral-400 dark:text-neutral-500 text-sm md:text-base">
             아직 채팅이 없습니다.
           </div>
         ) : (
-          messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`flex items-start gap-3 w-full ${
-                msg.userId === userId ? "justify-end" : "justify-start"
-              }`}
-            >
-              {/* Avatar */}
-              <div className="flex-shrink-0">
-                {msg.user?.avatar ? (
-                  <div className="relative w-8 h-8">
-                    {msg.userId === streamChatRoomhost && (
-                      <VideoCameraIcon className="absolute -left-2 -top-1 w-4 h-4 text-yellow-400 z-10" />
-                    )}
-                    <Link
-                      href={`/profile/${msg.user.username}`}
-                      className="hover:opacity-80"
-                    >
-                      <Image
-                        src={`${msg.user.avatar}/avatar`}
-                        alt={msg.user.username}
-                        width={32}
-                        height={32}
-                        className="rounded-full border border-neutral-700"
-                      />
-                    </Link>
-                  </div>
-                ) : (
-                  <div className="relative w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center border border-neutral-700">
-                    {msg.userId === streamChatRoomhost && (
-                      <VideoCameraIcon className="absolute -left-2 -top-1 w-4 h-4 text-yellow-400 z-10" />
-                    )}
-                    <UserIcon className="w-4 h-4 text-neutral-400" />
-                  </div>
-                )}
-              </div>
+          messages.map((msg) => {
+            const mine = msg.userId === userId;
+            const host = msg.userId === streamChatRoomhost;
 
-              {/* 메시지 텍스트 블록 */}
+            const avatarUrl = msg.user?.avatar ?? null;
+            const uname = msg.user?.username ?? (mine ? username : "익명");
+
+            const AvatarEl = (
+              <UserAvatar
+                avatar={avatarUrl}
+                username={uname}
+                showUsername={false}
+                size="sm"
+                disabled
+                className="p-0"
+              />
+            );
+
+            return (
               <div
-                className={`flex flex-col max-w-[70%] text-sm md:text-base leading-tight ${
-                  msg.userId === userId ? "items-end" : "items-start"
-                }`}
+                key={msg.id}
+                className={`flex w-full items-start gap-2 ${mine ? "justify-end" : "justify-start"}`}
               >
-                <div className="w-full flex items-center justify-start gap-2">
-                  <span
-                    className={`font-medium ${
-                      msg.userId === userId
-                        ? "text-indigo-400"
-                        : "text-emerald-300"
-                    }`}
+                {/* 상대 메시지 → 아바타 왼쪽 */}
+                {!mine && <div className="flex-shrink-0">{AvatarEl}</div>}
+
+                {/* 버블 */}
+                <div
+                  className={`max-w-[72%] md:max-w-[70%] flex flex-col ${mine ? "items-end" : "items-start"}`}
+                >
+                  <div className="flex items-center gap-2 text-xs">
+                    <span
+                      className={`font-medium ${
+                        mine
+                          ? "text-indigo-600 dark:text-indigo-300"
+                          : "text-emerald-700 dark:text-emerald-300"
+                      }`}
+                    >
+                      {uname}
+                      {host && (
+                        <span className="ml-1 rounded bg-amber-500/20 px-1.5 py-0.5 text-[11px] font-semibold text-amber-700 dark:text-amber-300">
+                          HOST
+                        </span>
+                      )}
+                    </span>
+                    <span className="text-[11px] text-neutral-400 dark:text-neutral-500">
+                      <TimeAgo date={new Date(msg.created_at).toISOString()} />
+                    </span>
+                  </div>
+
+                  <div
+                    className={[
+                      "mt-1 whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-sm md:text-[0.95rem] leading-tight",
+                      mine
+                        ? "bg-indigo-600 text-white shadow-sm"
+                        : "bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100 border border-neutral-200 dark:border-neutral-700",
+                    ].join(" ")}
                   >
-                    {msg.user?.username ?? username}
-                  </span>
-                  <span className="text-xs text-neutral-500">
-                    <TimeAgo date={new Date(msg.created_at).toISOString()} />
-                  </span>
+                    {msg.payload}
+                  </div>
                 </div>
 
-                <div className="break-words whitespace-pre-wrap text-neutral-100">
-                  {msg.payload}
-                </div>
+                {/* 내 메시지 → 아바타 오른쪽 */}
+                {mine && <div className="flex-shrink-0">{AvatarEl}</div>}
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 
-      {/* 입력영역: 모바일용 고정바 형태 옵션 또는 데스크탑 */}
-      <form className="mt-3" onSubmit={onSubmit}>
+      {/* Input: 모바일 sticky */}
+      <form
+        className="p-3 border-t bg-neutral-50 dark:bg-neutral-900/60 dark:border-neutral-800 sticky bottom-0 z-10 xl:static"
+        onSubmit={onSubmit}
+      >
         <div className="relative">
           <input
             required
             onChange={(e) => setMessage(e.target.value)}
             value={message}
-            className="w-full h-10 md:h-12 rounded-lg bg-neutral-800 placeholder:text-neutral-500 text-neutral-100 px-3 pr-12 border border-neutral-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full h-10 md:h-12 rounded-lg bg-white text-neutral-900 placeholder:text-neutral-400 border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder:text-neutral-500 dark:border-neutral-700 dark:focus:ring-indigo-500 dark:focus:border-indigo-500 pr-12 px-3"
             type="text"
             name="message"
             autoComplete="off"
@@ -330,9 +416,9 @@ export default function StreamChatRoom({
             disabled={sendDisabled}
             aria-label="메시지 전송"
             title={sendDisabled ? "잠시 후 다시 시도하세요" : "메시지 전송"}
-            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full disabled:opacity-50"
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full hover:bg-neutral-100 disabled:opacity-50 dark:hover:bg-neutral-700"
           >
-            <PaperAirplaneIcon className="w-5 h-5 text-indigo-400" />
+            <PaperAirplaneIcon className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
           </button>
         </div>
       </form>

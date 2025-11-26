@@ -38,6 +38,7 @@ export interface PostType extends BasePost {
 // 🔹 상세 조회용
 export interface PostDetail extends PostType {
   user: {
+    id: number;
     username: string;
     avatar: string | null;
   };

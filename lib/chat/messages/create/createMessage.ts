@@ -86,7 +86,7 @@ export async function createMessage(
         },
       });
 
-      // 🔁 유저 전용 채널로 변경 + 이미지 포함
+      // 유저 전용 채널로 변경 + 이미지 포함
       await supabase.channel(`user-${receiver.id}-notifications`).send({
         type: "broadcast",
         event: "notification",
@@ -96,7 +96,7 @@ export async function createMessage(
           body: notification.body,
           link: notification.link,
           type: notification.type,
-          image: notification.image, // 포함
+          image: `${notification.image}/avatar`,
         },
       });
 

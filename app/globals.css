@@ -38,6 +38,18 @@
     --radius-small: 0.375rem;
     --radius-medium: 0.5rem;
     --radius-large: 0.75rem;
+
+    --panel: #ffffff;
+    --panel-border: #e5e7eb;
+    --panel-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
+    --link: #3b82f6;
+  }
+
+  .dark {
+    --panel: #0b0f14; /* 기존 다크 톤과 자연스럽게 */
+    --panel-border: #1f2937;
+    --panel-shadow: 0 1px 2px rgb(0 0 0 / 0.4);
+    --link: #60a5fa;
   }
 
   /* 다크모드 전환 애니메이션 */
@@ -83,6 +95,42 @@
     focus:ring-primary focus:dark:ring-primary-light 
     placeholder:text-neutral-400 dark:placeholder:text-neutral-500 
     text-text dark:text-text-dark;
+  }
+
+  /* 라이트/다크 공용 패널 */
+  .panel {
+    @apply bg-[var(--panel)] border border-[var(--panel-border)] shadow-[var(--panel-shadow)] rounded-xl;
+  }
+  .btn-ghost {
+    @apply text-[var(--link)] px-2 py-1 rounded;
+  }
+  .section-h {
+    @apply flex items-center justify-between mb-2;
+  }
+
+  /* 링크형 타일(살짝 강조) */
+  .tile {
+    @apply panel transition-colors
+           hover:bg-neutral-50 dark:hover:bg-white/5;
+  }
+  .tile-strong {
+    @apply panel hover:shadow-lg transition-shadow;
+  }
+
+  /* 섹션 공통 여백(선택) */
+  .section {
+    @apply mt-6;
+  }
+  .section-tight {
+    @apply mt-4;
+  }
+  .section-divider {
+    @apply border-t border-neutral-200 dark:border-neutral-800 -mx-4 sm:-mx-6 px-4 sm:px-6 pt-6;
+  }
+
+  /* 타일 시각 강조(경계 + hover) */
+  .tile-strong {
+    @apply panel border-neutral-700/80 hover:border-neutral-500/70 hover:bg-white/5 transition-colors;
   }
 }
 

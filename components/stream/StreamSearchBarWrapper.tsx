@@ -6,6 +6,7 @@
  * History
  * 2025.08.25  임도헌   Created   posts의 StreamSearchBarWrapper 동일 컨셉
  * 2025.09.10  임도헌   Modified  a11y(role/label), 중복 push 방지, ESC/초기화 버튼, 모바일 키보드 힌트
+ * 2025.11.23  임도헌   Modified  모바일 UI 수정
  */
 
 "use client";
@@ -78,7 +79,7 @@ export default function StreamSearchBarWrapper() {
       <input
         id="stream-search"
         ref={inputRef}
-        type="search"
+        type="text"
         defaultValue={keywordFromUrl}
         placeholder="스트리밍 검색"
         onChange={onChange}
@@ -86,7 +87,13 @@ export default function StreamSearchBarWrapper() {
         enterKeyHint="search"
         autoComplete="off"
         spellCheck={false}
-        className="w-full px-3 py-2 pr-9 border border-neutral-300 dark:border-neutral-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-neutral-800 dark:text-white"
+        className="
+          w-full rounded-md border border-neutral-300 dark:border-neutral-600
+          px-3 py-1.5 sm:py-2                
+          text-[13px] sm:text-sm
+          shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500
+          dark:bg-neutral-800 dark:text-white appearance-none
+        "
       />
 
       {/* 초기화 버튼(X) — 텍스트가 있을 때만 표시 */}

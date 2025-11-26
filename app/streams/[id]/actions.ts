@@ -15,6 +15,7 @@
  * 2025.07.30  임도헌   Modified  비즈니스 로직 lib로 분리하고 revalidateTag만 유지
  * 2025.08.19  임도헌   Modified  rotateStreamKeyAction 추가
  * 2025.09.06  임도헌   Modified  sendStreamMessageAction 입력 검증/에러 코드 통일, 메시지 캐시 리빌리데이트 제거, import 경로 정리
+ * 2025.11.22  임도헌   Modified  broadcast-list 캐시 태그 제거 및 user-streams-id 태그 갱신 추가
  */
 "use server";
 
@@ -31,10 +32,24 @@ import { rotateLiveInputKey } from "@/lib/stream/rotateLiveInputKey";
  * 스트리밍 삭제 후 캐시 무효화
  */
 export const deleteBroadcastAction = async (broadcastId: number) => {
+  // 삭제 전에 소유자 id 확보 → user-broadcasts 태그 무효화용
+  const owner = await db.broadcast.findUnique({
+    where: { id: broadcastId },
+    select: {
+      liveInput: {
+        select: { userId: true },
+      },
+    },
+  });
+
   const result = await deleteBroadcast(broadcastId);
   if (result.success) {
     revalidateTag(`broadcast-detail-${broadcastId}`);
-    revalidateTag("broadcast-list");
+
+    const ownerId = owner?.liveInput?.userId;
+    if (ownerId) {
+      revalidateTag(`user-streams-id-${ownerId}`);
+    }
   }
   return result;
 };
@@ -107,23 +122,36 @@ export async function rotateLiveInputKeyAction(liveInputId: number) {
 
 /**
  * LiveInput 삭제
- * - 연결된 Broadcast들의 상세 캐시가 깨지므로 관련 상세 태그 무효화 + 리스트 무효화
- * - 삭제 전에 영향 받는 broadcast id들을 확보해서 revalidate
+ * - 연결된 Broadcast들의 상세 캐시가 깨지므로 관련 상세 태그 무효화
+ * - 삭제 전에 영향 받는 broadcast id / owner id들을 확보해서 revalidate
  */
 export async function deleteLiveInputAction(liveInputId: number) {
-  // 삭제 전에 참조 중인 broadcast id를 수집
+  // 삭제 전에 참조 중인 broadcast id + ownerId를 수집
   const affected = await db.broadcast.findMany({
     where: { liveInputId },
-    select: { id: true },
+    select: {
+      id: true,
+      liveInput: {
+        select: { userId: true },
+      },
+    },
   });
 
   const result = await deleteLiveInput(liveInputId);
 
   if (result.success) {
-    for (const { id } of affected) {
+    const ownerIds = new Set<number>();
+
+    for (const { id, liveInput } of affected) {
       revalidateTag(`broadcast-detail-${id}`);
+      if (liveInput?.userId) {
+        ownerIds.add(liveInput.userId);
+      }
     }
-    revalidateTag("broadcast-list");
+
+    for (const ownerId of ownerIds) {
+      revalidateTag(`user-streams-id-${ownerId}`);
+    }
   }
 
   return result;

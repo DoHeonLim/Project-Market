@@ -167,7 +167,7 @@ export default function PostForm({
 
   return (
     <div>
-      <form onSubmit={submitHandler} className="flex flex-col gap-5 p-5">
+      <form onSubmit={submitHandler} className="flex flex-col gap-5 p-5 pt-0">
         <select
           {...register("category")}
           className="w-full p-2 rounded-md

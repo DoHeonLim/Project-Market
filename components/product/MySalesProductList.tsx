@@ -250,11 +250,7 @@ export default function MySalesProductList({
   });
 
   return (
-    <div className="w-full flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold text-center text-primary dark:text-primary-light">
-        판매 제품
-      </h1>
-
+    <div className="w-full mx-auto max-w-3xl flex flex-col gap-6 px-4 py-6 sm:px-5 lg:px-6">
       {/* 탭 메뉴 */}
       <div
         className="flex justify-center space-x-4 mb-4"
@@ -312,7 +308,7 @@ export default function MySalesProductList({
         id={`panel-${activeTab}`}
         role="tabpanel"
         aria-labelledby={`tab-${activeTab}`}
-        className="flex flex-col gap-6"
+        className="flex flex-col gap-6 px-1.5 sm:px-0"
       >
         {currentProducts.length === 0 ? (
           <div className="text-center py-8">

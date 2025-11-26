@@ -108,11 +108,8 @@ export default function StreamList({
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-4 px-4 py-4">
+      <div className="grid grid-cols-2 gap-4">
         {items.map((s) => {
-          const startedAt =
-            typeof s.started_at === "string" ? s.started_at : null;
-
           const tags =
             Array.isArray(s.tags) && s.tags.length > 0
               ? typeof (s.tags as any)[0] === "string"
@@ -131,7 +128,7 @@ export default function StreamList({
                 username: s.user.username,
                 avatar: s.user.avatar ?? null,
               }}
-              startedAt={startedAt ?? null}
+              startedAt={s.started_at}
               category={s.category}
               tags={tags as { name: string }[]}
               requiresPassword={s.requiresPassword}
@@ -146,6 +143,7 @@ export default function StreamList({
                       })
                   : undefined
               }
+              layout="grid"
             />
           );
         })}

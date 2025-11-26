@@ -7,6 +7,7 @@
  * Date        Author   Status    Description
  * 2025.07.06  임도헌   Created   댓글 관련 서버 액션 분리
  * 2025.07.11  임도헌   Modified  댓글 무한 스크롤 구현
+ * 2025.11.20  임도헌   Modified  revalidate 태그 네이밍 통일
  */
 "use server";
 
@@ -19,6 +20,8 @@ import {
 import { revalidateTag, unstable_cache as nextCache } from "next/cache";
 import { commentFormSchema } from "@/lib/post/form/commentFormSchema";
 import { PostComment } from "@/types/post";
+
+const POST_COMMENTS_TAG_PREFIX = "post-comments-id-";
 
 // 게시글 댓글 목록 조회
 export const getComments = async (
@@ -48,9 +51,13 @@ export const getComments = async (
 
 // 게시글 댓글 목록 캐싱 함수
 export const getCachedComments = (postId: number): Promise<PostComment[]> => {
-  const cachedOperation = nextCache(getComments, ["post-comments"], {
-    tags: [`post-comments-${postId}`],
-  });
+  const cachedOperation = nextCache(
+    getComments,
+    ["post-comments", String(postId)],
+    {
+      tags: [`${POST_COMMENTS_TAG_PREFIX}${postId}`],
+    }
+  );
   return cachedOperation(postId);
 };
 
@@ -83,7 +90,7 @@ export const createComment = async (_: any, formData: FormData) => {
     });
     if (post) await checkBoardExplorerBadge(post.userId);
 
-    revalidateTag(`post-comments-${result.data.postId}`);
+    revalidateTag(`${POST_COMMENTS_TAG_PREFIX}${result.data.postId}`);
     return { success: true };
   } catch (e) {
     console.error(e);
@@ -95,7 +102,7 @@ export const createComment = async (_: any, formData: FormData) => {
 export const deleteComment = async (id: number, postId: number) => {
   try {
     await db.comment.delete({ where: { id } });
-    revalidateTag(`post-comments-${postId}`);
+    revalidateTag(`${POST_COMMENTS_TAG_PREFIX}${postId}`);
     return { success: true };
   } catch (e) {
     console.error(e);

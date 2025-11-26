@@ -12,6 +12,8 @@
  * 2025.09.13  임도헌   Modified  ended_at 우선 노출, TimeAgo에 Date 직접 전달, 반응형 1/2열
  * 2025.09.21  임도헌   Modified  카드 key를 vodId 기반으로, href 전달로 vodId 경로 사용
  * 2025.09.22  임도헌   Modified  VodForGrid(readyAt/duration/viewCount) 기준으로 정리
+ * 2025.11.23  임도헌   Modified  StreamCard layout(grid) 명시 및 카드 래퍼 정리,
+ *                                다시보기 메타 영역(길이/조회수) 높이 일관화
  */
 "use client";
 
@@ -51,14 +53,14 @@ export default function RecordingGrid({
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {recordings.map((rec) => {
-            // ⏱ 표시 시간 = readyAt (없으면 생략)
+            // 표시 시간 = readyAt (없으면 생략)
             const when = rec.readyAt ?? null;
 
-            // ⌛ 길이
+            // 길이
             const hasDuration =
               typeof rec.duration === "number" && rec.duration > 0;
 
-            // 👁 조회수
+            // 조회수
             const hasViews =
               typeof rec.viewCount === "number" && rec.viewCount >= 0;
 
@@ -73,13 +75,13 @@ export default function RecordingGrid({
                 ? rec.requiresPassword
                 : rec.visibility === "PRIVATE" && role !== "OWNER";
 
-            // 🔓 unlock 타깃 = 부모 Broadcast id
+            // unlock 타깃 = 부모 Broadcast id
             const unlockTargetId = rec.broadcastId;
 
-            // 📍 상세 경로: 없으면 vodId로 폴백
+            // 상세 경로: 없으면 vodId로 폴백
             const href = rec.href ?? `/streams/${rec.vodId}/recording`;
 
-            // 🔑 key = vodId
+            // key = vodId
             const key = `vod-${rec.vodId}`;
 
             return (
@@ -99,6 +101,7 @@ export default function RecordingGrid({
                   followersOnlyLocked={!!followersOnlyLocked}
                   onRequestFollow={followersOnlyLocked ? onFollow : undefined}
                   isPrivateType={rec.visibility === "PRIVATE"}
+                  layout="grid" // 기본값이라 생략 가능
                 />
 
                 {(when || hasDuration || hasViews) && (

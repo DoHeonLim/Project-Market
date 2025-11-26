@@ -7,17 +7,19 @@
  * 2025.08.06  임도헌   Created   녹화본 상세정보 컴포넌트 통합
  * 2025.09.20  임도헌   Modified  VodAsset 단위 좋아요/댓글/조회수 설계 반영
  * 2025.09.22  임도헌   Modified  RecordingDetailStream 제거 → getVodDetail DTO에 정렬
+ * 2025.11.26  임도헌   Modified  RecordingHeader → RecordingTitle, 작성자 정보는 Topbar로 이동
  */
 
 "use client";
 
-import RecordingHeader from "@/components/stream/recording/recordingDetail/RecordingHeader";
+import RecordingTitle from "@/components/stream/recording/recordingDetail/RecordingTitle";
 import RecordingVideo from "@/components/stream/recording/recordingDetail/RecordingVideo";
 import RecordingMeta from "@/components/stream/recording/recordingDetail/RecordingMeta";
 import RecordingLikeButton from "@/components/stream/recording/recordingDetail/RecordingLikeButton";
 import { VodDetailDTO } from "@/lib/stream/getVodDetail";
 
-type BroadcastForRecording = Pick<VodDetailDTO["broadcast"], "title" | "owner">;
+// 이제는 제목만 필요
+type BroadcastForRecording = Pick<VodDetailDTO["broadcast"], "title">;
 
 interface RecordingDetailProps {
   /** 방송 메타: 제목 + 소유자 */
@@ -51,7 +53,7 @@ export default function RecordingDetail({
 }: RecordingDetailProps) {
   return (
     <div className="flex w-full max-w-3xl flex-col gap-4 rounded-2xl p-4">
-      <RecordingHeader user={broadcast.owner} title={broadcast.title} />
+      <RecordingTitle title={broadcast.title} />
       <RecordingVideo uid={uid} />
       <RecordingMeta
         created={created}

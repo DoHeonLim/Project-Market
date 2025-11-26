@@ -4,10 +4,13 @@
  * Author : 임도헌
  *
  * History
- * 2025.09.17 임도헌 Created Broadcast 기준으로 재구현 + 직렬화 유틸 적용
+ * 2025.09.17 임도헌 Created   Broadcast 기준으로 재구현 + 직렬화 유틸 적용
  * 2025.09.17 임도헌 Modified 불필요한 scopeFilter 제거, where 인라인 분기
  * 2025.09.23 임도헌 Modified serializeStream 최신 스펙 반영(stream_id/ended_at)
  * 2025.09.30 임도헌 Modified 상위 카테고리 클릭 시 하위 카테고리 포함 필터링
+ * 2025.11.22 임도헌 Modified 커서 조건 분기(id < cursor) 가독성/안전성 개선
+ * 2025.11.23 임도헌 Modified FOLLOWERS 방송에서 본인 방송은 항상 노출되도록 예외 추가
+ * 2025.11.23 임도헌 Modified 팔로잉 탭에서도 본인 방송이 함께 노출되도록 조건 보강
  */
 
 import "server-only";
@@ -70,22 +73,25 @@ export async function getStreams(params: {
       }
     : {};
 
-  // 커서
-  const idCursor = cursor ? { lt: cursor } : {};
-
   // === 접근 제어 조건 구성 ===
   let where: any;
 
   if (scope === "following") {
-    // following 탭: 팔로우하는 유저의 방송만
+    // following 탭: 내가 팔로우하는 유저의 방송 + 내 방송
     const conditions: any[] = [
       whereBase,
       keywordFilter,
-      { id: idCursor },
       {
         liveInput: {
           user: {
-            followers: { some: { followerId: viewerId! } },
+            OR: [
+              { id: viewerId! }, // 내 방송
+              {
+                followers: {
+                  some: { followerId: viewerId! }, // 내가 팔로우하는 유저
+                },
+              },
+            ],
           },
         },
       },
@@ -95,6 +101,11 @@ export async function getStreams(params: {
         },
       },
     ];
+
+    // 커서 조건(id < cursor) — cursor가 있을 때만 추가
+    if (cursor) {
+      conditions.push({ id: { lt: cursor } });
+    }
 
     if (categoryCondition) {
       conditions.push(categoryCondition);
@@ -110,26 +121,43 @@ export async function getStreams(params: {
       const conditions: any[] = [
         whereBase,
         keywordFilter,
-        { id: idCursor },
         {
           OR: [
+            // 1) 누구에게나 노출되는 공개 방송
             { visibility: "PUBLIC" },
+
+            // 2) 팔로워 전용 방송
+            //    - 내가 그 유저를 팔로우하고 있거나
+            //    - 내가 방송 주인인 경우(본인 방송은 항상 보이도록)
             {
               AND: [
                 { visibility: "FOLLOWERS" },
                 {
                   liveInput: {
                     user: {
-                      followers: { some: { followerId: viewerId } },
+                      OR: [
+                        { id: viewerId }, // 내가 방송 주인인 경우
+                        {
+                          followers: {
+                            some: { followerId: viewerId }, // 내가 팔로워인 경우
+                          },
+                        },
+                      ],
                     },
                   },
                 },
               ],
             },
+
+            // 3) 비밀 방송 (비밀번호 모달로 보호, 노출 정책은 기존 그대로 유지)
             { visibility: "PRIVATE" },
           ],
         },
       ];
+
+      if (cursor) {
+        conditions.push({ id: { lt: cursor } });
+      }
 
       if (categoryCondition) {
         conditions.push(categoryCondition);
@@ -143,11 +171,14 @@ export async function getStreams(params: {
       const conditions: any[] = [
         whereBase,
         keywordFilter,
-        { id: idCursor },
         {
           OR: [{ visibility: "PUBLIC" }, { visibility: "PRIVATE" }],
         },
       ];
+
+      if (cursor) {
+        conditions.push({ id: { lt: cursor } });
+      }
 
       if (categoryCondition) {
         conditions.push(categoryCondition);

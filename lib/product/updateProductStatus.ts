@@ -11,8 +11,9 @@
  * 2025.11.02  임도헌   Modified   권한검증 추가, SELLING 캐시 무효화 버그 수정, selectUserId 검증 보강,
  *                                이미지 URL 안전화, 알림 링크 경로 통일(/products/view/:id)
  * 2025.11.10  임도헌   Modified   Supabase 공용 채널→유저 전용 채널 전환, 실시간 payload에 image 포함
+ * 2025.11.13  임도헌   Modified  중복예약 차단/판매완료 시 예약필드 정리 정책을 적용,
+ *                                알림/푸시 allSettled, 에러 메시지 보강
  */
-
 "use server";
 
 import { revalidateTag } from "next/cache";
@@ -32,7 +33,7 @@ import {
 
 type Status = "selling" | "reserved" | "sold";
 
-/* ---------------- Revalidate Functions ---------------- */
+/* ---------------- Revalidate ---------------- */
 
 function rvSellerTabsAndCounts(sellerId: number) {
   revalidateTag(`user-products-SELLING-id-${sellerId}`);
@@ -51,11 +52,10 @@ export async function updateProductStatus(
   selectUserId?: number
 ) {
   try {
-    // 권한 체크: 제품 소유자만 변경 가능
+    // 권한 체크
     const session = await getSession();
-    if (!session?.id) {
-      return { success: false, error: "로그인이 필요합니다." };
-    }
+    if (!session?.id) return { success: false, error: "로그인이 필요합니다." };
+
     const owner = await db.product.findUnique({
       where: { id: productId },
       select: { userId: true },
@@ -64,24 +64,37 @@ export async function updateProductStatus(
       return { success: false, error: "권한이 없습니다." };
     }
 
-    /* -------- RESERVED (판매중 → 예약중) --------
-       규칙: 판매자 태그만 무효화 */
+    /* -------- RESERVED (판매중 → 예약중) -------- */
     if (status === "reserved") {
-      if (!selectUserId) {
-        throw new Error("예약 전환에는 selectUserId가 필요합니다.");
+      if (!selectUserId)
+        return {
+          success: false,
+          error: "예약 전환에는 예약자를 선택해야 합니다.",
+        };
+
+      // (정책 고정) 이미 예약자가 있으면 차단
+      const prev = await db.product.findUnique({
+        where: { id: productId },
+        select: { reservation_userId: true },
+      });
+      if (prev?.reservation_userId) {
+        return { success: false, error: "이미 예약 중인 상품입니다." };
       }
 
-      // 선택 유저가 실제 채팅 상대인지 검증
+      // 실제 채팅 상대인지 검증
       const validChatUser = await db.productChatRoom.findFirst({
         where: {
           productId,
-          users: { some: { id: session.id } }, // 내가 속한 방
+          users: { some: { id: session.id } },
           AND: [{ users: { some: { id: selectUserId } } }],
         },
         select: { id: true },
       });
       if (!validChatUser) {
-        throw new Error("채팅 내역이 없는 유저는 예약자로 지정할 수 없습니다.");
+        return {
+          success: false,
+          error: "채팅 내역이 없는 유저는 예약자로 지정할 수 없습니다.",
+        };
       }
 
       const product = await db.product.update({
@@ -109,12 +122,12 @@ export async function updateProductStatus(
           title: "상품이 예약되었습니다",
           body: `${product.title} 상품이 예약되었습니다.`,
           type: "TRADE",
-          link: `/products/view/${productId}`, // 통일
+          link: `/products/view/${productId}`,
           image: imageUrl,
         },
       });
 
-      await Promise.all([
+      await Promise.allSettled([
         supabase.channel(`user-${selectUserId}-notifications`).send({
           type: "broadcast",
           event: "notification",
@@ -133,24 +146,20 @@ export async function updateProductStatus(
           message: notification.body,
           url: notification.link || "",
           type: "TRADE",
-          image: notification.image || "",
-          // 동일 상품 알림은 하나로 교체
+          image: notification.image || undefined,
           tag: `bp-trade-${productId}`,
-          // 예약 전환은 인지 필요 → 소리/진동 허용
           renotify: true,
           topic: `bp-trade-${productId}`,
         }),
       ]);
 
-      // 캐시 무효화 (판매자만)
       rvSellerTabsAndCounts(product.user.id);
       revalidateTag(`product-detail-id-${productId}`);
 
       return { success: true, newStatus: "reserved" as const };
     }
 
-    /* -------- SOLD (예약중 → 판매완료) --------
-       규칙: 판매자 + 구매자(PURCHASED) 태그 모두 무효화 */
+    /* -------- SOLD (예약중 → 판매완료) -------- */
     if (status === "sold") {
       const info = await db.product.findUnique({
         where: { id: productId },
@@ -182,9 +191,11 @@ export async function updateProductStatus(
       });
 
       if (!info?.reservation_userId) {
-        throw new Error(
-          "구매자(예약자)가 지정되지 않아 판매완료로 전환할 수 없습니다."
-        );
+        return {
+          success: false,
+          error:
+            "구매자(예약자)가 지정되어 있지 않아 판매완료로 전환할 수 없습니다.",
+        };
       }
 
       await db.product.update({
@@ -192,10 +203,13 @@ export async function updateProductStatus(
         data: {
           purchased_at: new Date(),
           purchase_userId: info.reservation_userId,
+          // (정책 고정) 판매완료 시 예약 흔적 정리
+          reservation_at: null,
+          reservation_userId: null,
         },
       });
 
-      // 배지 체크 (원본 로직 유지)
+      // 배지 체크
       const buyerBadges = await db.user.findUnique({
         where: { id: info.reservation_userId },
         select: { badges: { select: { name: true } } },
@@ -217,18 +231,18 @@ export async function updateProductStatus(
       if (!buyerFirstDeal)
         badgeTasks.push(checkFirstDealBadge(info.reservation_userId));
 
-      const badgeSet = new Set(info.user.badges.map((b) => b.name));
-      const sellerHasBadge =
-        badgeSet.has("POWER_SELLER") ||
-        badgeSet.has("FAIR_TRADER") ||
-        badgeSet.has("GENRE_MASTER");
+      const sellerBadgeSet = new Set(info.user.badges.map((b) => b.name));
+      const sellerHasTier =
+        sellerBadgeSet.has("POWER_SELLER") ||
+        sellerBadgeSet.has("FAIR_TRADER") ||
+        sellerBadgeSet.has("GENRE_MASTER");
 
-      if (!sellerHasBadge && sellerTradeCount >= 14) {
+      if (!sellerHasTier && sellerTradeCount >= 14) {
         badgeTasks.push(checkGenreMasterBadge(info.user.id));
         badgeTasks.push(checkGenreMasterBadge(info.reservation_userId));
-      } else if (!sellerHasBadge && sellerTradeCount >= 9) {
+      } else if (!sellerHasTier && sellerTradeCount >= 9) {
         badgeTasks.push(checkPowerSellerBadge(info.user.id));
-      } else if (!sellerHasBadge && sellerTradeCount >= 4) {
+      } else if (!sellerHasTier && sellerTradeCount >= 4) {
         badgeTasks.push(checkFairTraderBadge(info.user.id));
         badgeTasks.push(checkQualityMasterBadge(info.user.id));
       }
@@ -265,8 +279,7 @@ export async function updateProductStatus(
         checkBoardExplorerBadge(info.reservation_userId),
       ]);
 
-      await Promise.all([
-        // 유저 전용 채널 브로드캐스트(판매자)
+      await Promise.allSettled([
         supabase.channel(`user-${info.user.id}-notifications`).send({
           type: "broadcast",
           event: "notification",
@@ -279,7 +292,6 @@ export async function updateProductStatus(
             image: sellerNotification.image,
           },
         }),
-        // 유저 전용 채널 브로드캐스트(구매자)
         supabase.channel(`user-${info.reservation_userId}-notifications`).send({
           type: "broadcast",
           event: "notification",
@@ -292,14 +304,13 @@ export async function updateProductStatus(
             image: buyerNotification.image,
           },
         }),
-        // 푸시(판매자/구매자)
         sendPushNotification({
           targetUserId: info.user.id,
           title: sellerNotification.title,
           message: sellerNotification.body,
           url: sellerNotification.link || "",
           type: "TRADE",
-          image: sellerNotification.image || "",
+          image: sellerNotification.image || undefined,
           tag: `bp-trade-${productId}`,
           renotify: true,
           topic: `bp-trade-${productId}`,
@@ -310,56 +321,58 @@ export async function updateProductStatus(
           message: buyerNotification.body,
           url: buyerNotification.link || "",
           type: "TRADE",
-          image: buyerNotification.image || "",
+          image: buyerNotification.image || undefined,
           tag: `bp-trade-${productId}`,
           renotify: true,
           topic: `bp-trade-${productId}`,
         }),
       ]);
 
-      // 캐시 무효화 (판매자 + 구매자)
+      // 캐시 무효화
       rvSellerTabsAndCounts(info.user.id);
       rvBuyerPurchasedAndCounts(info.reservation_userId);
       revalidateTag(`product-detail-id-${productId}`);
 
+      // 프로필 리뷰/평점 캐시 무효화(양쪽)
+      revalidateTag(`user-average-rating-id-${info.user.id}`);
+      revalidateTag(`user-reviews-initial-id-${info.user.id}`);
+      revalidateTag(`user-average-rating-id-${info.reservation_userId}`);
+      revalidateTag(`user-reviews-initial-id-${info.reservation_userId}`);
+
       return { success: true, newStatus: "sold" as const };
     }
 
-    /* -------- SELLING (예약중/판매완료 → 판매중) --------
-       규칙:
-       - RESERVED → SELLING : 판매자만
-       - SOLD → SELLING(롤백) : 판매자 + 구매자(PURCHASED)
-    */
-    const prev = await db.product.findUnique({
+    /* -------- SELLING (예약중/판매완료 → 판매중) -------- */
+    const prev2 = await db.product.findUnique({
       where: { id: productId },
       select: { userId: true, purchase_userId: true },
     });
-    if (!prev) {
-      return { success: false, error: "상품을 찾을 수 없습니다." };
-    }
+    if (!prev2) return { success: false, error: "상품을 찾을 수 없습니다." };
 
     await db.product.update({
       where: { id: productId },
       data: {
         purchased_at: null,
-        purchase_userId: null, // 있었으면 SOLD → SELLING 롤백
+        purchase_userId: null,
         reservation_at: null,
-        reservation_userId: null, // 있었으면 RESERVED → SELLING
+        reservation_userId: null,
       },
     });
 
-    // 판매자 탭/카운트 무효화는 공통
-    rvSellerTabsAndCounts(prev.userId);
-
-    // SOLD → SELLING 롤백이었다면 구매자 캐시도 무효화
-    if (prev.purchase_userId) {
-      rvBuyerPurchasedAndCounts(prev.purchase_userId);
-    }
-
+    rvSellerTabsAndCounts(prev2.userId);
+    if (prev2.purchase_userId) rvBuyerPurchasedAndCounts(prev2.purchase_userId);
     revalidateTag(`product-detail-id-${productId}`);
+
+    // 리뷰 삭제는 클라이언트 Confirm 후 deleteAllProductReviews 호출로 처리
     return { success: true, newStatus: "selling" as const };
-  } catch (error) {
-    console.error("상품 상태 업데이트 중 오류:", error);
-    return { success: false, error: "상품 상태 업데이트에 실패했습니다." };
+  } catch (err) {
+    console.error("상품 상태 업데이트 중 오류:", err);
+    return {
+      success: false,
+      error:
+        err instanceof Error
+          ? err.message
+          : "상품 상태 업데이트에 실패했습니다.",
+    };
   }
 }

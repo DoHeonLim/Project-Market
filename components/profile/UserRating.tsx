@@ -81,7 +81,7 @@ export default function UserRating({
           );
         })}
       </div>
-      <div className={`${textSizes[size]} text-gray-300`}>
+      <div className={`${textSizes[size]} text-neutral-600 dark:text-gray-300`}>
         {displayAvg} ({reviews})
       </div>
     </div>

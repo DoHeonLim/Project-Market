@@ -9,11 +9,12 @@
  * 2025.08.23  임도헌   Modified  ignoreSelf 옵션 추가(낙관X 플로우 지원), cleanup 강화
  * 2025.09.05  임도헌   Modified  dedup(Set) 및 visibility 숨김 시 일시중단 추가 (시그니처 변화 없음)
  * 2025.09.09  임도헌   Modified  handler payload 타입 명확화(BroadcastEnvelope<StreamChatMessage>)
+ * 2025.11.21  임도헌   Modified  채널 인스턴스 반환 추가
  */
 
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import type { StreamChatMessage } from "@/types/chat";
@@ -41,6 +42,11 @@ export function useStreamChatSubscription({
   channelName,
   ignoreSelf = true,
 }: Props) {
+  // 채널 인스턴스 저장(전송용 재사용)
+  const [channelState, setChannelState] = useState<RealtimeChannel | null>(
+    null
+  );
+
   const onReceiveRef = useRef(onReceive);
   useEffect(() => {
     onReceiveRef.current = onReceive;
@@ -54,6 +60,7 @@ export function useStreamChatSubscription({
   useEffect(() => {
     const name = channelName ?? `room-${streamChatRoomId}`;
     const channel: RealtimeChannel = supabase.channel(name);
+    setChannelState(channel); // ← 외부에 알려줄 값
 
     // 가시성 변화에 따라 일시중단 플래그 관리
     const onVisibility = () => {
@@ -97,6 +104,9 @@ export function useStreamChatSubscription({
       // seenIdsRef.current.clear();
     };
   }, [streamChatRoomId, userId, eventName, channelName, ignoreSelf]);
+
+  // 전송 시에도 같은 채널을 재사용할 수 있도록 반환
+  return channelState;
 }
 
 export default useStreamChatSubscription;

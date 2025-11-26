@@ -19,6 +19,7 @@
  * 2025.09.16  임도헌   Modified   Broadcast 스키마 반영, 캐시 태그 교체(broadcast-detail-*), 채팅방 조회/host 경로 수정
  * 2025.09.16  임도헌   Modified   네이밍 정리(checkBroadcastAccess/isBroadcastUnlocked), 캐시 태그 상수화
  * 2025.09.30  임도헌   Modified   데스크톱, 모바일 UI 변경
+ * 2025.11.15  임도헌   Modified   layout으로 back버튼 이동
  */
 export const dynamic = "force-dynamic";
 
@@ -36,9 +37,10 @@ import { isBroadcastUnlocked } from "@/lib/stream/unlockPrivateBroadcast";
 import { checkBroadcastAccess } from "@/lib/stream/checkBroadcastAccess";
 import { getInitialStreamMessages } from "@/lib/chat/messages/getInitialStreamMessages";
 import type { StreamVisibility } from "@/types/stream";
-import BackButton from "@/components/common/BackButton";
 import StreamDetail from "@/components/stream/StreamDetail";
 import StreamChatRoom from "@/components/stream/StreamChatRoom";
+import StreamTopbar from "@/components/stream/StreamTopBar";
+import StreamMobileChatSection from "@/components/stream/StreamMobileChatSection";
 
 export default async function StreamDetailPage({
   params,
@@ -61,7 +63,11 @@ export default async function StreamDetailPage({
     getSession(),
     getCachedBroadcast(broadcastId),
   ]);
-
+  if (!session?.id) {
+    redirect(
+      `/login?callbackUrl=${encodeURIComponent(`/streams/${broadcastId}`)}`
+    );
+  }
   if (!fetched) notFound();
 
   const initialBroadcast = fetched as StreamDetailDTO;
@@ -110,43 +116,30 @@ export default async function StreamDetailPage({
 
   return (
     <main className="w-full">
-      <div className="py-6 px-4 md:px-6">
-        <BackButton href="/streams" />
-
-        {/* 데스크탑: 중앙 컬럼 + 오른쪽 고정 채팅(360px)
+      <StreamTopbar
+        visibility={initialBroadcast.visibility}
+        backFallbackHref="/streams"
+      />
+      {/* 데스크탑: 중앙 컬럼 + 오른쪽 고정 채팅(360px)
             모바일: 오른쪽 채팅은 숨기고 아래에 렌더 */}
-        <div className="xl:grid xl:grid-cols-[1fr,min(100%,900px),400px] ">
-          {/* 왼쪽 gutter (빈 칸) */}
-          <div className="hidden xl:block" />
+      <div className="xl:grid xl:grid-cols-[1fr,min(100%,900px),400px] ">
+        {/* 왼쪽 gutter (빈 칸) */}
+        <div className="hidden xl:block" />
 
-          {/* 중앙: 비디오 + 메타 (max width 고정) */}
-          <div className="mx-auto w-full max-w-[900px]">
-            <StreamDetail
-              stream={initialBroadcast}
-              me={session?.id ?? null}
-              streamId={broadcastId}
-            />
-          </div>
-
-          {/* 오른쪽: 데스크탑 전용 고정 채팅 패널 */}
-          <aside
-            className="hidden xl:block xl:ml-8"
-            aria-label="stream chat panel"
-          >
-            <div style={{ height: "calc(100vh - 96px)" }}>
-              <StreamChatRoom
-                initialStreamMessage={initialStreamMessage}
-                streamChatRoomId={streamChatRoom.id}
-                streamChatRoomhost={streamChatRoom.broadcast.liveInput.userId}
-                userId={session.id!}
-                username={user.username}
-              />
-            </div>
-          </aside>
+        {/* 중앙: 비디오 + 메타 (max width 고정) */}
+        <div className="mx-auto w-full">
+          <StreamDetail
+            stream={initialBroadcast}
+            me={session?.id ?? null}
+            streamId={broadcastId}
+          />
         </div>
 
-        {/* 모바일: 중앙 콘텐츠 아래에 채팅 렌더 (full width) */}
-        <div className="xl:hidden mt-6">
+        {/* 오른쪽: 데스크탑 전용 고정 채팅 패널 */}
+        <div
+          className="hidden xl:block xl:ml-2 h-[calc(100vh-96px)] max-w-[50vh]"
+          aria-label="stream chat panel"
+        >
           <StreamChatRoom
             initialStreamMessage={initialStreamMessage}
             streamChatRoomId={streamChatRoom.id}
@@ -155,6 +148,16 @@ export default async function StreamDetailPage({
             username={user.username}
           />
         </div>
+      </div>
+      {/* 모바일/태블릿: 정보 + 채팅을 같은 컬럼에서 배치, 남는 공간은 채팅이 먹음 */}
+      <div className="xl:hidden mt-1">
+        <StreamMobileChatSection
+          initialStreamMessage={initialStreamMessage}
+          streamChatRoomId={streamChatRoom.id}
+          streamChatRoomhost={streamChatRoom.broadcast.liveInput.userId}
+          userId={session.id!}
+          username={user.username}
+        />
       </div>
     </main>
   );

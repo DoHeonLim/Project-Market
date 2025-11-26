@@ -16,6 +16,7 @@
 import db from "@/lib/db";
 import { unstable_cache as nextCache } from "next/cache";
 import type { ProfileReview } from "@/types/profile";
+import type { Prisma } from "@prisma/client";
 
 export type ReviewCursor = { lastCreatedAt: Date; lastId: number } | null;
 
@@ -54,53 +55,63 @@ function toProfileReviewDTO(r: any): ProfileReview {
   };
 }
 
+// 공통 where (타입 명시)
+function receivedReviewsWhere(targetUserId: number): Prisma.ReviewWhereInput {
+  return {
+    userId: { not: targetUserId }, // 내가 쓴 건 제외
+    OR: [
+      // 내가 판매자였고 실제 판매가 성립한 거래에서 받은 리뷰
+      { product: { userId: targetUserId, purchase_userId: { not: null } } },
+      // 내가 구매자였던 거래에서 받은 리뷰
+      { product: { purchase_userId: targetUserId } },
+    ],
+  };
+}
+
 /** 초기 N개 (created_at desc, id desc) */
 export const getInitialUserReviews = async (
-  sellerId: number,
+  targetUserId: number,
   limit = 10
 ): Promise<ProfileReview[]> => {
-  const take = Math.max(1, Math.min(limit, 50)); // 간단한 클램프(음수 되지 않게)
+  const where = receivedReviewsWhere(targetUserId);
+  const take = Math.max(1, Math.min(limit, 50));
+
   const rows = await db.review.findMany({
-    where: {
-      // 판매자(sellerId)에게 달린 리뷰 & 실제 구매 완료만
-      product: { userId: sellerId, purchase_userId: { not: null } },
-      // 자기 자신이 자기에게 쓴 리뷰 제외
-      userId: { not: sellerId },
-    },
+    where,
     select: reviewSelect,
     orderBy: [{ created_at: "desc" }, { id: "desc" }],
     take,
   });
+
   return rows.map(toProfileReviewDTO);
 };
 
-/** 키셋 페이지네이션 (비캐시 권장: 개인화/스크롤 빈도 높음) */
 export const getMoreUserReviews = async (
-  sellerId: number,
+  targetUserId: number,
   cursor?: ReviewCursor,
   limit = 10
-): Promise<{ reviews: ProfileReview[]; nextCursor: ReviewCursor }> => {
-  const take = Math.max(1, Math.min(limit, 50));
-
-  const whereBase = {
-    product: { userId: sellerId, purchase_userId: { not: null } },
-    userId: { not: sellerId },
-  } as const;
-
-  const where = cursor
+) => {
+  const base = receivedReviewsWhere(targetUserId);
+  const where: Prisma.ReviewWhereInput = cursor
     ? {
+        ...base,
         AND: [
-          whereBase,
           {
             OR: [
               { created_at: { lt: cursor.lastCreatedAt } },
-              { created_at: cursor.lastCreatedAt, id: { lt: cursor.lastId } },
+              {
+                AND: [
+                  { created_at: cursor.lastCreatedAt },
+                  { id: { lt: cursor.lastId } },
+                ],
+              },
             ],
           },
         ],
       }
-    : whereBase;
+    : base;
 
+  const take = Math.max(1, Math.min(limit, 50));
   const rows = await db.review.findMany({
     where,
     select: reviewSelect,
@@ -110,7 +121,7 @@ export const getMoreUserReviews = async (
 
   const reviews = rows.map(toProfileReviewDTO);
   const tail = rows[rows.length - 1];
-  const nextCursor: ReviewCursor = tail
+  const nextCursor = tail
     ? { lastCreatedAt: tail.created_at as Date, lastId: tail.id }
     : null;
 
@@ -118,11 +129,11 @@ export const getMoreUserReviews = async (
 };
 
 /** 초기 번들 캐시: per-id 태그 + 고정 키 */
-export const getCachedInitialUserReviews = (sellerId: number, limit = 10) => {
+export const getCachedInitialUserReviews = (userId: number, limit = 10) => {
   const cached = nextCache(
     async (uid: number, lim: number) => getInitialUserReviews(uid, lim),
     ["user-reviews-initial-by-id"],
-    { tags: [`user-reviews-initial-id-${sellerId}`] }
+    { tags: [`user-reviews-initial-id-${userId}`] }
   );
-  return cached(sellerId, limit);
+  return cached(userId, limit);
 };

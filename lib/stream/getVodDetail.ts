@@ -6,6 +6,7 @@
  * History
  * Date        Author   Status    Description
  * 2025.09.22  임도헌   Created   녹화본 상세 페이지에서 사용하는 최소 필드만 선별
+ * 2025.11.26  임도헌   Modified  방송 카테고리/태그 포함하도록 DTO 확장(Topbar/메타용)
  */
 
 import "server-only";
@@ -33,6 +34,16 @@ export type VodDetailDTO = {
       username: string;
       avatar: string | null;
     };
+    category: {
+      id: number;
+      eng_name: string;
+      kor_name: string;
+      icon: string | null;
+    } | null;
+    tags: {
+      id: number;
+      name: string;
+    }[];
   };
 };
 
@@ -59,6 +70,20 @@ export async function getVodDetail(
             select: {
               provider_uid: true,
               user: { select: { id: true, username: true, avatar: true } },
+            },
+          },
+          category: {
+            select: {
+              id: true,
+              eng_name: true,
+              kor_name: true,
+              icon: true,
+            },
+          },
+          tags: {
+            select: {
+              id: true,
+              name: true,
             },
           },
         },
@@ -89,6 +114,18 @@ export async function getVodDetail(
         username: vod.broadcast.liveInput.user.username,
         avatar: vod.broadcast.liveInput.user.avatar,
       },
+      category: vod.broadcast.category
+        ? {
+            id: vod.broadcast.category.id,
+            eng_name: vod.broadcast.category.eng_name,
+            kor_name: vod.broadcast.category.kor_name,
+            icon: vod.broadcast.category.icon ?? null,
+          }
+        : null,
+      tags: (vod.broadcast.tags ?? []).map((t) => ({
+        id: t.id,
+        name: t.name,
+      })),
     },
   };
 }

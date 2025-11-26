@@ -20,10 +20,12 @@
  * 2025.10.12  임도헌   Modified   getUserProfile 변경 반영
  * 2025.10.29  임도헌   Modified   Promise.all 튜플 타입 적용, 무효화 키 주석 추가
  * 2025.10.29  임도헌   Modified   비로그인 가드 리다이렉트 경로 수정(/login 등), revalidate 메모 보강
+ * 2025.11.12  임도헌   Modified   내부 max-w 제거(중앙 정렬 체감↑), Harbor 배너/WaveDivider 추가,
+ *                                설정 드롭다운(ProfileSettingMenu) 상단 우측 배치
  */
 
 // revalidateTag 트리거 메모
-// - 프로필 코어:     user-core-id-${userId}                 // 아바타/닉네임/이메일 등 수정
+// - 프로필 코어:     user-core-id-${userId}
 // - 팔로우 카운트:   user-followers-id-${userId}, user-following-id-${userId}
 // - 리뷰 변경:       user-reviews-initial-id-${userId}, user-average-rating-id-${userId}
 // - 배지 변경:       badges-all, user-badges-id-${userId}
@@ -32,6 +34,7 @@
 import { redirect } from "next/navigation";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import MyProfile from "@/components/profile/MyProfile";
+import ProfileSettingMenu from "@/components/profile/ProfileSettingMenu";
 
 import { getUserProfile } from "@/lib/user/getUserProfile";
 import { getCachedInitialUserReviews } from "@/lib/user/getUserReviews";
@@ -54,16 +57,12 @@ import type {
 export const dynamic = "force-dynamic"; // 개인화 페이지 → 전체 응답 캐시 회피
 
 export default async function ProfilePage() {
-  // 1) 로그인/세션 기준 자신의 프로필
   const user = (await getUserProfile()) as UserProfile | null;
-  if (!user) {
-    return redirect("/login");
-  }
+  if (!user) return redirect("/login");
 
-  // 2) 병렬 데이터 로딩 (초기 리뷰/평점/배지/스트림 1페이지)
   const [initialReviews, averageRating, badgesPair, streams]: [
     ProfileReview[],
-    ProfileAverageRating, // { averageRating: number; reviewCount: number }
+    ProfileAverageRating,
     { badges: Badge[]; userBadges: Badge[] },
     BroadcastSummary[],
   ] = await Promise.all([
@@ -80,19 +79,28 @@ export default async function ProfilePage() {
       const { items } = await getUserStreams({
         ownerId: user.id,
         viewerId: user.id, // OWNER 버킷 히트
-        take: 6, // 1p 캐시 범위
+        take: 6,
       });
       return items;
     })(),
   ]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background/60 to-background/95 dark:from-background-dark/60 dark:to-background-dark/95 transition-colors duration-200">
-      <div className="mx-auto px-4 py-8 max-w-6xl">
-        <div className="flex justify-end mb-4">
+    <div className="min-h-screen bg-background dark:bg-neutral-950 transition-colors">
+      {/* 상단 우측 도구 모음 */}
+      <div
+        className="px-4 sm:px-5 py-3 sm:py-4"
+        role="region"
+        aria-label="프로필 도구 모음"
+      >
+        <div className="flex justify-end gap-2">
+          <ProfileSettingMenu emailVerified={!!user.emailVerified} />
           <ThemeToggle />
         </div>
+      </div>
 
+      {/* 본문 — AppWrapper가 폭을 고정하므로 추가 max-w 없이 좌우 여백만 */}
+      <div className="px-4 sm:px-5 pb-8">
         <MyProfile
           user={user}
           initialReviews={initialReviews}

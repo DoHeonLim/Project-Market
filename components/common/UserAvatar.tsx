@@ -1,15 +1,15 @@
 /**
-File Name : components/common/UserAvatar
-Description : 유저 아바타 컴포넌트
-Author : 임도헌
-
-History
-Date        Author   Status    Description
-2024.12.07  임도헌   Created
-2024.12.07  임도헌   Modified  유저 아바타 컴포넌트 추가
-2024.12.12  임도헌   Modified  유저 아바타 생성시간 표시 변경
-2024.12.16  임도헌   Modified  다크모드 적용
-*/
+ * File Name : components/common/UserAvatar
+ * Description : 유저 아바타 컴포넌트
+ * Author : 임도헌
+ *
+ * History
+ * 2024.12.07  임도헌   Created
+ * 2024.12.07  임도헌   Modified  유저 아바타 컴포넌트 추가
+ * 2024.12.16  임도헌   Modified  다크모드 적용
+ * 2025.11.12  임도헌   Modified  className 지원 및 아바타 표시 조건/접근성 보강
+ * 2025.11.16  임도헌   Modified  compact 옵션 + inline-flex/shrink-0, 빈 텍스트 래퍼 제거
+ */
 
 "use client";
 
@@ -17,6 +17,7 @@ import { UserIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import Link from "next/link";
 import TimeAgo from "./TimeAgo";
+import { cn } from "@/lib/utils";
 
 interface UserAvatarProps {
   avatar?: string | null;
@@ -26,6 +27,9 @@ interface UserAvatarProps {
   created_at?: Date;
   disabled?: boolean;
   text?: string;
+  className?: string;
+  /** 채팅/리스트 등 초소형 배치용: 바깥 패딩 제거, 호버 제거 */
+  compact?: boolean;
 }
 
 export default function UserAvatar({
@@ -36,64 +40,79 @@ export default function UserAvatar({
   created_at,
   disabled = false,
   text,
+  className,
+  compact = false,
 }: UserAvatarProps) {
   const sizes = {
-    sm: "size-7",
-    md: "size-10",
-    lg: "size-52",
+    sm: { box: "size-8", px: 32 },
+    md: { box: "size-28", px: 40 },
+    lg: { box: "size-52", px: 200 },
   };
 
-  const AvatarContent = () => (
+  const root = (
     <div
-      className={`flex items-center p-2 ${
-        disabled ? "" : "hover:bg-neutral-400 dark:hover:bg-neutral-700"
-      } rounded-md`}
+      className={cn(
+        // 핵심: inline-flex + shrink-0 로 링크/컨테이너가 가로로 퍼지지 않도록
+        "inline-flex shrink-0 items-center rounded-md",
+        compact ? "p-0" : "p-2",
+        disabled
+          ? ""
+          : compact
+            ? ""
+            : "hover:bg-neutral-100 dark:hover:bg-neutral-800",
+        className
+      )}
     >
-      {avatar !== null ? (
+      {avatar ? (
         <Image
-          width={size === "lg" ? 200 : 40}
-          height={size === "lg" ? 200 : 40}
-          className={`rounded-full ${sizes[size]} object-cover bg-white`}
+          width={sizes[size].px}
+          height={sizes[size].px}
+          className={cn(
+            "rounded-full object-cover bg-white dark:bg-neutral-900",
+            sizes[size].box,
+            "ring-1 ring-black/5 dark:ring-white/10"
+          )}
           src={`${avatar}/public`}
-          alt={username}
+          alt={`${username}의 프로필 이미지`}
         />
       ) : (
         <UserIcon
-          aria-label="user_icon"
-          className={`${sizes[size]} ${
+          aria-hidden
+          className={cn(
+            sizes[size].box,
             size === "lg"
               ? "text-gray-300 dark:text-gray-500"
-              : "text-neutral-200 dark:text-neutral-500"
-          } rounded-${size === "lg" ? "full" : "md"}`}
+              : "text-neutral-300 dark:text-neutral-500",
+            size === "lg" ? "rounded-full" : "rounded-md"
+          )}
         />
       )}
-      <div className="flex items-start h-full pl-2">
-        {showUsername ? (
-          text ? (
-            <div className="text-sm font-semibold dark:text-white">
+
+      {/* showUsername/text/created_at 중 하나라도 있을 때만 텍스트 블록 렌더 */}
+      {(showUsername || text || created_at) && (
+        <div className={cn("flex items-start h-full min-w-0", "pl-2")}>
+          {showUsername && (
+            <div className="text-sm font-semibold dark:text-white truncate">
               {username}
-              {text}
+              {text ?? ""}
             </div>
-          ) : (
-            <div className="text-sm font-semibold dark:text-white">
-              {username}
-            </div>
-          )
-        ) : null}
-        <div className="text-xs text-gray-600 dark:text-gray-400">
-          {created_at && <TimeAgo date={created_at?.toString() ?? null} />}
+          )}
+          <div className="ml-2 text-xs text-gray-600 dark:text-gray-400">
+            {created_at && <TimeAgo date={created_at?.toString() ?? null} />}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 
-  if (disabled) {
-    return <AvatarContent />;
-  }
+  if (disabled) return root;
 
   return (
-    <Link href={`/profile/${username}`}>
-      <AvatarContent />
+    <Link
+      href={`/profile/${username}`}
+      aria-label={`${username} 프로필로 이동`}
+    >
+      {root}
     </Link>
   );
 }

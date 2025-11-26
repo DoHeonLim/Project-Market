@@ -14,22 +14,25 @@
  * 2024.12.20  임도헌   Modified   푸시 알림 토글 컴포넌트 추가
  * 2024.12.31  임도헌   Modified   이메일 인증 기능 추가
  * 2025.05.22  임도헌   Modified   내 방송국 기능 추가
- * 2025.10.05  임도헌   Modified   averageRating 타입 최신 스키마로 정합(averageRating/reviewCount)
+ * 2025.10.05  임도헌   Modified   averageRating 타입 최신 스키마로 정합
  * 2025.10.05  임도헌   Modified   FollowListModal prop 이름 변경(followingIds → viewerFollowingIds)
  * 2025.10.05  임도헌   Modified   myStreams 안전 가드 추가(length/map)
  * 2025.10.06  임도헌   Modified   BroadcastSummary 타입 단언 수정
- * 2025.10.12  임도헌   Modified   팔로워/팔로잉 로딩/커서/중복 제거 공용 훅 적용, Set 시드/병합
- * 2025.10.14  임도헌   Modified   FollowSection 도입: 팔로우/모달/페이지네이션 로직 제거
- * 2025.10.29  임도헌   Modified   날짜 포맷 유틸/모달 지연 로드/a11y 개선으로 UX·성능 보강
- * 2025.11.10  임도헌   Modified
+ * 2025.10.12  임도헌   Modified   팔로워/팔로잉 로딩/커서/중복 제거 공용 훅 적용
+ * 2025.10.14  임도헌   Modified   FollowSection 도입
+ * 2025.10.29  임도헌   Modified   날짜 포맷 유틸/모달 지연 로드/a11y 보강
+ * 2025.11.12  임도헌   Modified   액션 툴바 제거 → 섹션 헤더 우측 링크형 액션으로 통일,
+ *                                SettingsMenu 커스텀 이벤트 리스너 도입
+ * 2025.11.23  임도헌   Modified   내 방송국 섹션 StreamCard(layout="rail") 적용,
+ *                                가로 스크롤 카드 폭/간격 반응형 정리
+ * 2025.11.26  임도헌   Modified  StreamCard에 vodIdForRecording Props 추가
  */
 
 "use client";
 
 import dynamic from "next/dynamic";
-
-import { useState } from "react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 import ProfileHeader from "./ProfileHeader";
 import UserBadges from "./UserBadges";
@@ -85,10 +88,36 @@ export default function MyProfile({
   const [isEmailVerificationModalOpen, setIsEmailVerificationModalOpen] =
     useState(false);
 
+  // SettingsMenu(⚙️)에서 발행하는 커스텀 이벤트를 수신해 모달을 연다
+  useEffect(() => {
+    const onOpenPassword = () => setIsPasswordModalOpen(true);
+    const onOpenEmail = () => setIsEmailVerificationModalOpen(true);
+
+    window.addEventListener(
+      "open-password-modal",
+      onOpenPassword as unknown as EventListener
+    );
+    window.addEventListener(
+      "open-email-verification-modal",
+      onOpenEmail as unknown as EventListener
+    );
+    return () => {
+      window.removeEventListener(
+        "open-password-modal",
+        onOpenPassword as unknown as EventListener
+      );
+      window.removeEventListener(
+        "open-email-verification-modal",
+        onOpenEmail as unknown as EventListener
+      );
+    };
+  }, []);
+
   return (
-    <div className="flex flex-col items-center gap-4">
-      <div className="flex gap-10 rounded-xl w-full pt-10 relative">
-        {/* ▼ 기존 헤더 블록 전체 대체 */}
+    // 중앙정렬은 상위 레이아웃 책임 → 내부는 좌정렬/풀폭
+    <div className="flex flex-col gap-6 text-left mx-4">
+      {/* 헤더 */}
+      <div className="pt-2">
         <ProfileHeader
           ownerId={user.id}
           ownerUsername={user.username}
@@ -98,164 +127,178 @@ export default function MyProfile({
           followingCount={user._count?.following ?? 0}
           viewerId={viewerId}
           avatarUrl={user.avatar ?? null}
-          // 내 프로필은 버튼 자동 숨김(FollowSection 내부 규칙)
-          showFollowButton={false}
+          showFollowButton={false} // 내 프로필
         />
-        {/* ▲ 대체 끝 */}
       </div>
 
-      {/* 액션/설정 영역 */}
-      <div className="flex flex-col md:flex-row items-center justify-center gap-6 w-full max-w-md">
-        <Link
-          href="/profile/edit"
-          className="btn-primary w-full md:w-1/2 text-center text-lg py-2.5 whitespace-nowrap"
+      {/* 알림 설정 */}
+      <section aria-labelledby="s-notify">
+        <h2
+          id="s-notify"
+          className="text-[15px] font-semibold text-neutral-900 dark:text-neutral-50 mb-2"
         >
-          프로필 수정
-        </Link>
-        <button
-          onClick={() => setIsPasswordModalOpen(true)}
-          className="btn-primary w-full md:w-1/2 text-center text-lg py-2.5 whitespace-nowrap"
-        >
-          비밀 항해 코드 수정
-        </button>
-      </div>
-
-      <div className="flex flex-col md:flex-row items-center justify-center gap-6 w-full max-w-md">
-        {!user.emailVerified ? (
-          <button
-            onClick={() => setIsEmailVerificationModalOpen(true)}
-            className="btn-primary w-full md:w-1/2 text-center text-lg py-2.5 whitespace-nowrap"
-          >
-            이메일 인증
-          </button>
-        ) : (
-          <div className="w-full md:w-1/2 text-center text-lg py-2.5 whitespace-nowrap bg-gray-200 dark:bg-neutral-700 text-gray-500 dark:text-gray-400 rounded-lg">
-            이메일 인증됨
-          </div>
-        )}
-      </div>
-
-      <div className="w-full max-w-md">
-        <div className="text-lg font-semibold mb-4 dark:text-white">
           알림 설정
-        </div>
-        <div className="flex items-center justify-between p-4 bg-white dark:bg-neutral-800 rounded-lg border border-gray-200 dark:border-neutral-700">
-          <div>
-            <h3 className="font-medium dark:text-white">푸시 알림</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              새로운 메시지나 거래 알림을 받아보세요
-            </p>
+        </h2>
+        <div className="panel">
+          <div className="flex items-center justify-between gap-4 px-4 py-3">
+            <div className="min-w-0">
+              <h3 className="font-medium text-neutral-900 dark:text-neutral-100">
+                푸시 알림
+              </h3>
+              <p className="text-[12.5px] text-neutral-600 dark:text-neutral-400">
+                새로운 메시지나 거래 알림을 받아보세요
+              </p>
+            </div>
+            <PushNotificationToggle />
           </div>
-          <PushNotificationToggle />
         </div>
-      </div>
+      </section>
 
-      {/* 내 방송국 섹션 */}
-      <div className="w-full max-w-md mt-2 gap-2">
-        <div className="flex justify-between items-center mb-2">
-          <h2 className="text-xl font-bold dark:text-white">내 방송국</h2>
+      {/* 내 방송국 */}
+      <section aria-labelledby="s-channel">
+        <div className="section-h">
+          <h2
+            id="s-channel"
+            className="text-[15px] font-semibold text-neutral-900 dark:text-neutral-50"
+          >
+            🗼 내 방송국
+          </h2>
           <Link
             href={`/profile/${user.username}/channel`}
-            className="btn-primary text-xs"
+            className="btn-ghost text-[12px]"
           >
             전체 방송 보기
           </Link>
         </div>
+
         {(myStreams?.length ?? 0) === 0 ? (
-          <div className="text-gray-500 dark:text-gray-400">
+          <p className="mt-1 text-[12.5px] text-neutral-400">
             아직 방송한 내역이 없습니다.
-          </div>
+          </p>
         ) : (
-          <div className="flex gap-4 overflow-x-auto pb-2">
-            {(myStreams ?? []).map((stream) => (
+          <div className="mt-2 flex gap-3 overflow-x-auto scrollbar pb-2 items-stretch">
+            {(myStreams ?? []).map((s) => (
               <StreamCard
-                key={stream.id}
-                id={stream.id}
-                title={stream.title}
-                thumbnail={stream.thumbnail}
-                isLive={stream.status === "CONNECTED"}
+                key={s.id}
+                id={s.id}
+                vodIdForRecording={s.latestVodId ?? undefined}
+                title={s.title}
+                thumbnail={s.thumbnail}
+                isLive={s.status === "CONNECTED"}
                 streamer={{
-                  username: stream.user.username,
-                  avatar: stream.user.avatar ?? undefined,
+                  username: s.user.username,
+                  avatar: s.user.avatar ?? undefined,
                 }}
-                startedAt={stream.started_at ?? undefined}
+                startedAt={s.started_at ?? undefined}
                 category={
-                  stream.category
+                  s.category
                     ? {
-                        id: stream.category.id,
-                        kor_name: stream.category.kor_name,
-                        icon: stream.category.icon ?? undefined,
+                        id: s.category.id,
+                        kor_name: s.category.kor_name,
+                        icon: s.category.icon ?? undefined,
                       }
                     : undefined
                 }
-                tags={stream.tags}
-                followersOnlyLocked={stream.followersOnlyLocked}
-                requiresPassword={stream.requiresPassword}
-                visibility={stream.visibility}
-                shortDescription
+                tags={s.tags}
+                followersOnlyLocked={s.followersOnlyLocked}
+                requiresPassword={s.requiresPassword}
+                visibility={s.visibility}
+                // shortDescription
+                layout="rail" // 가로 스크롤용 고정 폭 카드
               />
             ))}
           </div>
         )}
-      </div>
+      </section>
 
-      {/* 거래 정보/후기/뱃지/로그아웃은 기존 유지 */}
-      <div className="w-full max-w-md">
-        <div className="text-lg font-semibold mb-4 dark:text-white">
-          거래 정보
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* 거래 정보 — 타일 */}
+      <section aria-labelledby="s-trade">
+        <h2
+          id="s-trade"
+          className="text-[15px] font-semibold text-neutral-900 dark:text-neutral-50 mb-2"
+        >
+          <span aria-hidden>⚓</span> 거래 정보
+        </h2>
+        <div className="grid grid-cols-2 gap-2">
           <Link
             href="/profile/my-sales"
-            className="card bg-primary hover:bg-primary-dark dark:bg-primary-light dark:hover:bg-primary p-6 transition-all group"
+            className="tile-strong p-4"
+            aria-label="판매 제품 페이지로 이동"
           >
-            <h3 className="text-xl font-semibold mb-3 text-white">판매 제품</h3>
-            <p className="text-white/90">내가 판매중인 제품을 확인해보세요</p>
+            <h3 className="text-[13px] font-semibold text-neutral-900 dark:text-neutral-100">
+              판매 제품
+            </h3>
+            <p className="mt-1 text-[12px] text-neutral-600 dark:text-neutral-400">
+              내가 판매중인 제품을 확인해보세요
+            </p>
+            <span className="mt-2 inline-flex text-[12px] text-[var(--link)]">
+              바로 가기 →
+            </span>
           </Link>
+
           <Link
             href="/profile/my-purchases"
-            className="card bg-primary hover:bg-primary-dark dark:bg-primary-light dark:hover:bg-primary p-6 transition-all group"
+            className="tile-strong p-4"
+            aria-label="구매 제품 페이지로 이동"
           >
-            <h3 className="text-xl font-semibold mb-3 text-white">구매 제품</h3>
-            <p className="text-white/90">내가 구매한 제품을 확인해보세요</p>
+            <h3 className="text-[13px] font-semibold text-neutral-900 dark:text-neutral-100">
+              구매 제품
+            </h3>
+            <p className="mt-1 text-[12px] text-neutral-600 dark:text-neutral-400">
+              내가 구매한 제품을 확인해보세요
+            </p>
+            <span className="mt-2 inline-flex text-[12px] text-[var(--link)]">
+              바로 가기 →
+            </span>
           </Link>
         </div>
-      </div>
+      </section>
 
-      <div className="w-full max-w-md">
-        <div className="text-lg font-semibold mb-4 dark:text-white">
-          받은 거래 후기
-        </div>
-        <div className="flex flex-col gap-3">
+      {/* 받은 거래 후기 */}
+      <section aria-labelledby="s-reviews">
+        <div className="section-h">
+          <h2
+            id="s-reviews"
+            className="text-[15px] font-semibold text-neutral-900 dark:text-neutral-50"
+          >
+            <span aria-hidden>📝</span> 받은 거래 후기
+          </h2>
           <button
             onClick={() => setIsReviewModalOpen(true)}
-            className="btn-primary w-full text-lg py-2.5"
+            className="btn-ghost text-[12px]"
+            aria-label="받은 거래 후기 전체 보기"
           >
             전체 후기 보기
           </button>
         </div>
-      </div>
+      </section>
 
-      <div className="w-full max-w-md">
-        <div className="flex items-center justify-between mb-4">
-          <div className="text-lg font-semibold dark:text-white">
-            획득한 뱃지
-          </div>
+      {/* 획득한 뱃지 */}
+      <section aria-labelledby="s-badges">
+        <div className="section-h">
+          <h2
+            id="s-badges"
+            className="text-[15px] font-semibold text-neutral-900 dark:text-neutral-50"
+          >
+            🎖️ 획득한 뱃지
+          </h2>
+          <button
+            onClick={() => setIsBadgeModalOpen(true)}
+            className="btn-ghost text-[12px]"
+          >
+            전체 뱃지 보기
+          </button>
         </div>
-        <UserBadges badges={userBadges} max={5} />
-        <button
-          onClick={() => setIsBadgeModalOpen(true)}
-          className="btn-primary w-full text-lg py-2.5"
-        >
-          전체 뱃지 보기
-        </button>
-      </div>
+        <div className="mt-1">
+          <UserBadges badges={userBadges} max={5} />
+        </div>
+      </section>
 
-      <form action={logOut} className="w-full max-w-md mt-4">
+      {/* 로그아웃 */}
+      <form action={logOut}>
         <button
           type="submit"
-          aria-label="로그아웃"
-          className="w-full py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-md transition-colors dark:bg-red-600 dark:hover:bg-red-500"
+          className="w-full px-4 py-3 mt-2 text-[13px] rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium"
         >
           로그아웃
         </button>

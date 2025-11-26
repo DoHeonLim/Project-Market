@@ -1,21 +1,21 @@
 /**
-File Name : app/post/[id]/edit
-Description : 게시글 편집 페이지
-Author : 임도헌
-
-History
-Date        Author   Status    Description
-2025.04.21  임도헌   Created
-2025.04.21  임도헌   Modified  게시글 편집 페이지 추가
-2025.07.04  임도헌   Modified  게시글 등록, 편집 컴포넌트로 통합
-*/
+ * File Name : app/post/[id]/edit
+ * Description : 게시글 편집 페이지
+ * Author : 임도헌
+ *
+ * History
+ * Date        Author   Status    Description
+ * 2025.04.21  임도헌   Created
+ * 2025.04.21  임도헌   Modified  게시글 편집 페이지 추가
+ * 2025.07.04  임도헌   Modified  게시글 등록, 편집 컴포넌트로 통합
+ * 2025.11.13  임도헌   Modified  뒤로가기 버튼 layout으로 이동
+ * 2025.11.20  임도헌   Modified  삭제 흐름 정리
+ */
 import { notFound, redirect } from "next/navigation";
-import db from "@/lib/db";
 import PostForm from "@/components/post/PostForm";
-import BackButton from "@/components/common/BackButton";
 import { updatePost } from "@/lib/post/update/updatePost";
 import { getIsOwner } from "@/lib/get-is-owner";
-import { getPost } from "../actions/posts";
+import { deletePost, getPost } from "../actions/posts";
 
 export default async function PostEditPage({
   params,
@@ -33,18 +33,12 @@ export default async function PostEditPage({
 
   const handleDeletePost = async () => {
     "use server";
-    await db.post.delete({
-      where: { id },
-    });
+    await deletePost(id);
     redirect("/posts");
   };
 
   return (
-    <div className="min-h-screen dark:bg-neutral-900 bg-white p-4">
-      <BackButton href="/posts" />
-      <h1 className="text-center text-2xl font-bold mb-6 dark:text-white">
-        게시글 수정
-      </h1>
+    <div className="min-h-screen dark:bg-neutral-900 bg-white">
       <PostForm
         initialValues={{
           id: post.id,

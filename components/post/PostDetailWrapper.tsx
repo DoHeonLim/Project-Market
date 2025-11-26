@@ -14,7 +14,6 @@ import { motion } from "framer-motion";
 import PostLikeButton from "@/components/post/PostLikeButton";
 import Carousel from "@/components/common/Carousel";
 import Comment from "@/components/post/comment/Comment";
-import BackButton from "@/components/common/BackButton";
 import TimeAgo from "@/components/common/TimeAgo";
 import UserAvatar from "@/components/common/UserAvatar";
 import { PencilSquareIcon, EyeIcon } from "@heroicons/react/24/solid";
@@ -38,9 +37,6 @@ export default function PostDetailWrapper({
 }: PostDetailWrapperProps) {
   return (
     <div className="max-w-3xl mx-auto min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100 dark:from-neutral-900 dark:to-neutral-950">
-      {/* 뒤로가기 버튼 */}
-      <BackButton href="/posts" className="pt-3 pl-3" />
-
       {/* 본문 카드 */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}

@@ -7,7 +7,7 @@ History
 Date        Author   Status    Description
 2024.12.12  임도헌   Created   제품 상세 정보 관련 서버 코드 분리
 2025.06.08  임도헌   Modified  actions 파일 역할별 분리 시작
-2024.07.06  임도헌   Modified  getIsOwner 함수 lib로 이동
+2025.07.06  임도헌   Modified  getIsOwner 함수 lib로 이동
 */
 "use server";
 
@@ -53,7 +53,7 @@ export const getProduct = async (
 
     if (!product) return null;
 
-    return product as ProductDetailType; // 👈 여기서 명시적으로 타입 단언
+    return product as ProductDetailType; // 여기서 명시적으로 타입 단언
   } catch (e) {
     console.error("[getProduct] 제품 정보 조회 실패:", e);
     return null;

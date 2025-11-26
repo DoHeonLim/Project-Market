@@ -200,7 +200,7 @@ export default function PrivateAccessModal({
               value={password}
               onChange={(e) => {
                 setPassword(e.target.value);
-                if (error) setError(""); // ✅ 입력 시 에러 해제
+                if (error) setError(""); // 입력 시 에러 해제
               }}
               placeholder="비밀번호를 입력하세요"
               className="w-full rounded-md border border-neutral-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-neutral-600 dark:bg-neutral-700 dark:text-white"

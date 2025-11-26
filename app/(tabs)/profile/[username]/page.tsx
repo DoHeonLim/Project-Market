@@ -1,6 +1,6 @@
 /**
- * File Name : app/(tabs)/profile/[username]/page.tsx
- * Description : 유저 프로필 페이지 (MyProfile 구조에 맞춰 개인화 최소화/모달 on-demand)
+ * File Name : app/(tabs)/profile/[username]/page
+ * Description : 유저 프로필 페이지 (MyProfile와 통일된 레이아웃/모달 on-demand)
  * Author : 임도헌
  *
  * History
@@ -15,20 +15,25 @@
  * 2025.10.08  임도헌   Modified  viewerId/viewerFollowingIds/viewerInfo 주입 + 병렬화
  * 2025.10.12  임도헌   Modified  MyProfile 구조 반영: viewerFollowingIds/viewerInfo 제거, 개인화 최소화
  * 2025.10.22  임도헌   Modified  viewerInfo 서버 주입 제거(캐시 파편화 방지), 낙관 표시용은 클라 훅으로 대체
+ * 2025.11.12  임도헌   Modified  MyProfile 레이아웃/톤 통일
+ * 2025.11.22  임도헌   Modified  getIsFollowing 중복 호출 제거(getUserProfile.isFollowing만 사용)
+ * 2025.11.26  임도헌   Modified  방송국 섹션에 최근 방송 목록 추가
  */
 
 import { notFound, redirect } from "next/navigation";
-
 import getSession from "@/lib/session";
 import { getUserProfile } from "@/lib/user/getUserProfile";
 import { getCachedInitialUserReviews } from "@/lib/user/getUserReviews";
 import { getCachedUserAverageRating } from "@/lib/user/getUserAverageRating";
 import { getCachedUserBadges } from "@/lib/user/getUserBadges";
-import { getIsFollowing } from "@/lib/user/follow/getIsFollowing";
+import { getInitialUserProducts } from "@/lib/product/getUserProducts";
+import { getUserStreams } from "@/lib/stream/getUserStreams";
 
 import type { UserProfile as UserProfileType } from "@/types/profile";
+import type { BroadcastSummary } from "@/types/stream";
 import UserProfile from "@/components/profile/UserProfile";
-import { getInitialUserProducts } from "@/lib/product/getUserProducts";
+
+export const dynamic = "force-dynamic";
 
 export default async function UserProfilePage({
   params,
@@ -38,47 +43,53 @@ export default async function UserProfilePage({
   const session = await getSession();
   const viewerId = session?.id ?? null;
 
-  // 프로필 조회 (본인이면 내부 redirect)
+  // 프로필 조회 (본인이면 /profile로 redirect)
   const user = (await getUserProfile({
     username: params.username,
     redirectIfSelfToProfile: true,
   })) as UserProfileType | null;
 
   if (!user) return notFound();
+  if (viewerId && user.id === viewerId) redirect("/profile");
 
-  // 본인 리다이렉트 옵션이 true인데 가드가 실패했을 경우를 대비한 이중 가드
-  if (viewerId && user.id === viewerId) {
-    redirect("/profile");
-  }
-
-  // 공용 데이터는 캐시, 개인화는 최소만(팔로우 여부)
+  // 공용 데이터는 캐시, 개인화는 최소(팔로우 여부는 getUserProfile.isFollowing 사용)
   const [
     averageRating,
     initialReviews,
     initialSellingProducts,
     initialSoldProducts,
     userBadges,
-    isFollowing,
+    streams,
   ] = await Promise.all([
-    getCachedUserAverageRating(user.id), // 캐시 사용 (user-average-rating-* tag)
-    getCachedInitialUserReviews(user.id), // 캐시 사용 (user-reviews-initial-* tag)
-    getInitialUserProducts({ type: "SELLING", userId: user.id }), // 도메인 정책에 따라 캐싱 고려
+    getCachedUserAverageRating(user.id),
+    getCachedInitialUserReviews(user.id),
+    getInitialUserProducts({ type: "SELLING", userId: user.id }),
     getInitialUserProducts({ type: "SOLD", userId: user.id }),
-    getCachedUserBadges(user.id), // 캐시 사용 (user-badges-* tag)
-    viewerId ? getIsFollowing(viewerId, user.id) : Promise.resolve(false), // 개인화(비캐시)
+    getCachedUserBadges(user.id),
+    (async () => {
+      const { items } = await getUserStreams({
+        ownerId: user.id,
+        viewerId, // 시청자 기준 역할(OWNER/FOLLOWER/VISITOR)에 따라 followersOnlyLocked 등 계산
+        take: 6,
+      });
+      return items as BroadcastSummary[];
+    })(),
   ]);
 
   return (
-    <div className="min-h-screen dark:bg-neutral-900 bg-white transition-colors duration-200">
-      <UserProfile
-        user={{ ...user, isFollowing }}
-        initialReviews={initialReviews}
-        initialSellingProducts={initialSellingProducts}
-        initialSoldProducts={initialSoldProducts}
-        averageRating={averageRating}
-        userBadges={userBadges}
-        viewerId={viewerId ?? undefined}
-      />
+    <div className="min-h-screen bg-background dark:bg-neutral-950 transition-colors">
+      <div className="px-4 sm:px-5 pb-8">
+        <UserProfile
+          user={user}
+          initialReviews={initialReviews}
+          initialSellingProducts={initialSellingProducts}
+          initialSoldProducts={initialSoldProducts}
+          averageRating={averageRating}
+          userBadges={userBadges}
+          viewerId={viewerId ?? undefined}
+          myStreams={streams}
+        />
+      </div>
     </div>
   );
 }

@@ -8,15 +8,18 @@
  * 2025.08.03  임도헌   Created
  * 2025.08.07  임도헌   Modified  녹화본 타입 정의
  * 2025.09.22  임도헌   Modified  라이브/방송/녹화 타입 슬림화 + VOD 전환
+ * 2025.11.26  임도헌   Modified  BroadCastSummary에 vodIdForRecording 추가
  */
 
 // 공통 원시 타입
 export type ViewerRole = "OWNER" | "FOLLOWER" | "VISITOR";
+
 export const STREAM_VISIBILITY = {
   PUBLIC: "PUBLIC",
   FOLLOWERS: "FOLLOWERS",
   PRIVATE: "PRIVATE",
 } as const;
+
 export type StreamVisibility =
   | (typeof STREAM_VISIBILITY)[keyof typeof STREAM_VISIBILITY]
   | string;
@@ -83,6 +86,9 @@ export interface BroadcastCard {
 export interface BroadcastSummary {
   /** Broadcast PK */
   id: number;
+
+  /**  가장 최근 VodAsset id */
+  latestVodId?: number | null;
 
   /** Cloudflare Live Input UID (iframe/임베드 식별자) */
   stream_id: string;

@@ -7,13 +7,14 @@
  * Date        Author   Status    Description
  * 2025.04.21  임도헌   Created
  * 2025.04.21  임도헌   Modified  게시글 편집 폼 액션 추가
- * 2025.07.06  임도헌   Modified   게시글 수정 액션 분리 및 리팩토링
+ * 2025.07.06  임도헌   Modified  게시글 수정 액션 분리 및 리팩토링
+ * 2025.11.20  임도헌   Modified   revalidate 태그 네이밍 통일
  */
 "use server";
 
 import db from "@/lib/db";
 import getSession from "@/lib/session";
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidateTag } from "next/cache";
 import { postFormSchema } from "@/lib/post/form/postFormSchema";
 
 export async function updatePost(formData: FormData) {
@@ -87,8 +88,7 @@ export async function updatePost(formData: FormData) {
       );
     }
 
-    revalidatePath("/posts");
-    revalidateTag(`post-detail-${updatedPost.id}`);
+    revalidateTag(`post-detail-id-${updatedPost.id}`);
 
     return { success: true, postId: updatedPost.id };
   } catch (error) {

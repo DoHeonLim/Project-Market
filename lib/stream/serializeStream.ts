@@ -48,7 +48,7 @@ export function serializeStream(
 
   return {
     id: s.id,
-    stream_id: s.stream_id, // ✅ 새 필드
+    stream_id: s.stream_id,
     title: s.title,
     thumbnail: s.thumbnail ?? null,
     isLive: (s.status ?? "").toUpperCase() === CONNECTED,
@@ -67,9 +67,8 @@ export function serializeStream(
           kor_name: s.category.kor_name,
           icon: s.category.icon ?? null,
         }
-      : null, // ✅ 존재 안하면 null
+      : null, // 존재 안하면 null
     tags: Array.isArray(s.tags) ? s.tags.map((t) => ({ name: t.name })) : [],
-    // isFollowing: ❌ (DTO에서 제거)
     followersOnlyLocked,
     requiresPassword,
   };

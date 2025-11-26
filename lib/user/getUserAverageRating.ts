@@ -15,6 +15,7 @@
 import db from "@/lib/db";
 import { unstable_cache as nextCache } from "next/cache";
 import type { ProfileAverageRating } from "@/types/profile";
+import type { Prisma } from "@prisma/client";
 
 /**
  * revalidateTag 메모
@@ -22,29 +23,34 @@ import type { ProfileAverageRating } from "@/types/profile";
  *   await revalidateTag(`user-average-rating-id-${sellerId}`);
  */
 
+// 프로필 받은 후기(판매+구매) 공통 where
+function receivedReviewsWhere(targetUserId: number): Prisma.ReviewWhereInput {
+  return {
+    userId: { not: targetUserId }, // 내가 쓴 건 제외
+    OR: [
+      { product: { userId: targetUserId, purchase_userId: { not: null } } }, // 판매자로 받은
+      { product: { purchase_userId: targetUserId } }, // 구매자로 받은
+    ],
+  };
+}
+
 /** 판매자(userId) 상품에 달린 리뷰(본인 제외)의 평균/개수 */
 export const getUserAverageRating = async (
   userId: number
 ): Promise<ProfileAverageRating> => {
-  const result = await db.review.aggregate({
-    where: {
-      product: { userId, purchase_userId: { not: null } }, // 구매 완료 리뷰만
-      userId: { not: userId }, // 자기 자신 제외
-    },
+  const where = receivedReviewsWhere(userId);
+
+  const agg = await db.review.aggregate({
+    where,
     _avg: { rate: true },
-    _count: { rate: true }, // rate가 non-null이므로 전체 리뷰 수와 동일
+    _count: { rate: true },
   });
 
-  // 평균 → number 보장 + 0~5 클램프 + 소수점 1자리 반올림
-  const rawAvg = result._avg.rate ?? 0;
-  const avgNum = Number(rawAvg);
-  const clamped = Math.min(5, Math.max(0, avgNum));
-  const roundedTo1 = Math.round(clamped * 10) / 10; // ex) 4.46 → 4.5
+  const avg = Number(agg._avg.rate ?? 0);
+  const clamped = Math.min(5, Math.max(0, avg));
+  const rounded = Math.round(clamped * 10) / 10;
 
-  return {
-    averageRating: roundedTo1,
-    reviewCount: Number(result._count.rate ?? 0),
-  };
+  return { averageRating: rounded, reviewCount: Number(agg._count.rate ?? 0) };
 };
 
 /** 권장: 호출 시점 wrapper로 per-id 태그 주입 + 키 표준화 */

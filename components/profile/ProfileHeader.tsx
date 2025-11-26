@@ -6,9 +6,12 @@
  * History
  * Date        Author   Status     Description
  * 2025.11.10  임도헌   Created    MyProfile 헤더 UI를 공용 컴포넌트로 분리
+ * 2025.11.18  임도헌   Modified   xl 미만에서 아바타/평점 사이즈 축소
  */
 
 "use client";
+
+import { useEffect, useState } from "react";
 
 import UserAvatar from "@/components/common/UserAvatar";
 import TimeAgo from "@/components/common/TimeAgo";
@@ -56,40 +59,59 @@ export default function ProfileHeader({
   initialIsFollowing,
   avatarUrl,
   onRequireLogin,
-  className,
+  // className,
   showFollowButton = true,
 }: Props) {
+  // xl 이상 여부 감지
+  const [isXL, setIsXL] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1280px)");
+    const apply = () => setIsXL(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+
+  // xl 이상: avatar=lg, rating=md
+  // xl 미만: avatar=md, rating=sm
+  const avatarSize: "sm" | "md" | "lg" = isXL ? "lg" : "md";
+  const ratingSize: "sm" | "md" | "lg" = isXL ? "md" : "sm";
+
   return (
-    <div
-      className={[
-        // ↓↓↓ MyProfile 헤더의 레이아웃/간격을 그대로 유지
-        "md:flex-row flex flex-col items-center justify-center w-full gap-6",
-        className,
-      ]
-        .filter(Boolean)
-        .join(" ")}
-    >
+    <header className="grid grid-cols-[auto,1fr] items-center gap-4 text-left">
       <UserAvatar
         avatar={avatarUrl ?? undefined}
         username={ownerUsername}
-        size="lg"
+        size={avatarSize}
         showUsername={false}
-        // MyProfile에서 disabled였음
         disabled
+        className="ring-1 ring-white/70 dark:ring-neutral-900/70 shadow-sm"
       />
 
-      <div className="flex flex-col items-center md:items-start justify-center gap-2">
-        <span className="dark:text-white text-lg">{ownerUsername}</span>
-        <span className="text-sm text-gray-400">
-          가입일: <TimeAgo date={createdAt} />
-        </span>
+      <div className="min-w-0">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h1 className="text-[17px] font-semibold leading-tight text-neutral-900 dark:text-neutral-50 truncate">
+              {ownerUsername}
+            </h1>
+            <p className="mt-1.5 mr-1 text-xs leading-none text-neutral-500 dark:text-neutral-400">
+              가입일 <TimeAgo date={createdAt} />
+            </p>
 
-        <UserRating
-          average={averageRating?.averageRating ?? 0}
-          totalReviews={averageRating?.reviewCount ?? 0}
-          size="md"
-        />
-        <div className="flex justify-center items-center gap-4">
+            {/* 별점: 위/아래 블록과 간격 살짝만 */}
+            <div className="mt-2">
+              <UserRating
+                average={averageRating?.averageRating ?? 0}
+                totalReviews={averageRating?.reviewCount ?? 0}
+                size={ratingSize}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* 팔로우/카운트: 헤더 하단과 시각 분리되도록 여백만 정리 */}
+        <div className="mt-2.5">
           <FollowSection
             ownerId={ownerId}
             ownerUsername={ownerUsername}
@@ -99,14 +121,13 @@ export default function ProfileHeader({
               followingCount,
             }}
             viewer={{ id: viewerId }}
-            // 내 프로필이면 내부 규칙으로 버튼 자동 숨김
             showButton={showFollowButton}
-            size="regular"
+            size="compact"
             align="start"
             onRequireLogin={onRequireLogin}
           />
         </div>
       </div>
-    </div>
+    </header>
   );
 }

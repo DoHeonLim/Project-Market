@@ -16,12 +16,14 @@
  * 2025.09.10  임도헌   Modified  로그인 가드 제거(미들웨어 신뢰), 변수명/타이핑/동시성 소폭 개선
  * 2025.09.20  임도헌   Modified  Broadcast/VodAsset 스키마로 전면 전환 (좋아요/댓글을 VodAsset 단위로)
  * 2025.09.20  임도헌   Modified  라우트 파라미터를 vodId로 고정
+ * 2025.11.26  임도헌   Modified  RecordingTopbar 도입(뒤로가기/유저/카테고리 상단 고정)
  */
 export const dynamic = "force-dynamic";
 
 import { notFound, redirect } from "next/navigation";
 import getSession from "@/lib/session";
 
+import RecordingTopbar from "@/components/stream/recording/RecordingTopbar";
 import RecordingDetail from "@/components/stream/recording/recordingDetail";
 import RecordingComment from "@/components/stream/recording/recordingComment/RecordingComment";
 import RecordingDeleteButton from "@/components/stream/recording/recordingDetail/RecordingDeleteButton";
@@ -86,35 +88,44 @@ export default async function RecordingVodPage({
   const created = new Date((vod.readyAt ?? vod.createdAt) as Date);
   const durationSec = Math.round(vod.durationSec ?? 0);
 
-  return (
-    <div className="flex flex-col items-center justify-center gap-6 overflow-y-auto scrollbar">
-      <div className="mt-4 text-4xl font-semibold text-black dark:text-white">
-        녹화본
-      </div>
+  const broadcastOwner = vod.broadcast.owner;
+  const category = vod.broadcast.category ?? null; // { kor_name, icon } 이라고 가정
 
-      <RecordingDetail
-        broadcast={vod.broadcast}
-        vodId={vodId}
-        uid={vod.uid}
-        duration={durationSec}
-        created={created}
-        isLiked={like.isLiked}
-        likeCount={like.likeCount}
-        commentCount={vod.counts.comments}
-        viewCount={vod.views ?? 0}
+  return (
+    <div className="flex min-h-screen flex-col overflow-y-auto scrollbar bg-background dark:bg-neutral-950">
+      <RecordingTopbar
+        backHref="/streams"
+        username={broadcastOwner.username}
+        avatar={broadcastOwner.avatar}
+        categoryLabel={category?.kor_name ?? null}
+        categoryIcon={category?.icon ?? null}
       />
 
-      {isOwner && (
-        <div className="w-full max-w-3xl px-4">
-          <RecordingDeleteButton
-            broadcastId={vod.broadcast.id}
-            liveInputUid={vod.broadcast.stream_id}
-            username={vod.broadcast.owner.username}
-          />
-        </div>
-      )}
+      <main className="flex flex-col items-center gap-6 pb-10">
+        <RecordingDetail
+          broadcast={vod.broadcast}
+          vodId={vodId}
+          uid={vod.uid}
+          duration={durationSec}
+          created={created}
+          isLiked={like.isLiked}
+          likeCount={like.likeCount}
+          commentCount={vod.counts.comments}
+          viewCount={vod.views ?? 0}
+        />
 
-      <RecordingComment vodId={vodId} currentUserId={session.id!} />
+        {isOwner && (
+          <div className="w-full max-w-3xl px-4">
+            <RecordingDeleteButton
+              broadcastId={vod.broadcast.id}
+              liveInputUid={vod.broadcast.stream_id}
+              username={vod.broadcast.owner.username}
+            />
+          </div>
+        )}
+
+        <RecordingComment vodId={vodId} currentUserId={session.id!} />
+      </main>
     </div>
   );
 }

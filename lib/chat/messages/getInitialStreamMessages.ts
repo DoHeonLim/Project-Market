@@ -1,5 +1,5 @@
 /**
- * File Name : lib/chat/message/getInitialStreamMessages
+ * File Name : lib/chat/messages/getInitialStreamMessages
  * Description : 스트리밍 채팅방의 초기 메시지 조회
  * Author : 임도헌
  *

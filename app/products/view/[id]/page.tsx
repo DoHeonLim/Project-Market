@@ -32,10 +32,10 @@ Date        Author   Status    Description
 2025.04.13  임도헌   Modified  condition 필드를 영어로 변경
 2025.04.13  임도헌   Modified  game_type 필드를 영어로 변경
 2025.06.08  임도헌   Modified  데이터 fetch와 UI 컨테이너로 분리 리팩토링
+2025.11.13  임도헌   Modified  뒤로가기 layout으로 위임
 */
 
 import { notFound } from "next/navigation";
-import BackButton from "@/components/common/BackButton";
 import { getProductDetailData } from "@/lib/product/getProductDetailData";
 import ProductDetailContainer from "@/components/product/productDetail";
 
@@ -63,7 +63,6 @@ export default async function ProductDetail({
 
   return (
     <>
-      <BackButton className="p-4" />
       <ProductDetailContainer {...data} />
     </>
   );

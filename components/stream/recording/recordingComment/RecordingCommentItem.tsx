@@ -47,7 +47,7 @@ export default function RecordingCommentItem({
       <UserAvatar
         avatar={comment.user.avatar}
         username={comment.user.username}
-        size="md"
+        size="sm"
         showUsername={false}
       />
 

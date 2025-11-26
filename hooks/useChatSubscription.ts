@@ -8,13 +8,14 @@
  * 2025.07.16  임도헌   Created   Supabase 실시간 채팅 구독 훅 분리
  * 2025.07.22  임도헌   Modified  단계별 주석 추가 및 코드 흐름 설명 강화
  * 2025.07.29  임도헌   Modified  읽음 처리 이벤트(message_read) 수신 로직 추가
+ * 2025.11.21  임도헌   Modified  MessageReadPayload 타입 적용 및 any 제거
  */
 
 "use client";
 
 import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { ChatMessage } from "@/types/chat";
+import { ChatMessage, MessageReadPayload } from "@/types/chat";
 import { readMessageUpdateAction } from "@/app/chats/[id]/actions/messages";
 
 interface UseChatSubscriptionOptions {
@@ -37,17 +38,11 @@ export default function useChatSubscription({
   onMessagesRead,
 }: UseChatSubscriptionOptions) {
   useEffect(() => {
-    /**
-     * 1단계: Supabase 채널 생성 및 구독
-     */
     const channel = supabase
       .channel(`room-${chatRoomId}`)
 
       /**
-       * 2단계: 메시지 수신 브로드캐스트 핸들링
-       * - 실시간으로 전송된 메시지를 수신
-       * - 메시지 구조를 ChatMessage 타입으로 변환하여 콜백 전달
-       * - 상대방 메시지일 경우 읽음 처리 API 호출
+       * 1) 메시지 수신 브로드캐스트 핸들링
        */
       .on("broadcast", { event: "message" }, async ({ payload }) => {
         const newMessage: ChatMessage = {
@@ -75,25 +70,19 @@ export default function useChatSubscription({
       })
 
       /**
-       * 3단계: 읽음 처리 브로드캐스트 수신
-       * - 다른 사용자가 메시지를 읽었을 때 전송되는 read 이벤트 수신
-       * - readIds 배열을 상위 콜백으로 전달하여 메시지 상태를 갱신
+       * 2) 읽음 처리 브로드캐스트 수신
+       * - 서버에서 payload: { readIds: number[] } 구조로 전송
        */
       .on("broadcast", { event: "message_read" }, ({ payload }) => {
-        const readIds: number[] = payload.readIds;
+        const { readIds } = payload as MessageReadPayload;
         if (Array.isArray(readIds) && readIds.length > 0) {
           onMessagesRead(readIds);
         }
       })
 
-      /**
-       * 4단계: 채널 구독 시작
-       */
       .subscribe();
 
-    /**
-     * 5단계: 컴포넌트 언마운트 시 채널 구독 해제
-     */
+    // 언마운트 시 채널 구독 해제
     return () => {
       supabase.removeChannel(channel);
     };

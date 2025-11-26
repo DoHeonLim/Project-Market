@@ -18,13 +18,13 @@
  * 2025.07.13  임도헌   Modified  비즈니스 로직과 server action 분리
  * 2025.07.21  임도헌   Modified  app/chats/[id]/actions.ts 파일을 기능별로 분리
  * 2025.07.29  임도헌   Modified  readMessageUpdateAction에 실시간 읽음 처리 추가
+ * 2025.11.21  임도헌   Modified  캐싱 제거
  */
 "use server";
 
 import getSession from "@/lib/session";
 import { getInitialMessages } from "@/lib/chat/messages/getInitialMessages";
 import { getMoreMessages } from "@/lib/chat/messages/getMoreMessages";
-import { revalidateTag } from "next/cache";
 import { createMessage } from "@/lib/chat/messages/create/createMessage";
 import { readMessageUpdate } from "@/lib/chat/messages/update/readMessageUpdate";
 import { supabase } from "@/lib/supabase";
@@ -40,10 +40,6 @@ export const sendMessageAction = async (
   if (!session?.id) throw new Error("로그인이 필요합니다.");
 
   const result = await createMessage(payload, chatRoomId, session.id);
-
-  if (result.success) {
-    revalidateTag(`chat-messages-${chatRoomId}`);
-  }
 
   return result;
 };
@@ -86,8 +82,6 @@ export const readMessageUpdateAction = async (
       payload: { readIds },
     });
   }
-
-  revalidateTag("chatroom-list");
 
   return { success: true, readIds };
 };

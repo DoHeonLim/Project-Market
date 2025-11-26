@@ -28,7 +28,7 @@
 
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import ChatMessageBubble from "./ChatMessageBubble";
 import ChatInputBar from "./ChatInputBar";
 import useChatSubscription from "@/hooks/useChatSubscription";
@@ -41,15 +41,6 @@ interface ChatMessagesListProps {
   initialMessages: ChatMessage[];
   productChatRoomId: string;
   user: ChatUser;
-  productUser: ChatUser;
-  product: {
-    id: number;
-    title: string;
-    images: { url: string }[];
-    price: number;
-    purchase_userId: number | null;
-    reservation_userId: number | null;
-  };
 }
 
 /**
@@ -100,15 +91,17 @@ export default function ChatMessagesList({
   });
 
   /**
-   * 3단계: 최초 진입/갱신 시 스크롤 하단으로 이동
+   * 3단계: 최초 진입시 스크롤 하단으로 이동
    */
+  const hasInitialScrolledRef = useRef(false);
   useEffect(() => {
-    if (!messagesEndRef.current) return;
+    if (hasInitialScrolledRef.current) return;
+    hasInitialScrolledRef.current = true;
 
     requestAnimationFrame(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
     });
-  }, [messages, messagesEndRef]);
+  }, [messagesEndRef]);
 
   /**
    * 4단계: 메시지 전송 핸들러
@@ -141,7 +134,7 @@ export default function ChatMessagesList({
       className="flex flex-col h-screen bg-[url('/images/light-chat-bg.png')] dark:bg-[url('/images/dark-chat-bg.png')] bg-cover bg-center"
     >
       {/* 메시지 영역 */}
-      <div className="flex-1 overflow-y-auto mt-20 p-4 space-y-2 scrollbar">
+      <div className="flex-1 overflow-y-auto mt-10 p-4 space-y-2 scrollbar">
         <div ref={sentinelRef} />
         {isFetching && (
           <div className="text-center text-sm text-neutral-500">

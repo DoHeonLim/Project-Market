@@ -6,6 +6,7 @@
  * History
  * Date        Author   Status     Description
  * 2025.10.17  임도헌    Moved     lib/review/deleteAllProductReviews로 이동(server-only) + 기존 revalidateTag 정책 유지
+ * 2025.11.19  임도헌   Modified   리뷰 삭제 시 판매자 평균 평점, 리뷰 목록 및 해당 제품 상세 최신화
  */
 "use server";
 
@@ -28,5 +29,6 @@ export const deleteAllProductReviews = async (productId: number) => {
 
   revalidateTag(`user-average-rating-id-${prod.userId}`);
   revalidateTag(`user-reviews-initial-id-${prod.userId}`);
+  revalidateTag(`product-detail-id-${productId}`);
   return { success: true };
 };

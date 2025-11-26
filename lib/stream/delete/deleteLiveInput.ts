@@ -1,5 +1,5 @@
 /**
- * File Name : lib/stream/key/deleteLiveInput
+ * File Name : lib/stream/delete/deleteLiveInput
  * Description : Cloudflare Live Input 삭제 및 DB 정리
  * Author : 임도헌
  *

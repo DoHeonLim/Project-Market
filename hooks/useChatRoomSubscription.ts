@@ -8,6 +8,7 @@
  * 2025.07.16  임도헌   Created   실시간 처리 로직 훅으로 분리
  * 2025.07.16  임도헌   Modified  Supabase 채팅방 실시간 구독 로직 분리
  * 2025.07.22  임도헌   Modified  단계별 주석 추가 및 코드 흐름 설명 강화
+ * 2025.11.21  임도헌   Modified  unreadCount 서버 계산 기반으로 초기화
  */
 
 "use client";
@@ -15,58 +16,58 @@
 import { useEffect, useState } from "react";
 import { ChatMessage, ChatRoom } from "@/types/chat";
 import { subscribeToRoomUpdates } from "@/lib/chat/room/subscribeToRoomUpdates";
-import { getUnreadCount } from "@/lib/chat/messages/getUnreadCount";
 
 /**
  * useChatRoomSubscription
- * - 각 채팅방에 대해 unread 메시지 개수를 불러오고 상태로 관리
+ * - 서버에서 전달된 initialRooms(rooms + unreadCount)를 상태로 관리
  * - Supabase 실시간 채널을 통해 각 채팅방의 메시지/읽음 이벤트를 구독
- * - 새로운 메시지가 오면 해당 채팅방의 마지막 메시지를 갱신하고 unread count 증가
- * - 메시지가 읽혔다는 이벤트가 오면 해당 방의 unread count를 0으로 초기화
+ * - 새로운 메시지:
+ *   - 해당 채팅방의 lastMessage 갱신
+ *   - 해당 방 unreadCount + 1
+ * - 읽음 이벤트:
+ *   - 해당 방 unreadCount = 0
  *
- * userId - 현재 로그인된 사용자 ID
- * initialRooms - 초기 채팅방 목록
- * rooms - 최신 메시지가 반영된 채팅방 배열, unreadCounts: 각 채팅방별 안읽은 메시지 수
+ * @param userId       현재 로그인된 사용자 ID
+ * @param initialRooms 서버에서 조회한 채팅방 목록 (unreadCount 포함)
  */
 export default function useChatRoomSubscription(
   userId: number,
   initialRooms: ChatRoom[]
 ) {
   const [rooms, setRooms] = useState<ChatRoom[]>(initialRooms);
-  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
 
-  /**
-   * 1단계: 각 채팅방에 대해 unread 메시지 개수 비동기 로딩
-   */
-  useEffect(() => {
-    const fetchUnreadCounts = async () => {
+  // 서버에서 주입한 unreadCount를 기반으로 초기 상태 구성
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>(
+    () => {
       const counts: Record<string, number> = {};
+      for (const room of initialRooms) {
+        counts[room.id] = room.unreadCount ?? 0;
+      }
+      return counts;
+    }
+  );
 
-      await Promise.all(
-        initialRooms.map(async (room) => {
-          counts[room.id] = await getUnreadCount(userId, room.id);
-        })
-      );
-
-      setUnreadCounts(counts);
-    };
-
-    fetchUnreadCounts();
-  }, [initialRooms, userId]);
+  // initialRooms 변경 시 rooms / unreadCounts도 동기화
+  useEffect(() => {
+    setRooms(initialRooms);
+    setUnreadCounts(() => {
+      const counts: Record<string, number> = {};
+      for (const room of initialRooms) {
+        counts[room.id] = room.unreadCount ?? 0;
+      }
+      return counts;
+    });
+  }, [initialRooms]);
 
   /**
-   * 2단계: Supabase 실시간 채널 구독 설정
-   * - 메시지 수신 시: 해당 채팅방의 마지막 메시지를 갱신하고 unread count 증가
-   * - 읽음 수신 시: 해당 채팅방의 unread count를 0으로 초기화
+   * Supabase 실시간 채널 구독 설정
    */
   useEffect(() => {
     const unsubscribe = subscribeToRoomUpdates({
       userId,
       roomIds: initialRooms.map((room) => room.id),
 
-      /**
-       * 메시지 수신 시 콜백
-       */
+      // 메시지 수신 시 콜백
       onMessage: (message: ChatMessage) => {
         // lastMessage 갱신
         setRooms((prevRooms) =>
@@ -80,15 +81,13 @@ export default function useChatRoomSubscription(
         // unread count 증가
         setUnreadCounts((prev) => ({
           ...prev,
-          [message.productChatRoomId!]:
-            (prev[message.productChatRoomId!] || 0) + 1,
+          [message.productChatRoomId]:
+            (prev[message.productChatRoomId] || 0) + 1,
         }));
       },
 
-      /**
-       * 메시지 읽음 수신 시 콜백
-       */
-      onMessageRead: ({ roomId }) => {
+      // 메시지 읽음 수신 시 콜백
+      onMessageRead: (roomId: string) => {
         setUnreadCounts((prev) => ({
           ...prev,
           [roomId]: 0,

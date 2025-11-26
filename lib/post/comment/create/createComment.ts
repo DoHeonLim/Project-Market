@@ -6,6 +6,7 @@
  * History
  * Date        Author   Status    Description
  * 2024.07.06  임도헌   Created
+ * 2025.11.20  임도헌   Modified  revalidate 태그 네이밍 통일
  */
 
 "use server";
@@ -51,7 +52,7 @@ export const createComment = async (formData: FormData) => {
     });
     if (post) await checkBoardExplorerBadge(post.userId);
 
-    revalidateTag(`post-comments-${result.data.postId}`);
+    revalidateTag(`post-comments-id-${result.data.postId}`);
 
     return { success: true, id: comment.id };
   } catch (e) {

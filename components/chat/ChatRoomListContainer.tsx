@@ -31,7 +31,7 @@ export default function ChatRoomListContainer({
 
   return (
     <div className="flex flex-col gap-3 px-4 py-6 w-full max-w-2xl mx-auto">
-      <h2 className="text-lg m-1 sm:text-xl font-semibold text-foreground dark:text-text-dark mb-2">
+      <h2 className="text-lg m-1 sm:text-xl font-semibold text-center text-foreground dark:text-text-dark mb-2">
         신호
       </h2>
       {rooms.length > 0 ? (

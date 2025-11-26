@@ -16,7 +16,7 @@
 import db from "@/lib/db";
 import getSession from "@/lib/session";
 
-// 🔹 검색 필드 인터페이스
+// 검색 필드 인터페이스
 export interface SearchData {
   keyword: string;
   category?: string;
@@ -26,19 +26,19 @@ export interface SearchData {
   condition?: string;
 }
 
-// 🔹 최근 검색 기록 반환 타입
+// 최근 검색 기록 반환 타입
 export interface UserSearchHistoryItem {
   keyword: string;
   created_at: Date;
 }
 
-// 🔹 인기 검색어 반환 타입
+// 인기 검색어 반환 타입
 export interface PopularSearchItem {
   keyword: string;
   count: number;
 }
 
-// 🔸 검색 기록 저장 (내부 로직)
+// 검색 기록 저장 (내부 로직)
 export const saveSearchHistory = async (
   userId: number,
   searchData: SearchData
@@ -65,7 +65,7 @@ export const saveSearchHistory = async (
   }
 };
 
-// 🔸 클라이언트 호출용: 세션에서 유저 ID 자동 처리
+// 클라이언트 호출용: 세션에서 유저 ID 자동 처리
 export const createSearchHistory = async (keyword: string): Promise<void> => {
   const session = await getSession();
   if (!session?.id) return;
@@ -73,7 +73,7 @@ export const createSearchHistory = async (keyword: string): Promise<void> => {
   await saveSearchHistory(session.id, { keyword });
 };
 
-// 🔸 최근 검색 기록 가져오기
+// 최근 검색 기록 가져오기
 export const getUserSearchHistory = async (): Promise<
   UserSearchHistoryItem[]
 > => {
@@ -88,7 +88,7 @@ export const getUserSearchHistory = async (): Promise<
   });
 };
 
-// 🔸 인기 검색어 가져오기
+// 인기 검색어 가져오기
 export const getPopularSearches = async (): Promise<PopularSearchItem[]> => {
   return db.popularSearch.findMany({
     select: { keyword: true, count: true },
@@ -97,7 +97,7 @@ export const getPopularSearches = async (): Promise<PopularSearchItem[]> => {
   });
 };
 
-// 🔸 특정 검색어 삭제
+// 특정 검색어 삭제
 export const deleteSearchHistory = async (keyword: string): Promise<void> => {
   const session = await getSession();
   if (!session.id) return;
@@ -107,7 +107,7 @@ export const deleteSearchHistory = async (keyword: string): Promise<void> => {
   });
 };
 
-// 🔸 전체 검색어 삭제
+// 전체 검색어 삭제
 export const deleteAllSearchHistory = async (): Promise<void> => {
   const session = await getSession();
   if (!session.id) return;

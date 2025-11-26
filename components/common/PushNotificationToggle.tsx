@@ -52,17 +52,18 @@ export function PushNotificationToggle() {
       </span>
       <button
         onClick={handleToggle}
-        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 order-1 sm:order-2
-          ${
-            isSubscribed ? "bg-indigo-600" : "bg-gray-200 dark:bg-neutral-700"
-          }`}
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors
+    focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2
+    ${isSubscribed ? "bg-indigo-600" : "bg-neutral-700"}`}
+        aria-pressed={isSubscribed}
+        aria-label={`푸시 알림 ${isSubscribed ? "끄기" : "켜기"}`}
       >
         <span className="sr-only">
           푸시 알림 {isSubscribed ? "끄기" : "켜기"}
         </span>
         <span
-          className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out
-            ${isSubscribed ? "translate-x-6" : "translate-x-1"}`}
+          className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition
+    ${isSubscribed ? "translate-x-6" : "translate-x-1"}`}
         />
       </button>
     </div>

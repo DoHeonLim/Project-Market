@@ -56,11 +56,7 @@ export default function MyPurchasesList({
   });
 
   return (
-    <div className="flex flex-col gap-6 mx-auto p-4">
-      <h1 className="text-2xl font-semibold text-center text-primary dark:text-primary-light">
-        구매 제품
-      </h1>
-
+    <div className="w-full mx-auto max-w-3xl flex flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
       {products.length === 0 ? (
         <div className="bg-white dark:bg-neutral-800 rounded-xl p-8 text-center">
           <p className="text-neutral-500 dark:text-neutral-400">
@@ -68,7 +64,7 @@ export default function MyPurchasesList({
           </p>
           <a
             href="/products"
-            className="inline-block mt-4 underline text-primary dark:text-primary-light"
+            className="inline-block mt-4 text-primary dark:text-primary-light"
           >
             제품 보러가기
           </a>
@@ -92,19 +88,19 @@ export default function MyPurchasesList({
             <button
               ref={triggerRef}
               type="button"
-              onClick={() => {
-                if (!purchased.isLoading) purchased.loadMore();
-              }}
-              disabled={purchased.isLoading}
-              className="mb-40 text-sm font-medium bg-primary/10 dark:bg-primary-light/10 text-primary dark:text-primary-light w-fit mx-auto px-4 py-2 rounded-full hover:bg-primary/20 dark:hover:bg-primary-light/20 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="mb-[clamp(6rem,5vh,8rem)] pb-[env(safe-area-inset-bottom)] text-sm font-medium bg-primary/10 dark:bg-primary-light/10 text-primary dark:text-primary-light w-fit mx-auto px-4 py-2 rounded-full hover:bg-primary/20 dark:hover:bg-primary-light/20 active:scale-95 transition-all flex items-center gap-2"
+              aria-busy={purchased.isLoading}
             >
               {purchased.isLoading ? (
                 <>
-                  <span className="animate-spin">🌊</span> 항해중...
+                  <span className="animate-spin" aria-hidden>
+                    🌊
+                  </span>{" "}
+                  항해중...
                 </>
               ) : (
                 <>
-                  <span>⚓</span> 더 보기
+                  <span aria-hidden>⚓</span> 더 보기
                 </>
               )}
             </button>

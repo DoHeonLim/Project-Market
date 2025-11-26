@@ -25,7 +25,7 @@ export default function AppWrapper({ children, className }: AppWrapperProps) {
       className={cn(
         "relative min-h-[100dvh] w-full",
         "bg-background dark:bg-background-dark",
-        "text-text dark:text-dark",
+        "text-neutral-900 dark:text-neutral-100",
         "transition-colors duration-300",
         "sm:max-w-screen-sm sm:mx-auto sm:shadow-xl",
         className

@@ -7,8 +7,10 @@
  * Date        Author   Status    Description
  * 2025.09.15  임도헌   Created   기본 삭제 라우트
  * 2025.09.17  임도헌   Modified  비즈니스 로직 분리: deleteBroadcastTx 호출 구조
+ * 2025.11.22  임도헌   Modified  broadcast-list 캐시 태그 제거 및 user-streams-id 태그 무효화 추가
  */
 
+import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import db from "@/lib/db";
 import getSession from "@/lib/session";
@@ -79,13 +81,26 @@ export async function DELETE(
       );
     }
 
-    // ⚙️ 비즈니스 로직 호출 — VodAsset → Broadcast 삭제(트랜잭션)
+    // 비즈니스 로직 호출 — VodAsset → Broadcast 삭제(트랜잭션)
     await db.$transaction(async (tx) => {
       const res = await deleteBroadcastTx(tx, idNum);
       if (!res.success) {
         throw new Error(res.error || "삭제 실패");
       }
     });
+
+    // 삭제 후 관련 캐시 태그 무효화
+    try {
+      revalidateTag(`broadcast-detail-${row.id}`);
+      if (row.liveInput?.userId) {
+        revalidateTag(`user-streams-id-${row.liveInput.userId}`);
+      }
+    } catch (err) {
+      console.warn(
+        "[DELETE /api/streams/:id/delete] revalidateTag failed:",
+        err
+      );
+    }
 
     return NextResponse.json({ success: true });
   } catch (err) {

@@ -15,6 +15,7 @@
  * 2025.10.19  임도헌   Modified   도메인 정리 및 import 정리
  * 2025.11.05  임도헌   Modified   세션 기반 userId 강제, 자격 검증, 중복 방지, rate/payload 검증, null-safe 알림
  * 2025.11.10  임도헌   Modified   유저 전용 채널 브로드캐스트, push tag/renotify 적용, payload에 image 포함
+ * 2025.11.19  임도헌   Modified   제품 상세 캐시 초기화
  */
 
 "use server";
@@ -192,6 +193,9 @@ export async function createReview(
     } else if (prod.purchase_userId) {
       revalidateTag(`user-badges-id-${prod.purchase_userId}`);
     }
+
+    // 제품 상세 캐시 최신화(리뷰 수/평점 등 반영 대비)
+    revalidateTag(`product-detail-id-${productId}`);
 
     return {
       success: true,

@@ -16,7 +16,10 @@ Date        Author   Status    Description
 2025.05.06  임도헌   Modified  그리드/리스트 뷰 모드 추가
 2025.05.06  임도헌   Modified  게시글 페이지 컴포넌트 수정
 2025.06.26  임도헌   Modified  PostList, PostCard 분리 및 검색 구조 개선
+2025.11.20  임도헌   Modified  게시글 페이지 동적으로 변경
 */
+
+export const dynamic = "force-dynamic";
 
 import PostList from "@/components/post/PostList";
 import { getInitialPosts } from "./actions/init";

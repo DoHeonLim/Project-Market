@@ -29,7 +29,6 @@ import Link from "next/link";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 
-import { formatToWon } from "@/lib/utils";
 import TimeAgo from "../common/TimeAgo";
 import UserAvatar from "../common/UserAvatar";
 import { SelectUserModal } from "../profile/SelectUserModal";
@@ -40,6 +39,7 @@ import ConfirmDialog from "@/components/common/ConfirmDialog";
 import { EyeIcon, HeartIcon } from "@heroicons/react/24/solid";
 
 import { useReview } from "@/hooks/useReview";
+import { formatToWon } from "@/lib/utils";
 import { getUserInfo } from "@/lib/user/getUserInfo";
 import { updateProductStatus } from "@/lib/product/updateProductStatus";
 import { deleteReview } from "@/lib/review/deleteReview";
@@ -159,17 +159,11 @@ export default function MySalesProductItem({
     productId: product.id,
     type: "seller",
     onSuccess: (newReview) => {
-      // 로컬 즉시 반영
-      setReviews((prev) => [
-        newReview,
-        ...prev.filter((r) => r.userId !== userId),
-      ]);
-      // 부모 리스트에도 부분 패치
-      onReviewChanged?.({
-        reviews: [
-          newReview,
-          ...(product.reviews ?? []).filter((r) => r.userId !== userId),
-        ],
+      // 로컬 최신 상태 기준으로 일관 적용
+      setReviews((prev) => {
+        const next = [newReview, ...prev.filter((r) => r.userId !== userId)];
+        onReviewChanged?.({ reviews: next });
+        return next;
       });
     },
   });
@@ -283,6 +277,9 @@ export default function MySalesProductItem({
         toast.success(
           "판매중으로 변경했어요. 관련 리뷰는 모두 삭제되었습니다."
         );
+        // 즉시 UI 동기화 (리뷰 지표/모달들 반영)
+        setReviews([]);
+        onReviewChanged?.({ reviews: [] });
       }
       return res;
     });

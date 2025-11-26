@@ -178,7 +178,7 @@ export default function FollowListModal({
           aria-modal="true"
           aria-labelledby={titleId}
           tabIndex={-1}
-          className="relative w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 shadow-xl transition-all dark:bg-neutral-800"
+          className="relative w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-4 shadow-xl transition-all dark:bg-neutral-800"
         >
           {/* 헤더 */}
           <div className="mb-4">
@@ -215,7 +215,7 @@ export default function FollowListModal({
                   <section aria-labelledby="mutual-section-title">
                     <div
                       id="mutual-section-title"
-                      className="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-200"
+                      className="mb-2 text-[11px] font-semibold text-gray-700 dark:text-gray-200"
                     >
                       맞팔로잉
                     </div>

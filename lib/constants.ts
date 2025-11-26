@@ -103,7 +103,7 @@ export type StreamVisibility =
 export const STREAM_VISIBILITY_DISPLAY = {
   PUBLIC: "공개",
   PRIVATE: "비공개",
-  FOLLOWERS: "팔로워만",
+  FOLLOWERS: "팔로워",
 } as const;
 
 // 스트리밍 상태 상수 정의

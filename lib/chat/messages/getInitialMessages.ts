@@ -23,18 +23,16 @@ export const getInitialMessages = async (
   limit = 20
 ): Promise<ChatMessage[]> => {
   try {
-    // DB에서 최신순(DESC)으로 limit 개수 가져오기
     const messages = await db.productMessage.findMany({
       where: {
         productChatRoomId: chatRoomId,
       },
       orderBy: { created_at: "desc" }, // 최신순 정렬
-      take: limit, // 최신 메시지 limit 개수
+      take: limit,
       select: {
         id: true,
         payload: true,
         created_at: true,
-        userId: true,
         isRead: true,
         user: {
           select: {
@@ -47,11 +45,23 @@ export const getInitialMessages = async (
       },
     });
 
-    // reverse() 이유
-    // - DESC로 가져오면 최신 메시지가 배열 앞에 위치
-    // - 채팅 UI는 오래된 → 최신 순서로 출력해야 자연스러움
-    return messages.reverse();
-  } catch (err) {
+    // DESC → ASC + ChatMessage 형태로 매핑
+    return messages.reverse().map<ChatMessage>((m) => ({
+      id: m.id,
+      payload: m.payload,
+      created_at: m.created_at,
+      isRead: m.isRead,
+      // Prisma 타입은 string | null 이지만,
+      // 이 함수는 chatRoomId 기준으로만 조회하므로
+      // null일 경우 현재 chatRoomId로 보정해서 항상 string으로 맞춰줌
+      productChatRoomId: m.productChatRoomId ?? chatRoomId,
+      user: {
+        id: m.user.id,
+        username: m.user.username,
+        avatar: m.user.avatar,
+      },
+    }));
+  } catch (err: unknown) {
     console.error("getInitialMessages error:", err);
     return [];
   }

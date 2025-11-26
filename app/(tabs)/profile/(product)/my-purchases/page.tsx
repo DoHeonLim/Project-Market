@@ -11,11 +11,11 @@
  * 2025.10.17  임도헌   Modified  커서 기반 공용 액션(getInitialUserProducts) 사용 + 캐시 태그 분리
  * 2025.10.23  임도헌   Modified  캐시 리팩토링 적용: per-id 태그 + lib 캐시 래퍼 사용
  * 2025.11.06  임도헌   Modified  미로그인 가드(redirect) 추가
+ * 2025.11.13  임도헌   Modified  뒤로가기 버튼 layout으로 이동
  */
 
 import getSession from "@/lib/session";
 import { getCachedInitialUserProducts } from "@/lib/product/getUserProducts";
-import BackButton from "@/components/common/BackButton";
 import MyPurchasesList from "@/components/product/MyPurchasesList";
 import { redirect } from "next/navigation";
 
@@ -33,7 +33,6 @@ export default async function MyPurchasesPage() {
 
   return (
     <>
-      <BackButton className="" />
       <MyPurchasesList userId={userId} initialPurchased={initialPurchased} />
     </>
   );

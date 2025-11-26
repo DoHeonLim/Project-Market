@@ -16,6 +16,8 @@
  * 2025.09.19  임도헌   Modified  getUserChannel 도입(리다이렉트 제거)
  * 2025.09.21  임도헌   Modified  모든 VOD 전개 + vodId 경로 주입
  * 2025.10.06  임도헌   Modified  BroadcastSummary 타입 단언 수정
+ * 2025.11.22  임도헌   Modified  viewerRole 기반 isFollowing 유도, getIsFollowing 제거,
+ *                                dynamic 적용(개인화 페이지 캐시 회피)
  */
 
 import { notFound } from "next/navigation";
@@ -23,11 +25,13 @@ import getSession from "@/lib/session";
 import db from "@/lib/db";
 import UserStreamsClient from "@/components/stream/UserStreamsClient";
 import { getUserStreams } from "@/lib/stream/getUserStreams";
-import { getIsFollowing } from "@/lib/user/follow/getIsFollowing";
 import { getUserChannel } from "@/lib/user/getUserChannel";
 import type { BroadcastSummary, ViewerRole, VodForGrid } from "@/types/stream";
 
 type Params = { username: string };
+
+// 세션/팔로우 상태에 따라 UI가 달라지는 페이지 → 캐시 강제 비활성화
+export const dynamic = "force-dynamic";
 
 export default async function ChannelPage({ params }: { params: Params }) {
   const username = decodeURIComponent(params.username);
@@ -40,19 +44,17 @@ export default async function ChannelPage({ params }: { params: Params }) {
 
   const ownerId = userInfo.id;
 
-  // 2) 병렬 조회
-  const [streamsWithRole, isFollowing] = await Promise.all([
-    getUserStreams({ ownerId, viewerId, take: 30 }),
-    viewerId ? getIsFollowing(viewerId, ownerId) : Promise.resolve(false),
-  ]);
-
+  // 2) 방송 목록 + 뷰어 역할
+  const streamsWithRole = await getUserStreams({ ownerId, viewerId, take: 30 });
   const { items: userStreams = [], role = "VISITOR" } = streamsWithRole ?? {};
   const resolvedRole = role as ViewerRole;
 
-  // BroadcastSummary 타입 단언 수정
+  // ROLE → isFollowing 유도 (OWNER/FOLLOWER = true, VISITOR = false)
+  const isFollowing = resolvedRole === "OWNER" || resolvedRole === "FOLLOWER";
+
   const streams: BroadcastSummary[] = userStreams ?? [];
 
-  // 3) ENDED 방송들의 모든 VOD 조회 → VOD 카드로 평탄화
+  // 3) ENDED 방송들의 VOD 조회 → 평탄화
   const endedBroadcasts = streams.filter((s) => s.status === "ENDED");
   const endedIds = endedBroadcasts.map((s) => s.id);
 
@@ -72,7 +74,6 @@ export default async function ChannelPage({ params }: { params: Params }) {
       orderBy: [{ ready_at: "desc" }, { created_at: "desc" }],
     });
 
-    // broadcastId → 원본 방송(UserStream) 매핑
     const byBroadcast = new Map<number, BroadcastSummary>();
     for (const s of endedBroadcasts) byBroadcast.set(s.id, s);
 
@@ -103,7 +104,6 @@ export default async function ChannelPage({ params }: { params: Params }) {
     });
   }
 
-  // 5) 렌더
   return (
     <UserStreamsClient
       userStreams={streams}

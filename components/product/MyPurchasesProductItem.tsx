@@ -34,6 +34,7 @@ import ConfirmDialog from "@/components/common/ConfirmDialog";
 import { useReview } from "@/hooks/useReview";
 import { deleteReview } from "@/lib/review/deleteReview";
 import type { MyPurchasedListItem } from "@/types/product";
+import UserAvatar from "../common/UserAvatar";
 
 type Props = {
   product: MyPurchasedListItem;
@@ -125,47 +126,67 @@ export default function MyPurchasesProductItem({
   const thumbUrl = getPublicImageUrl(product.images?.[0]?.url);
 
   return (
-    <div className="bg-white dark:bg-neutral-800 rounded-xl p-6 transition-all">
-      <Link
-        href={href}
-        className="flex gap-5 transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-700/50 rounded-lg p-2 -m-2"
-      >
-        <div className="relative overflow-hidden rounded-lg size-28 border border-neutral-200 dark:border-neutral-700">
+    <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5 dark:bg-neutral-800 dark:ring-white/10">
+      <div className="flex gap-5">
+        <Link
+          href={href}
+          className="relative size-28 shrink-0 overflow-hidden rounded-xl ring-1 ring-black/10 dark:ring-white/10"
+          aria-label={`${product.title} 상세보기`}
+        >
           {thumbUrl ? (
             <Image
               fill
               src={thumbUrl}
-              sizes="(max-width: 768px) 112px, 112px"
-              className="object-cover hover:scale-110 transition-transform duration-200"
-              alt={`${product.title} 썸네일`}
+              sizes="112px"
+              className="object-cover transition-transform duration-200 hover:scale-110"
+              alt={product.title}
             />
           ) : (
             <div className="absolute inset-0 bg-neutral-100 dark:bg-neutral-800 animate-pulse" />
           )}
-        </div>
+        </Link>
 
-        <div className="flex flex-col gap-2">
-          <span className="text-lg font-medium text-neutral-900 dark:text-white">
-            {product.title}
-          </span>
+        <div className="flex min-w-0 flex-1 flex-col gap-2">
+          <div className="flex items-start justify-between gap-3">
+            <Link href={href} className="min-w-0">
+              <h3 className="truncate text-lg font-semibold text-neutral-900 dark:text-white">
+                {product.title}
+              </h3>
+            </Link>
 
-          {purchasedAt && (
-            <span className="text-sm text-neutral-500 dark:text-neutral-400">
-              판매 날짜 : <TimeAgo date={purchasedAt} />
-            </span>
-          )}
+            {/* 상태 + 판매자 표시 */}
+            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+              <UserAvatar
+                avatar={sellerAvatar}
+                username={sellerName}
+                size="sm"
+              />
+              <span className="rounded-full px-2.5 py-1 text-xs font-semibold text-white bg-emerald-600 dark:bg-emerald-500">
+                구매 완료
+              </span>
+              {/* 옵션: 판매자 아바타 노출 */}
+            </div>
+          </div>
 
-          <span className="text-lg font-semibold text-primary dark:text-primary-light">
+          {/* 가격 */}
+          <div className="text-base font-semibold text-primary dark:text-primary-light">
             {formatToWon(product.price)}원
-          </span>
-        </div>
-      </Link>
+          </div>
 
-      <div className="flex justify-center gap-4 mt-6">
+          {/* 타임라인 */}
+          <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+            <span className="text-neutral-400 dark:text-neutral-500">
+              · 구매: {purchasedAt ? <TimeAgo date={purchasedAt} /> : "—"}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-3 grid-cols-1 sm:grid-cols-2">
         {buyerReview ? (
           <button
             onClick={() => setIsBuyerReviewModalOpen(true)}
-            className="btn-primary flex-1 max-w-[200px] py-2.5"
+            className="btn-primary flex-1 py-2.5"
             disabled={isLoading}
           >
             내가 쓴 리뷰 보기
@@ -173,7 +194,7 @@ export default function MyPurchasesProductItem({
         ) : (
           <button
             onClick={() => setIsReviewModalOpen(true)}
-            className="btn-primary flex-1 max-w-[200px] py-2.5"
+            className="btn-primary flex-1 py-2.5"
             disabled={isLoading}
           >
             거래 후기 보내기
@@ -182,7 +203,7 @@ export default function MyPurchasesProductItem({
 
         <button
           onClick={() => setIsSellerReviewModalOpen(true)}
-          className="btn-primary flex-1 max-w-[200px] py-2.5"
+          className="btn-secondary flex-1 py-2.5"
           disabled={isLoading}
         >
           {sellerName} 님의 리뷰 보기

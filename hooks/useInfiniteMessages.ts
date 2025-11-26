@@ -7,6 +7,7 @@
  * Date        Author   Status    Description
  * 2025.07.15  임도헌   Created   무한스크롤 메시지 관리
  * 2025.07.22  임도헌   Modified  단계별 주석 추가 및 코드 흐름 설명 강화
+ * 2025.11.21  임도헌   Modified  메시지가 아예 없을 때 fetchMore 방지
  */
 
 "use client";
@@ -48,7 +49,13 @@ export default function useInfiniteMessages(
     if (isFetching || !hasMore) return;
     setIsFetching(true);
 
+    // 메시지가 아예 없을 때 fetchMore 방지
     const firstMessageId = messages[0]?.id;
+    if (!firstMessageId) {
+      setHasMore(false);
+      setIsFetching(false);
+      return;
+    }
     const result = await getMoreMessagesAction(chatRoomId, firstMessageId);
 
     if (!result.success) {

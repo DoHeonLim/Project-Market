@@ -10,6 +10,7 @@
  * 2025.08.27  임도헌   Modified  비소유자도 PRIVATE의 ENDED(다시보기) 노출
  * 2025.10.23  임도헌   Modified  ownerId 우선, username→id 해석; per-id 태그; ROLE 캐시 버킷 2단계(owner/public); nextCursor 추가
  * 2025.10.29  임도헌   Modified  unstable_cache 키에 take/cursor 반영(1p만 캐시), username→id 얇은 캐시 + 태그 추가
+ * 2025.11.26  임도헌   Modified  latestVodId(가장 최신 VodAsset id) DTO에 추가
  */
 
 import "server-only";
@@ -104,7 +105,14 @@ const broadcastSelect = {
   },
   category: { select: { id: true, kor_name: true, icon: true } },
   tags: { select: { name: true } },
-} as const;
+
+  // 가장 최신 VodAsset 1개만 필요 (녹화 페이지 라우팅용 latestVodId)
+  vodAssets: {
+    select: { id: true, ready_at: true },
+    orderBy: [{ ready_at: "desc" }, { id: "desc" }],
+    take: 1,
+  },
+} satisfies Prisma.BroadcastSelect;
 
 // 1페이지 캐시(페이징 없는 첫 페이지만 캐시)
 // - 태그: user-streams-id-${ownerId}
@@ -173,34 +181,41 @@ export async function getUserStreams(params: GetUserStreamsParams) {
   }
 
   // 4) DTO 매핑 + nextCursor
-  const items = rows.map((b) => ({
-    id: b.id,
-    title: b.title,
-    description: b.description,
-    thumbnail: b.thumbnail ?? null,
-    visibility: b.visibility,
-    status: b.status,
-    isLive: b.status === "CONNECTED",
-    started_at: b.started_at,
-    ended_at: b.ended_at,
-    stream_id: b.liveInput.provider_uid,
-    user: {
-      id: b.liveInput.user.id,
-      username: b.liveInput.user.username,
-      avatar: b.liveInput.user.avatar ?? null,
-    },
-    category: b.category
-      ? {
-          id: b.category.id,
-          kor_name: b.category.kor_name,
-          icon: b.category.icon ?? null,
-        }
-      : null,
-    tags: b.tags,
-    requiresPassword: b.visibility === "PRIVATE" && role !== "OWNER",
-    followersOnlyLocked: b.visibility === "FOLLOWERS" && role === "VISITOR",
-    locked: b.visibility === "FOLLOWERS" && role === "VISITOR",
-  }));
+  const items = rows.map((b) => {
+    const latestVod = b.vodAssets[0] ?? null;
+
+    return {
+      id: b.id,
+      title: b.title,
+      description: b.description,
+      thumbnail: b.thumbnail ?? null,
+      visibility: b.visibility,
+      status: b.status,
+      isLive: b.status === "CONNECTED",
+      started_at: b.started_at,
+      ended_at: b.ended_at,
+      stream_id: b.liveInput.provider_uid,
+      user: {
+        id: b.liveInput.user.id,
+        username: b.liveInput.user.username,
+        avatar: b.liveInput.user.avatar ?? null,
+      },
+      category: b.category
+        ? {
+            id: b.category.id,
+            kor_name: b.category.kor_name,
+            icon: b.category.icon ?? null,
+          }
+        : null,
+      tags: b.tags,
+      requiresPassword: b.visibility === "PRIVATE" && role !== "OWNER",
+      followersOnlyLocked: b.visibility === "FOLLOWERS" && role === "VISITOR",
+      locked: b.visibility === "FOLLOWERS" && role === "VISITOR",
+
+      // 가장 최신 VodAsset id (녹화 상세로 이동할 때 사용)
+      latestVodId: latestVod?.id ?? null,
+    };
+  });
 
   const nextCursor = items.length === take ? items[items.length - 1].id : null;
   const owner = { id: ownerId }; // 호환용 메타

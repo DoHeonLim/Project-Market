@@ -136,7 +136,7 @@ export default function StreamSecretInfo({
   };
 
   return (
-    <div className="mb-4">
+    <>
       {/* 패널 토글 */}
       <button
         type="button"
@@ -238,6 +238,6 @@ export default function StreamSecretInfo({
           </p>
         </div>
       )}
-    </div>
+    </>
   );
 }

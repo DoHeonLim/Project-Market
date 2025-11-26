@@ -1,6 +1,6 @@
 /**
  * File Name : lib/user/getUserChannel
- * Description : 채널(유저) 기본 정보 조회 + 팔로잉 여부 확인
+ * Description : 채널(유저) 기본 정보 조회 (카운트 포함, 팔로우 여부는 별도)
  * Author : 임도헌
  *
  * History

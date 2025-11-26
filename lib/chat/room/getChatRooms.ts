@@ -6,11 +6,13 @@
  * History
  * Date        Author   Status    Description
  * 2025.07.13  임도헌   Created   채팅 목록 fetch 로직 분리
+ * 2025.11.21  임도헌   Modified  방별 unreadCount 서버 계산 추가
  */
 "use server";
 
 import db from "@/lib/db";
 import { ChatRoom } from "@/types/chat";
+import { getUnreadCount } from "@/lib/chat/messages/getUnreadCount";
 
 /**
  * getChatRooms
@@ -19,6 +21,7 @@ import { ChatRoom } from "@/types/chat";
  *   - 상대방 유저 정보
  *   - 해당 제품의 대표 정보 (제목, 이미지)
  *   - 마지막 메시지 1건
+ *   - unreadCount: 읽지 않은 메시지 개수
  *
  * userId - 현재 로그인한 사용자 ID
  * @returns ChatRoom[] - 채팅방 목록
@@ -66,26 +69,37 @@ export async function getChatRooms(userId: number): Promise<ChatRoom[]> {
     },
   });
 
-  // Prisma 쿼리 결과 → 프론트용 데이터 구조로 변환
-  return chatRooms.map((room) => ({
-    id: room.id,
-    created_at: room.created_at,
-    updated_at: room.updated_at,
-    product: {
-      id: room.product.id,
-      title: room.product.title,
-      imageUrl: room.product.images[0]?.url ?? "", // 대표 이미지 URL
-    },
-    users: room.users, // 상대방 유저 정보
-    lastMessage: room.messages[0]
-      ? {
-          id: room.messages[0].id,
-          payload: room.messages[0].payload,
-          created_at: room.messages[0].created_at,
-          isRead: room.messages[0].isRead,
-          productChatRoomId: room.messages[0].productChatRoomId!,
-          user: room.messages[0].user,
-        }
-      : null,
-  }));
+  // Prisma 쿼리 결과 → 프론트용 데이터 구조로 변환 + unreadCount 계산
+  const roomsWithUnread = await Promise.all(
+    chatRooms.map(async (room) => {
+      const unreadCount = await getUnreadCount(userId, room.id);
+
+      return {
+        id: room.id,
+        created_at: room.created_at,
+        updated_at: room.updated_at,
+        product: {
+          id: room.product.id,
+          title: room.product.title,
+          imageUrl: room.product.images[0]?.url ?? "", // 대표 이미지 URL
+        },
+        users: room.users, // 상대방 유저 정보
+        lastMessage: room.messages[0]
+          ? {
+              id: room.messages[0].id,
+              payload: room.messages[0].payload,
+              created_at: room.messages[0].created_at,
+              isRead: room.messages[0].isRead,
+              productChatRoomId: room.messages[0].productChatRoomId!,
+              user: room.messages[0].user,
+            }
+          : null,
+
+        unreadCount,
+      };
+    })
+  );
+
+  // ChatRoom에는 unreadCount 정의가 없을 수 있어서, 소비 측에서 (room as any).unreadCount 로 읽도록 처리
+  return roomsWithUnread as ChatRoom[];
 }

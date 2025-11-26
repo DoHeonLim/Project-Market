@@ -44,6 +44,7 @@ import ProductCardPrice from "./ProductCardPrice";
 import ProductCardMeta from "./ProductCardMeta";
 import { ProductCardTags } from "./ProductCardTags";
 import type { ProductCardProps } from "@/types/product";
+import { usePathname, useSearchParams } from "next/navigation";
 
 export default function ProductCard({
   product,
@@ -65,9 +66,14 @@ export default function ProductCard({
     search_tags,
   } = product;
 
+  const pathname = usePathname();
+  const sp = useSearchParams();
+  const next = pathname + (sp.size ? `?${sp.toString()}` : "");
+  const href = `/products/view/${id}?returnTo=${encodeURIComponent(next)}`;
+
   return (
     <Link
-      href={`/products/view/${id}`}
+      href={href}
       className={`${
         viewMode === "grid"
           ? "flex flex-col h-full p-4 border border-neutral-200 dark:border-neutral-700 rounded-lg hover:bg-neutral-100/50 dark:hover:bg-neutral-800/50 hover:shadow-lg transition-all group"

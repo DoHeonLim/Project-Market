@@ -83,7 +83,7 @@ export default function LiveStatusButton({
     <div
       role="status"
       aria-live="polite"
-      className="mb-4 flex h-8 w-24 items-center justify-center rounded-md bg-indigo-500"
+      className="m-2 flex h-8 w-24 items-center justify-center rounded-md bg-indigo-500"
       data-stream-id={streamId}
       title={label}
     >
@@ -96,7 +96,7 @@ export default function LiveStatusButton({
     <div
       role="status"
       aria-live="polite"
-      className="mb-4 flex h-8 w-24 items-center justify-center rounded-md bg-red-500"
+      className="m-2 flex h-8 w-24 items-center justify-center rounded-md bg-red-500"
       data-stream-id={streamId}
       title={label}
     >

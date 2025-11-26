@@ -17,7 +17,12 @@
  * 2025.09.05  임도헌   Modified  (a11y) 잠금 시 키보드 네비 차단(Enter/Space), 오버레이 버튼 aria 보강
  * 2025.09.10  임도헌   Modified  a11y(aria-disabled/배지 sr-only), useMemo로 계산값 메모
  * 2025.09.23  임도헌   Modified  뷰포트에 들어오면 미니 프리뷰 iframe 렌더
+ * 2025.11.23  임도헌   Modified  layout(grid/rail) prop 도입, 카드 flex(h-full) 레이아웃 정리,
+ *                                내/채널/리스트 공용 카드 폭 제어
+ * 2025.11.23  임도헌   Modified  카드 하단 레이아웃을 제목/유저/메타 3단 구조로 재배치
+ * 2025.11.26  임도헌   Modified  라이브/녹화용 id를 분리하도록 수정
  */
+
 "use client";
 
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
@@ -36,6 +41,8 @@ import {
 interface StreamCardProps {
   /** unlock 타깃(원본 streamId 권장) */
   id: number;
+  /** 녹화본 페이지로 이동할 때 사용할 VodAsset id (없으면 id로 폴백) */
+  vodIdForRecording?: number;
   title: string;
   thumbnail?: string | null;
   /** 라이브 여부 (false면 다시보기 배지 표시) */
@@ -69,6 +76,9 @@ interface StreamCardProps {
 
   // 옵션 액션
   onRequestFollow?: () => void; // 팔로우 CTA
+
+  /** 레이아웃 모드: grid(기본), rail(가로 스크롤용 고정폭 카드) */
+  layout?: "grid" | "rail";
 }
 
 function resolveThumbUrl(src?: string | null): string | null {
@@ -80,6 +90,7 @@ function resolveThumbUrl(src?: string | null): string | null {
 export default function StreamCard(props: StreamCardProps) {
   const {
     id,
+    vodIdForRecording,
     title,
     thumbnail,
     isLive,
@@ -95,6 +106,7 @@ export default function StreamCard(props: StreamCardProps) {
     visibility,
     isPrivateType,
     onRequestFollow,
+    layout = "grid",
   } = props;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -103,8 +115,14 @@ export default function StreamCard(props: StreamCardProps) {
 
   // 기본 라우팅: 라이브/녹화에 따라 자동 분기(직접 href 주면 우선)
   const computedHref = useMemo(
-    () => href ?? (isLive ? `/streams/${id}` : `/streams/${id}/recording`),
-    [href, isLive, id]
+    () =>
+      href ??
+      (isLive
+        ? `/streams/${id}` // 라이브는 broadcastId
+        : vodIdForRecording
+          ? `/streams/${vodIdForRecording}/recording` // 녹화는 vodId
+          : `/streams/${id}/recording`), // fallback: 예전 방식
+    [href, isLive, id, vodIdForRecording]
   );
 
   // FOLLOWERS 배지/오버레이 판정 (prop 우선, 없으면 visibility로 계산)
@@ -122,7 +140,9 @@ export default function StreamCard(props: StreamCardProps) {
   // startedAt를 ISO 문자열로 정규화 (formatToTimeAgo 호환)
   const startedAtIso = useMemo(() => {
     if (!startedAt) return null;
-    return typeof startedAt === "string" ? startedAt : startedAt.toISOString();
+    if (startedAt instanceof Date) return startedAt.toISOString();
+    if (typeof startedAt === "string") return startedAt;
+    return null;
   }, [startedAt]);
 
   // ======== Hover/Focus 기반 Preview 로직 (IntersectionObserver 제거) ========
@@ -166,10 +186,8 @@ export default function StreamCard(props: StreamCardProps) {
   }, []);
 
   // 렌더 조건: 호버/포커스 중이거나(접근성 포함) 썸네일이 없을 때만 프리뷰 허용
-  // (썸네일이 없는 경우 호버 없이도 프리뷰를 보여주고 싶다면 아래 조건에서 thumb 체크 제거)
   const shouldRenderPreview =
     shouldPreview && (isHoveredOrFocused || !thumb) && !previewError;
-  // ======================================================================================
 
   const handleStreamClick = (e: React.MouseEvent) => {
     if (followersOnlyLocked) {
@@ -209,8 +227,14 @@ export default function StreamCard(props: StreamCardProps) {
     ? `${title} — 접근 제한(팔로워 전용 또는 비밀)`
     : title;
 
+  const layoutClass =
+    layout === "rail" ? "w-[260px] flex-none h-full" : "w-full";
+
   return (
-    <div className="relative overflow-hidden rounded-lg bg-white shadow dark:bg-neutral-800">
+    <article
+      className={`relative flex flex-col overflow-hidden rounded-lg bg-white shadow dark:bg-neutral-900 ${layoutClass}`}
+    >
+      {/* 썸네일/영상 영역 */}
       <Link
         href={computedHref}
         className="group block"
@@ -222,7 +246,7 @@ export default function StreamCard(props: StreamCardProps) {
       >
         <div
           ref={containerRef}
-          className="relative aspect-video w-full bg-neutral-100 dark:bg-neutral-800"
+          className="relative aspect-video w-full bg-neutral-100 dark:bg-neutral-900"
           data-preview={shouldRenderPreview ? "true" : "false"}
           onMouseEnter={startHover}
           onMouseLeave={endHover}
@@ -230,7 +254,6 @@ export default function StreamCard(props: StreamCardProps) {
           onBlur={endHover}
         >
           {shouldRenderPreview ? (
-            // 호버 또는 썸네일 없음일 때만 미니 프리뷰 iframe 렌더
             <div className="pointer-events-none absolute inset-0">
               <iframe
                 src={`/streams/${id}/live-preview`}
@@ -259,7 +282,6 @@ export default function StreamCard(props: StreamCardProps) {
               onError={() => {
                 console.warn("[StreamCard] thumb image failed:", id);
                 setThumbError(true);
-                // 썸네일 실패 시 바로 프리뷰 시도(호버 또는 썸네일 없음 조건에 의해 렌더)
                 if (shouldPreview) setIsHoveredOrFocused(true);
               }}
             />
@@ -332,54 +354,65 @@ export default function StreamCard(props: StreamCardProps) {
         </div>
       </Link>
 
-      {/* 타이틀 */}
-      <div className="mt-2 flex items-center gap-2 px-2 pb-2">
+      {/* 하단 정보 영역: 1) 제목 2) 유저 3) 메타 */}
+      <div className="flex flex-col px-2 py-2">
+        {/* 1줄: 제목 */}
+        <h3 className="line-clamp-2 text-sm font-semibold text-neutral-900 dark:text-white">
+          {title}
+        </h3>
+
+        {/* 유저 아바타, 닉네임 */}
         <UserAvatar
           avatar={streamer.avatar ?? null}
           username={streamer.username}
           size="sm"
+          compact
         />
-        <span className="flex-1 truncate text-base font-semibold text-neutral-900 dark:text-white">
-          {title}
-        </span>
-      </div>
 
-      {/* 메타: 한 줄(카테고리 • 태그 최대2 • 시간) — 데이터 있을 때만 렌더 */}
-      {!shortDescription &&
-        (category || (tags?.length ?? 0) > 0 || startedAtIso) && (
-          <div className="min-w-0 flex items-center gap-2 px-2 pb-3 text-xs text-neutral-600 dark:text-neutral-400">
-            {category && (
-              <span className="inline-flex shrink-0 items-center gap-1">
-                {category.icon && (
-                  <span aria-hidden="true">{category.icon}</span>
-                )}
-                {category.kor_name}
-              </span>
-            )}
-            {Array.isArray(tags) && tags.length > 0 && (
-              <div className="flex min-w-0 items-center gap-1">
-                {tags.slice(0, 2).map((tag) => (
-                  <span
-                    key={tag.name}
-                    className="shrink-0 rounded bg-neutral-200 px-1 dark:bg-neutral-700"
-                  >
-                    #{tag.name}
-                  </span>
-                ))}
-                {tags.length > 2 && (
-                  <span className="shrink-0 text-neutral-500 dark:text-neutral-400">
-                    +{tags.length - 2}
-                  </span>
-                )}
-              </div>
-            )}
-            {startedAtIso && (
-              <span className="ml-auto shrink-0 whitespace-nowrap">
-                {formatToTimeAgo(startedAtIso)}
-              </span>
-            )}
-          </div>
-        )}
+        {/* 3줄: 카테고리 • 태그 • 시간 */}
+        {!shortDescription &&
+          (category || (tags?.length ?? 0) > 0 || startedAtIso) && (
+            <div
+              className={`
+              mt-0.5 min-w-0 flex items-center gap-2 text-[11px]
+              text-neutral-600 dark:text-neutral-400 whitespace-nowrap
+            `}
+            >
+              {category && (
+                <span className="inline-flex shrink-0 items-center gap-1">
+                  {category.icon && (
+                    <span aria-hidden="true">{category.icon}</span>
+                  )}
+                  {category.kor_name}
+                </span>
+              )}
+
+              {Array.isArray(tags) && tags.length > 0 && (
+                <div className="flex min-w-0 items-center gap-1 overflow-hidden">
+                  {tags.slice(0, 2).map((tag) => (
+                    <span
+                      key={tag.name}
+                      className="shrink-0 rounded bg-neutral-200 px-1 dark:bg-neutral-700"
+                    >
+                      #{tag.name}
+                    </span>
+                  ))}
+                  {tags.length > 2 && (
+                    <span className="shrink-0 text-neutral-500 dark:text-neutral-400">
+                      +{tags.length - 2}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {startedAtIso && (
+                <span className="ml-auto shrink-0 whitespace-nowrap">
+                  {formatToTimeAgo(startedAtIso)}
+                </span>
+              )}
+            </div>
+          )}
+      </div>
 
       {/* 공용 비밀번호 모달: redirectHref는 계산된 경로 사용 */}
       <PrivateAccessModal
@@ -388,6 +421,6 @@ export default function StreamCard(props: StreamCardProps) {
         streamId={id}
         redirectHref={computedHref}
       />
-    </div>
+    </article>
   );
 }

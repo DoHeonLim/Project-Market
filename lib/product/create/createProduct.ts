@@ -6,13 +6,14 @@
  * History
  * Date        Author   Status    Description
  * 2025.06.15  임도헌   Created   제품 등록 로직 서버 액션으로 분리
+ * 2025.11.19  임도헌   Modified  프로필 판매 탭/카운트 및 제품 상세 캐시 무효화 추가
  */
 
 "use server";
 
 import db from "@/lib/db";
 import getSession from "@/lib/session";
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidateTag } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { productFormSchema } from "../form/productFormSchema";
 import { ProductFormResponse } from "@/types/product";
@@ -106,8 +107,10 @@ export const CreateProduct = async (
       data: { count: { increment: 1 } },
     });
 
-    revalidatePath("/products");
-    revalidateTag("product-detail");
+    // 프로필 판매 탭/카운트 및 제품 상세 캐시 무효화
+    revalidateTag(`user-products-SELLING-id-${session.id}`);
+    revalidateTag(`user-products-counts-id-${session.id}`);
+    revalidateTag(`product-detail-id-${product.id}`);
 
     return {
       success: true,

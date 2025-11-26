@@ -13,11 +13,12 @@
  * 2025.07.30  임도헌   Modified   비즈니스 로직 분리
  * 2025.09.09  임도헌   Modified   try/catch 보강, 실패시 일관된 에러 반환, 태그 리밸리데이션 주석 정리
  * 2025.09.15  임도헌   Modified   createBroadcastAction으로 리네이밍, 캐시 태그 정리(broadcast-list)
+ * 2025.11.22  임도헌   Modified   broadcast-list 캐시 태그 제거
  */
 
 "use server";
 
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath } from "next/cache";
 import { createBroadcast } from "@/lib/stream/create/createBroadcast";
 import type { CreateBroadcastResult } from "@/types/stream";
 
@@ -33,7 +34,6 @@ export const createBroadcastAction = async (
     const result = await createBroadcast(formData);
 
     if (result.success) {
-      revalidateTag("broadcast-list");
       revalidatePath("/streams", "page");
     }
 

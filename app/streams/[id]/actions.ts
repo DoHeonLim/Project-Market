@@ -20,6 +20,7 @@
 "use server";
 
 import { revalidateTag } from "next/cache";
+import * as T from "@/lib/cache/tags";
 import getSession from "@/lib/session";
 import { deleteBroadcast } from "@/lib/stream/delete/deleteBroadcast";
 import { deleteLiveInput } from "@/lib/stream/delete/deleteLiveInput";
@@ -44,11 +45,11 @@ export const deleteBroadcastAction = async (broadcastId: number) => {
 
   const result = await deleteBroadcast(broadcastId);
   if (result.success) {
-    revalidateTag(`broadcast-detail-${broadcastId}`);
+    revalidateTag(T.BROADCAST_DETAIL(broadcastId));
 
     const ownerId = owner?.liveInput?.userId;
     if (ownerId) {
-      revalidateTag(`user-streams-id-${ownerId}`);
+      revalidateTag(T.USER_STREAMS_ID(ownerId));
     }
   }
   return result;
@@ -143,14 +144,14 @@ export async function deleteLiveInputAction(liveInputId: number) {
     const ownerIds = new Set<number>();
 
     for (const { id, liveInput } of affected) {
-      revalidateTag(`broadcast-detail-${id}`);
+      revalidateTag(T.BROADCAST_DETAIL(id));
       if (liveInput?.userId) {
         ownerIds.add(liveInput.userId);
       }
     }
 
     for (const ownerId of ownerIds) {
-      revalidateTag(`user-streams-id-${ownerId}`);
+      revalidateTag(T.USER_STREAMS_ID(ownerId));
     }
   }
 

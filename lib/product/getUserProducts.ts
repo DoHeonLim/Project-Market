@@ -19,6 +19,7 @@
 import "server-only";
 import db from "@/lib/db";
 import { unstable_cache as nextCache } from "next/cache";
+import * as T from "@/lib/cache/tags";
 import { PRODUCTS_PAGE_TAKE } from "@/lib/constants";
 import { PROFILE_SALES_UNIFIED_SELECT } from "../constants/productSelect";
 import type { Paginated } from "@/types/product";
@@ -38,17 +39,7 @@ export type UserProductsScope =
  * - 태그는 "무효화 범위"를 지정하는 레이블
  */
 function tagForScope(scope: UserProductsScope) {
-  const id = scope.userId;
-  switch (scope.type) {
-    case "SELLING":
-      return `user-products-SELLING-id-${id}`;
-    case "RESERVED":
-      return `user-products-RESERVED-id-${id}`;
-    case "SOLD":
-      return `user-products-SOLD-id-${id}`;
-    case "PURCHASED":
-      return `user-products-PURCHASED-id-${id}`;
-  }
+  return T.USER_PRODUCTS_SCOPE_ID(scope.type, scope.userId);
 }
 
 /**
@@ -209,7 +200,7 @@ export async function getCachedUserTabCounts(userId: number) {
     },
     // counts는 userId 단일 스코프이므로 key도 per-id로 명시
     [`user-products-tab-counts-id-${userId}`],
-    { tags: [`user-products-counts-id-${userId}`] }
+    { tags: [T.USER_PRODUCTS_COUNTS_ID(userId)] }
   );
   return cached(userId);
 }
@@ -218,13 +209,13 @@ export async function getCachedUserTabCounts(userId: number) {
  * 변경 이벤트 무효화 예시:
  *
  *  - 상태 변경(SELLING ↔ RESERVED ↔ SOLD), 구매/예약/해제 등:
- *    await revalidateTag(`user-products-SELLING-id-${sellerId}`);
- *    await revalidateTag(`user-products-RESERVED-id-${sellerId}`);
- *    await revalidateTag(`user-products-SOLD-id-${sellerId}`);
- *    await revalidateTag(`user-products-counts-id-${sellerId}`);
+ *    revalidateTag(`user-products-SELLING-id-${sellerId}`);
+ *    revalidateTag(`user-products-RESERVED-id-${sellerId}`);
+ *    revalidateTag(`user-products-SOLD-id-${sellerId}`);
+ *    revalidateTag(`user-products-counts-id-${sellerId}`);
  *
  *  - 내가 구매(PURCHASED) 탭에 영향 줄 때(판매완료 성립/롤백 등):
- *    await revalidateTag(`user-products-PURCHASED-id-${buyerId}`);
+ *    revalidateTag(`user-products-PURCHASED-id-${buyerId}`);
  *
  * 주의:
  * - key는 "엔트리 식별" 용도이며, 무효화는 항상 tag를 통해 수행한다.

@@ -27,7 +27,7 @@ import SearchModal from "./SearchModal";
 import { useSearchContext } from "../providers/SearchProvider";
 import { useSearchHistory } from "@/hooks/useSearchHistory";
 import { useSearchParamsUtils } from "@/hooks/useSearchParamsUtils";
-import type { Category } from "@prisma/client";
+import type { Category } from "@/generated/prisma/client";
 import type {
   UserSearchHistoryItem,
   PopularSearchItem,

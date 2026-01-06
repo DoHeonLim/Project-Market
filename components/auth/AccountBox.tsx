@@ -13,11 +13,12 @@ import Link from "next/link";
 
 export default function AccountBox() {
   return (
-    <div className="flex flex-col items-center w-full max-w-md gap-3 p-4 sm:p-6 z-20 relative bottom-16 sm:bottom-8 md:bottom-16">
+    <div className="mt-auto w-full max-w-md p-4 sm:p-6 z-20">
       <div className="w-full bg-white/10 dark:bg-gray-800/10 backdrop-blur-sm rounded-xl p-4 sm:p-6 shadow-lg">
         {/* 회원가입 링크 */}
         <Link
           href="/create-account"
+          aria-label="보드포트에 새로운 선원으로 회원가입하기"
           className="w-full py-3 sm:py-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm 
                  text-primary dark:text-secondary rounded-lg text-center font-semibold 
                  hover:bg-white dark:hover:bg-gray-800 hover:scale-105 

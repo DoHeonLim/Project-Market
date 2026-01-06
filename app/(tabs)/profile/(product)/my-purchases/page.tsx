@@ -22,7 +22,7 @@ import { redirect } from "next/navigation";
 export default async function MyPurchasesPage() {
   const session = await getSession();
   if (!session?.id) {
-    redirect("/login?callbackUrl=/profile/(product)/my-purchases");
+    redirect("/login?callbackUrl=/profile/my-purchases");
   }
   const userId = session.id;
 

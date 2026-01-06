@@ -7,12 +7,13 @@ History
 Date        Author   Status    Description
 2024.12.13  임도헌   Created
 2024.12.13  임도헌   Modified  로고 컴포넌트 추가
-
+2025.12.10  임도헌   Modified  clsx 추가
 */
 "use client";
 import Image from "next/image";
 import logo from "@/public/images/logo.svg";
 import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 interface LogoProps {
   variant?: "full" | "symbol";
@@ -22,13 +23,16 @@ interface LogoProps {
 
 export default function Logo({
   variant = "full",
-  size = 64,
+  size,
   className = "",
 }: LogoProps) {
   return (
-    <div className={`relative flex flex-col items-center ${className}`}>
+    <div className={cn("relative flex flex-col items-center", className)}>
       {/* 로고 이미지 컨테이너 */}
-      <div className="relative" style={{ width: size, height: size }}>
+      <div
+        className={cn("relative", !size && "w-40 h-40 sm:w-56 sm:h-56")}
+        style={size ? { width: size, height: size } : undefined}
+      >
         {/* 빛나는 효과 (로고 뒤에) */}
         <motion.div
           className="absolute inset-0 bg-yellow-300/30 rounded-full blur-2xl"
@@ -95,10 +99,12 @@ export default function Logo({
           }}
           className="mt-4 text-center"
         >
-          <h1 className="text-4xl font-bold text-white drop-shadow-lg">
+          <h1 className="text-3xl sm:text-4xl font-bold text-white drop-shadow-lg">
             보드포트
           </h1>
-          <p className="text-blue-100 text-lg mt-1">모든 게임이 모이는 곳</p>
+          <p className="text-base sm:text-lg text-blue-100 mt-1">
+            모든 게임이 모이는 곳
+          </p>
         </motion.div>
       )}
     </div>

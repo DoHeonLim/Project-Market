@@ -15,6 +15,8 @@
  * 2025.09.19  임도헌   Modified  유저 팔로우, 팔로잉 무한스크롤 기능 추가
  * 2025.10.05  임도헌   Modified  follow관련 함수 이름 변경(listFollowers -> fetchFollowers, listFollowing -> fetchFollowing)
  * 2025.10.14  임도헌   Modified  FollowSection 도입: 팔로우/모달/페이지네이션 로직 제거
+ * 2026.01.06  임도헌   Modified  팔로우 용어/SSOT 정리: 모달 row는 isFollowedByViewer, 섹션 분리는 isMutualWithOwner(owner 기준)
+ * 2025.01.06  임도헌   Modified  LiveNowHero에 onFollow 연결
  */
 "use client";
 
@@ -102,15 +104,28 @@ export default function UserStreamsClient({
         onRequireLogin={() =>
           router.push(`/login?callbackUrl=${encodeURIComponent(next)}`)
         }
-        onFollowingChange={setIsFollowing} // ← FollowSection에서 토글되면 채널 내 상태도 동기화
+        onFollowingChange={setIsFollowing} // FollowSection에서 토글되면 채널 내 상태도 동기화
       />
 
       {/* 라이브/녹화 섹션 — 팔로우 상태/역할 반영 */}
       <LiveNowHero
         stream={liveStream}
         role={role}
-        // onFollow는 FollowSection이 담당하므로 보통 불필요.
-        // 필요 시 안내만 할 수도 있음.
+        onFollow={() => {
+          const btn = document.getElementById("channel-follow-button");
+          if (btn) {
+            btn.scrollIntoView({ behavior: "smooth", block: "center" });
+            // 포커스는 a11y/UX용
+            (btn as HTMLElement).focus?.();
+
+            // 원하면 “한 번 더” 사용자 행동 줄이기(자동 클릭)도 가능:
+            // (btn as HTMLButtonElement).click?.();
+            return;
+          }
+
+          // fallback
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
       />
 
       <RecordingGrid

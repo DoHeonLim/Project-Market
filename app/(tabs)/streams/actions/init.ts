@@ -8,6 +8,7 @@
  * 2025.09.02  임도헌   Modified  TAKE 상수 STREAMS_PAGE_TAKE로 변경
  * 2025.09.10  임도헌   Modified  TAKE+1 페이지네이션(정확한 next 유무 판단) 적용, 주석 보강
  * 2025.09.17  임도헌   Modified  keyword/category 입력 정규화(trim) 적용
+ * 2026.01.03  임도헌   Modified  getStreams 팔로우 상태 조인 옵션화(includeViewerFollowState) 반영
  */
 
 "use server";
@@ -48,6 +49,7 @@ export async function getInitialStreams(params: {
     viewerId: params.viewerId,
     cursor: null,
     take: TAKE + 1,
+    includeViewerFollowState: false,
   });
 
   const hasMore = list.length > TAKE;
@@ -74,6 +76,7 @@ export async function getMoreStreams(
     viewerId,
     cursor,
     take: TAKE + 1,
+    includeViewerFollowState: false,
   });
 
   const hasMore = list.length > TAKE;

@@ -88,8 +88,8 @@ export default function TimeAgo({
   // 현재 시점 기준 상대시간 텍스트 (클라이언트/서버 동일 계산)
   const relative = useMemo(() => {
     if (!parsedDate) return null;
-    // formatToTimeAgo 는 ISO 문자열을 기대하는 기존 유틸을 그대로 사용
-    return formatToTimeAgo(parsedDate.toISOString());
+    // now 를 두 번째 인자로 넘겨서, now 변경 시마다 재계산
+    return formatToTimeAgo(parsedDate.toISOString(), now);
   }, [parsedDate, now]);
 
   // 툴팁(절대 시간)

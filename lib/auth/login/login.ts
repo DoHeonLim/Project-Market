@@ -1,12 +1,12 @@
 /**
- File Name : lib/auth/login/login
- Description : 유저 로그인 비즈니스 로직
- Author : 임도헌
- 
- History
- Date        Author   Status    Description
- 2025.05.30  임도헌   Created
- 2025.05.30  임도헌   Modified  유저 로그인 함수 분리
+ * File Name : lib/auth/login/login
+ * Description : 유저 로그인 비즈니스 로직
+ * Author : 임도헌
+ *
+ * History
+ * Date        Author   Status    Description
+ * 2025.05.30  임도헌   Created
+ * 2025.05.30  임도헌   Modified  유저 로그인 함수 분리
  */
 
 import bcrypt from "bcrypt";

@@ -14,7 +14,7 @@ Date        Author   Status    Description
 */
 
 // 패스워드 최소 값
-export const PASSWORD_MIN_LENGTH = 4;
+export const PASSWORD_MIN_LENGTH = 8;
 
 // 페이지네이션 TAKE (도메인별 분리 — 값은 도메인 특성에 맞춤)
 export const POSTS_PAGE_TAKE = 10;

@@ -2,6 +2,7 @@
   "name": "project-market",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -13,7 +14,8 @@
     "@hello-pangea/dnd": "^17.0.0",
     "@heroicons/react": "^2.1.5",
     "@hookform/resolvers": "^3.9.1",
-    "@prisma/client": "^5.20.0",
+    "@prisma/adapter-pg": "^7.1.0",
+    "@prisma/client": "^7.0.1",
     "@supabase/supabase-js": "^2.47.9",
     "@types/bcrypt": "^5.0.2",
     "bcrypt": "^5.1.1",
@@ -24,7 +26,6 @@
     "next": "^14.2.26",
     "next-pwa": "^5.6.0",
     "next-themes": "^0.4.4",
-    "prisma": "^5.20.0",
     "react": "^18",
     "react-dom": "^18",
     "react-hook-form": "^7.53.2",
@@ -49,10 +50,9 @@
     "eslint": "^8",
     "eslint-config-next": "14.2.13",
     "postcss": "^8",
+    "prisma": "^7.0.1",
     "tailwindcss": "^3.4.1",
+    "tsx": "^4.20.6",
     "typescript": "^5"
-  },
-  "prisma": {
-    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
   }
 }

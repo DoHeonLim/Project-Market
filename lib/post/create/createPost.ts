@@ -10,18 +10,18 @@
  * 2024.12.10  임도헌   Modified  이미지 여러개 업로드 코드 추가
  * 2025.03.02  임도헌   Modified  게시글 작성시 게시글 추가 관련 뱃지 체크 추가
  * 2025.03.29  임도헌   Modified  checkBoardExplorerBadge 기능 추가
- * 2025.07.04  임도헌   Modified   게시글 생성 액션 분리 및 리팩토링
+ * 2025.07.04  임도헌   Modified  게시글 생성 액션 분리 및 리팩토링
+ * 2025.12.07  임도헌   Modified  게시글 관련 뱃지 체크를 badgeChecks/onPostCreate + RULE_SAGE로 정리
+ * 2026.01.03  임도헌   Modified  게시글 생성 후 POST_LIST 태그 및 /posts 경로 무효화로 목록 즉시 최신화
  */
 "use server";
 
 import db from "@/lib/db";
 import getSession from "@/lib/session";
 import { postFormSchema } from "@/lib/post/form/postFormSchema";
-import {
-  badgeChecks,
-  checkBoardExplorerBadge,
-  checkRuleSageBadge,
-} from "@/lib/check-badge-conditions";
+import { badgeChecks, checkRuleSageBadge } from "@/lib/check-badge-conditions";
+import { revalidatePath, revalidateTag } from "next/cache";
+import * as T from "@/lib/cache/tags";
 
 export async function createPost(formData: FormData) {
   const session = await getSession();
@@ -89,17 +89,27 @@ export async function createPost(formData: FormData) {
     });
 
     // 게시글 생성 후 뱃지 체크 수행
-    await badgeChecks.onPostCreate(session.id);
-    await badgeChecks.onEventParticipation(session.id);
+    // - onPostCreate        : FIRST_POST / POPULAR_WRITER 등 "글 기반" 뱃지
+    // - onEventParticipation: EARLY_SAILOR 등 이벤트/초기 유입 뱃지
+    // - checkRuleSageBadge  : MAP 카테고리 규칙 설명/공략 전용 뱃지
+    //
+    // BOARD_EXPLORER / PORT_FESTIVAL:
+    //   - /api/cron/check-badge (Vercel Cron)에서 주기적으로 점검
+    const badgeTasks: Promise<any>[] = [
+      badgeChecks.onPostCreate(session.id),
+      badgeChecks.onEventParticipation(session.id),
+    ];
 
-    // 만약 category가 MAP일 경우에만 RULE_SAGE, BoardExplorer 뱃지 체크 수행
     if (results.data.category === "MAP") {
-      await checkRuleSageBadge(session.id);
-      await checkBoardExplorerBadge(session.id);
-      // LOG일 경우에만 수행
-    } else if (results.data.category === "LOG") {
-      await checkBoardExplorerBadge(session.id);
+      badgeTasks.push(checkRuleSageBadge(session.id));
     }
+
+    // 게시글 생성은 성공시키되, 뱃지 계산 실패는 전체 트랜잭션에 영향 주지 않도록 allSettled 사용
+    await Promise.allSettled(badgeTasks);
+
+    // 게시글 생성 성공 후 (return 전에)
+    revalidateTag(T.POST_LIST());
+    revalidatePath("/posts");
 
     // 게시글 ID 반환
     return { success: true, postId: post.id };

@@ -2,7 +2,7 @@
  File Name : app/(tabs)/products/@modal/(..)products/view/[id]/page
  Description : products/view/[id] 인터셉트 후 모달 페이지
  Author : 임도헌
- 
+
  History
  Date        Author   Status    Description
  2024.10.22  임도헌   Created
@@ -25,11 +25,20 @@
  2025.04.13  임도헌   Modified  game_type 필드를 영어로 변경
  2025.06.08  임도헌   Modified  데이터 fetch와 UI 컨테이너로 분리 리팩토링
  2025.06.12  임도헌   Modified  app/(tabs)/products/@modal/(..)products/view/[id]/page로 이동
+ 2026.01.04  임도헌   Modified  getProductDetailData가 redirect/조회수/개인화를 포함 → 모달도 force-dynamic + revalidate=0 명시
  */
 
 import { notFound } from "next/navigation";
 import { getProductDetailData } from "@/lib/product/getProductDetailData";
 import ProductDetailModalContainer from "@/components/product/productDetail/modal/ProductDetailModalContainer";
+
+/**
+ * NOTE:
+ * - getProductDetailData()는 로그인 강제(redirect) + 조회수 증가(incrementViews) + 좋아요/오너 개인화를 포함한다.
+ * - 따라서 인터셉트 모달 라우트도 정적/ISR로 두면 부작용/불안정이 생길 수 있어 동적 페이지로 고정한다.
+ */
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 interface ProductDetailModalProps {
   params: { id: string };

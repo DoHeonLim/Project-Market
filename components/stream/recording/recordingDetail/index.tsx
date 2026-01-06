@@ -62,7 +62,7 @@ export default function RecordingDetail({
         commentCount={commentCount} // VodAsset 기준 댓글 수
         LikeButtonComponent={
           <RecordingLikeButton
-            vodId={vodId} // ← streamId → vodId 로 전환
+            vodId={vodId} // streamId → vodId 로 전환
             isLiked={isLiked}
             likeCount={likeCount}
           />

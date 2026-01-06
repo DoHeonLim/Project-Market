@@ -11,25 +11,21 @@
  * 2025.10.29  임도헌   Modified  재전송 쿨다운 서버 고정(3분) 및 모달 닫아도 유지,
  *                                 cooldownRemaining/sent 플래그 도입, 토스트 중복 방지,
  *                                 입력 pattern을 [0-9]{6}으로 안전 적용
+ * 2025.12.12  임도헌   Modified  모달 재오픈 시 useFormState 상태 리셋(key 리마운트),
+ *                                 intent 기반 분기(request/resend/verify)로 서버액션 오동작 방지,
+ *                                 자동 요청은 open 상승 에지에서 1회만 실행
+ * 2026.01.06  임도헌   Modified  쿨다운 UX를 localStorage로도 유지(재오픈/새로고침 즉시 복원) + 서버 응답으로 보정
  */
+
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useFormState } from "react-dom";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Input from "../common/Input";
-import Button from "../common/Button";
 import { verifyEmail } from "@/lib/auth/email/verifyEmail";
-
-const initialState = {
-  token: false,
-  email: "",
-  error: undefined as { formErrors?: string[] } | undefined,
-  success: false,
-  cooldownRemaining: undefined as number | undefined,
-  sent: false,
-};
+import { initialEmailVerifyState } from "@/lib/auth/email/verifyEmailState";
 
 interface EmailVerificationModalProps {
   isOpen: boolean;
@@ -37,53 +33,118 @@ interface EmailVerificationModalProps {
   email: string;
 }
 
-export default function EmailVerificationModal({
-  isOpen,
+function EmailVerificationModalInner({
   onClose,
   email,
-}: EmailVerificationModalProps) {
+}: Omit<EmailVerificationModalProps, "isOpen">) {
   const router = useRouter();
-  const [state, action] = useFormState(verifyEmail, initialState);
+  const [state, action] = useFormState(verifyEmail, initialEmailVerifyState);
 
   const [countdown, setCountdown] = useState(0);
+  const lastActionRef = useRef<"request" | "resend" | "verify" | null>(null);
   const successToastShown = useRef(false);
-  const lastActionRef = useRef<"auto" | "resend" | null>(null);
 
-  // 모달 닫혀도 쿨다운을 리셋하지 않음 (서버가 강제)
-  useEffect(() => {
-    if (!isOpen) {
-      successToastShown.current = false; // 성공 토스트만 초기화
+  const maskedEmail = useMemo(() => {
+    const [id, domain] = email.split("@");
+    if (!domain) return email;
+    const head = id.slice(0, 2);
+    const tail = id.slice(Math.max(1, id.length - 3));
+    return `${head}${"*".repeat(Math.max(1, id.length - 3))}${tail}@${domain}`;
+  }, [email]);
+
+  const formatTime = (s: number) =>
+    `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+
+  // localStorage 쿨다운 저장 키 (이메일별)
+  const cooldownStorageKey = useMemo(() => {
+    // email은 외부에서 주입되며, key 충돌만 피하면 됨
+    return `bp:email-verify:cooldown-until:${email}`;
+  }, [email]);
+
+  const readCooldownRemainingFromStorage = useCallback((): number => {
+    if (typeof window === "undefined") return 0;
+    try {
+      const raw = window.localStorage.getItem(cooldownStorageKey);
+      const until = raw ? Number(raw) : 0;
+      if (!Number.isFinite(until) || until <= 0) return 0;
+      const remaining = Math.ceil((until - Date.now()) / 1000);
+      return remaining > 0 ? remaining : 0;
+    } catch {
+      return 0;
     }
-  }, [isOpen]);
+  }, [cooldownStorageKey]);
 
-  // 서버 응답에 따라 토스트/카운트다운 갱신
+  const writeCooldownUntilToStorage = useCallback(
+    (cooldownRemainingSeconds: number) => {
+      if (typeof window === "undefined") return;
+      try {
+        const now = Date.now();
+        const nextUntil = now + Math.max(0, cooldownRemainingSeconds) * 1000;
+
+        const existingRaw = window.localStorage.getItem(cooldownStorageKey);
+        const existingUntil = existingRaw ? Number(existingRaw) : 0;
+
+        // 기존 값이 더 길게 남아있으면(클라가 더 엄격) 유지한다.
+        const finalUntil =
+          Number.isFinite(existingUntil) && existingUntil > nextUntil
+            ? existingUntil
+            : nextUntil;
+
+        if (finalUntil > now) {
+          window.localStorage.setItem(cooldownStorageKey, String(finalUntil));
+        } else {
+          window.localStorage.removeItem(cooldownStorageKey);
+        }
+      } catch {
+        // ignore
+      }
+    },
+    [cooldownStorageKey]
+  );
+
+  const clearCooldownStorage = useCallback(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.removeItem(cooldownStorageKey);
+    } catch {
+      // ignore
+    }
+  }, [cooldownStorageKey]);
+
+  // 모달 재오픈/새로고침에도 쿨다운 UX 유지(localStorage) - 서버 쿨다운이 SSOT이며, 클라는 표시/버튼 비활성용
+  useEffect(() => {
+    const remaining = readCooldownRemainingFromStorage();
+    if (remaining > 0) setCountdown(remaining);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 서버 응답 → 카운트다운 동기화 + 토스트
   useEffect(() => {
     if (!state.token) return;
 
-    // 서버에서 남은 쿨다운 내려오면 동기화
     if (typeof state.cooldownRemaining === "number") {
       setCountdown(state.cooldownRemaining);
+      writeCooldownUntilToStorage(state.cooldownRemaining);
     }
 
-    // 최초 발송/재전송 토스트 제어
+    // sent 플래그 기반 토스트 (중복 최소화)
     if (lastActionRef.current === "resend") {
-      if (state.sent) {
-        toast.success("인증 코드를 재전송했습니다.");
-      } else if (
-        typeof state.cooldownRemaining === "number" &&
-        state.cooldownRemaining > 0
-      ) {
-        const mm = Math.floor(state.cooldownRemaining / 60);
-        const ss = String(state.cooldownRemaining % 60).padStart(2, "0");
+      if (state.sent) toast.success("인증 코드를 재전송했습니다.");
+      else if ((state.cooldownRemaining ?? 0) > 0) {
+        const mm = Math.floor((state.cooldownRemaining ?? 0) / 60);
+        const ss = String((state.cooldownRemaining ?? 0) % 60).padStart(2, "0");
         toast.info(`잠시만요! 재전송은 ${mm}:${ss} 후에 가능합니다.`);
       }
-    } else if (lastActionRef.current === "auto") {
-      if (state.sent) {
-        toast.success("인증 코드가 이메일로 전송되었습니다.");
-      }
+    } else if (lastActionRef.current === "request") {
+      if (state.sent) toast.success("인증 코드가 이메일로 전송되었습니다.");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.token, state.cooldownRemaining, state.sent]);
+  }, [
+    state.token,
+    state.cooldownRemaining,
+    state.sent,
+    writeCooldownUntilToStorage,
+  ]);
 
   // 1초 카운트다운
   useEffect(() => {
@@ -92,7 +153,13 @@ export default function EmailVerificationModal({
     return () => clearTimeout(t);
   }, [countdown]);
 
-  // 에러 알림
+  // 카운트다운이 끝나면 localStorage도 정리
+  useEffect(() => {
+    if (countdown > 0) return;
+    clearCooldownStorage();
+  }, [countdown, clearCooldownStorage]);
+
+  // 에러 토스트
   useEffect(() => {
     if (state.error?.formErrors?.length) {
       toast.error(state.error.formErrors[0] ?? "인증에 실패했습니다.");
@@ -101,45 +168,43 @@ export default function EmailVerificationModal({
 
   // 성공 처리
   useEffect(() => {
-    if (state.success && !successToastShown.current) {
-      successToastShown.current = true;
-      toast.success("이메일 인증이 완료되었습니다.");
-      onClose();
-      router.refresh();
-    }
-  }, [state.success, onClose, router]);
+    if (!state.success || successToastShown.current) return;
+    successToastShown.current = true;
+    toast.success("이메일 인증이 완료되었습니다.");
+    clearCooldownStorage();
+    onClose();
+    router.refresh();
+  }, [state.success, onClose, router, clearCooldownStorage]);
 
-  // 모달 열릴 때 자동 발송(또는 기존 토큰/쿨다운 조회)
+  // 열릴 때 1회: "조회/요청(request)"" (쿨다운/기존 토큰 동기화 포함)
   useEffect(() => {
-    if (isOpen) {
-      const fd = new FormData();
-      fd.append("email", email);
-      lastActionRef.current = "auto";
-      action(fd);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, email]);
-
-  const maskedEmail = useMemo(() => {
-    const [id, domain] = email.split("@");
-    if (!domain) return email;
-    const head = id.slice(0, 2);
-    const tail = id.length > 4 ? id.slice(-1) : "";
-    return `${head}${"*".repeat(Math.max(1, id.length - 3))}${tail}@${domain}`;
-  }, [email]);
-
-  const formatTime = (s: number) =>
-    `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
-
-  const handleResend = () => {
     const fd = new FormData();
     fd.append("email", email);
-    fd.append("resend", "true");
+    fd.append("intent", "request");
+    lastActionRef.current = "request";
+    action(fd);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [email]);
+
+  const handleVerify = useCallback(
+    (token: string) => {
+      const fd = new FormData();
+      fd.append("email", email);
+      fd.append("token", token);
+      fd.append("intent", "verify");
+      lastActionRef.current = "verify";
+      action(fd);
+    },
+    [action, email]
+  );
+
+  const handleResend = useCallback(() => {
+    const fd = new FormData();
+    fd.append("email", email);
+    fd.append("intent", "resend");
     lastActionRef.current = "resend";
     action(fd);
-  };
-
-  if (!isOpen) return null;
+  }, [action, email]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -147,95 +212,129 @@ export default function EmailVerificationModal({
         className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm"
         onClick={onClose}
       />
+
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="email-verify-title"
-        className="relative bg-white dark:bg-neutral-800 rounded-xl shadow-xl w-full max-w-md mx-4 animate-fade-in"
+        className="relative z-10 w-[92vw] max-w-md rounded-2xl bg-white dark:bg-gray-900 p-6 shadow-xl"
       >
-        {/* 헤더 */}
-        <div className="flex justify-between items-center px-6 py-4 border-b dark:border-neutral-700">
-          <h2
-            id="email-verify-title"
-            className="text-xl font-semibold text-primary dark:text-primary-light"
-          >
-            이메일 인증
-          </h2>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2
+              id="email-verify-title"
+              className="text-lg font-semibold text-gray-900 dark:text-gray-100"
+            >
+              이메일 인증
+            </h2>
+            <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+              {maskedEmail} 로 전송된 6자리 코드를 입력해주세요.
+            </p>
+          </div>
+
           <button
+            type="button"
             onClick={onClose}
-            className="text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 transition-colors"
+            className="rounded-md px-2 py-1 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
             aria-label="닫기"
           >
             ✕
           </button>
         </div>
 
-        {/* 폼 */}
-        <form action={action} className="pb-6 px-4 space-y-4">
-          <input type="hidden" name="email" value={email} />
-          <div className="space-y-2">
-            <p className="text-sm text-neutral-700 dark:text-neutral-200 px-2 pb-4">
-              {maskedEmail} 로 전송된 6자리 인증 코드를 입력해주세요.
-            </p>
-
-            {state.token ? (
-              <>
-                <Input
-                  key="token"
-                  name="token"
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]{6}"
-                  maxLength={6}
-                  placeholder="6자리 숫자 입력"
-                  required
-                  aria-label="인증번호 6자리"
-                  icon={
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                      />
-                    </svg>
-                  }
-                />
-                <div className="flex justify-end mt-2">
-                  <button
-                    type="button"
-                    onClick={handleResend}
-                    disabled={countdown > 0}
-                    className={`text-sm ${
-                      countdown > 0
-                        ? "text-gray-400 dark:text-gray-500"
-                        : "text-primary dark:text-primary-light hover:underline"
-                    }`}
-                    aria-disabled={countdown > 0 || undefined}
+        <div className="mt-5">
+          {state.token ? (
+            <>
+              <Input
+                name="token"
+                placeholder="6자리 인증 코드"
+                maxLength={6}
+                inputMode="numeric"
+                pattern="[0-9]{6}"
+                icon={
+                  <svg
+                    className="w-5 h-5 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
                   >
-                    {countdown > 0
-                      ? `재전송 가능까지 ${formatTime(countdown)}`
-                      : "인증 코드 재전송"}
-                  </button>
-                </div>
-              </>
-            ) : (
-              <div className="flex justify-center py-4">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-              </div>
-            )}
-          </div>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 11c0 .552-.448 1-1 1H9c-.552 0-1-.448-1-1V9c0-.552.448-1 1-1h2c.552 0 1 .448 1 1v2zm0 0v6m8-6V9a4 4 0 00-4-4H8a4 4 0 00-4 4v2a4 4 0 004 4h2m6 6h2a4 4 0 004-4v-2a4 4 0 00-4-4h-2m-6 0h6"
+                    />
+                  </svg>
+                }
+                onChange={(e) => {
+                  const v =
+                    e.target.value?.replace(/\D/g, "").slice(0, 6) ?? "";
+                  // 강제 정규화
+                  e.target.value = v;
+                  if (v.length === 6) handleVerify(v);
+                }}
+              />
 
-          <div className="flex flex-col gap-2 pt-4 border-t dark:border-neutral-600">
-            <Button text={state.token ? "인증하기" : "인증 코드 보내기"} />
-          </div>
-        </form>
+              <div className="mt-4 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+                >
+                  닫기
+                </button>
+              </div>
+
+              <div className="flex justify-end mt-2">
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={countdown > 0}
+                  className={`text-sm ${
+                    countdown > 0
+                      ? "text-gray-400 dark:text-gray-500"
+                      : "text-primary dark:text-primary-light hover:underline"
+                  }`}
+                  aria-disabled={countdown > 0 || undefined}
+                >
+                  {countdown > 0
+                    ? `재전송 가능까지 ${formatTime(countdown)}`
+                    : "인증 코드 재전송"}
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="flex justify-center py-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+            </div>
+          )}
+        </div>
       </div>
     </div>
+  );
+}
+
+export default function EmailVerificationModal({
+  isOpen,
+  onClose,
+  email,
+}: EmailVerificationModalProps) {
+  // 모달을 닫았다가 열 때 useFormState state를 완전히 초기화하기 위해 key 리마운트 사용
+  const [openSeq, setOpenSeq] = useState(0);
+  const prevOpen = useRef(false);
+
+  useEffect(() => {
+    if (isOpen && !prevOpen.current) setOpenSeq((v) => v + 1);
+    prevOpen.current = isOpen;
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  return (
+    <EmailVerificationModalInner
+      key={`${email}-${openSeq}`}
+      onClose={onClose}
+      email={email}
+    />
   );
 }

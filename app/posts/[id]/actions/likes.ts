@@ -7,6 +7,7 @@
  * Date        Author   Status    Description
  * 2025.07.06  임도헌   Created   좋아요 관련 서버 액션 분리
  * 2025.11.20  임도헌   Modified  revalidate 태그 네이밍 통일
+ * 2026.01.03  임도헌   Modified  좋아요/취소 후 POST_LIKE_STATUS 외 POST_DETAIL/POST_LIST도 무효화하여 카운트 즉시 동기화
  */
 "use server";
 
@@ -17,8 +18,7 @@ import {
   checkPopularWriterBadge,
 } from "@/lib/check-badge-conditions";
 import { revalidateTag, unstable_cache as nextCache } from "next/cache";
-
-const POST_LIKE_STATUS_TAG_PREFIX = "post-like-status-id-";
+import * as T from "@/lib/cache/tags";
 
 // 게시글 좋아요 상태 조회
 export const getLikeStatus = async (postId: number, userId: number) => {
@@ -38,7 +38,7 @@ export const getCachedLikeStatus = async (postId: number) => {
     getLikeStatus,
     ["post-like-status", String(postId)],
     {
-      tags: [`${POST_LIKE_STATUS_TAG_PREFIX}${postId}`],
+      tags: [T.POST_LIKE_STATUS(postId)],
     }
   );
 
@@ -60,7 +60,9 @@ export const likePost = async (postId: number) => {
 
   await checkPopularWriterBadge(post.userId);
   await checkBoardExplorerBadge(post.userId);
-  revalidateTag(`${POST_LIKE_STATUS_TAG_PREFIX}${postId}`);
+  revalidateTag(T.POST_LIKE_STATUS(postId));
+  revalidateTag(T.POST_DETAIL(postId));
+  revalidateTag(T.POST_LIST());
 };
 
 // 게시글 좋아요 취소
@@ -69,5 +71,7 @@ export const dislikePost = async (postId: number) => {
   await db.postLike.delete({
     where: { id: { postId, userId: session.id! } },
   });
-  revalidateTag(`${POST_LIKE_STATUS_TAG_PREFIX}${postId}`);
+  revalidateTag(T.POST_LIKE_STATUS(postId));
+  revalidateTag(T.POST_DETAIL(postId));
+  revalidateTag(T.POST_LIST());
 };

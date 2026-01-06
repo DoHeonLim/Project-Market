@@ -3,6 +3,11 @@
  * Description : 실시간 방송 히어로 섹션 (FOLLOWERS/PRIVATE 가드 + Cloudflare live iframe)
  * Author : 임도헌
  *
+ * Key Points
+ * - FOLLOWERS 잠금: 팔로우로 풀리는 잠금 → 클라이언트(role)로 즉시 전환 가능한 UX가 중요하다.
+ * - PRIVATE 잠금: 팔로우로 풀리지 않음(비밀번호 언락/세션 기반) → 서버가 계산해 준 requiresPassword를 SSOT로 사용한다.
+ *   (언락 후 back/forward 복원에서도 잠금 표시가 즉시 해제되도록)
+ *
  * History
  * Date        Author   Status    Description
  * 2025.08.09  임도헌   Created   히어로 섹션 분리
@@ -10,6 +15,8 @@
  * 2025.09.13  임도헌   Modified  StreamCategoryTags 컴포넌트로 태그/카테고리 출력 통일, 오버레이 z-index 고정(클릭 가능)
  * 2025.09.13  임도헌   Modified  iframe 자동재생 추가
  * 2025.09.30  임도헌   Modified  우상단 버튼 제거, 전체 클릭 시 상세페이지 이동
+ * 2026.01.06  임도헌   Modified  PRIVATE 잠금 판단 SSOT를 stream.requiresPassword(서버/세션 언락 반영)로 전환하여
+ *                                언락 후 back/forward 복원에서도 히어로 잠금 표시 정합성 보장
  */
 
 "use client";
@@ -59,9 +66,32 @@ function HeroMedia({
   role: Role;
   onFollow?: () => void;
 }) {
-  const isPrivateLocked = stream.visibility === "PRIVATE" && role !== "OWNER";
+  /**
+   * 시청 가능 여부 판단 (LiveNowHero의 핵심 규칙)
+   *
+   * 1) FOLLOWERS(팔로워 전용)
+   * - VISITOR면 "티저(팔로우 CTA)"를 노출한다.
+   * - 팔로우 토글로 즉시 role이 FOLLOWER로 바뀌면, 같은 화면에서 즉시 시청 가능 상태로 전환되는 UX가 목표다.
+   *
+   * 2) PRIVATE(비공개/비밀번호)
+   * - 팔로우로 풀리지 않는다. (비밀번호 언락 → 세션 저장이 SSOT)
+   * - 따라서 PRIVATE 잠금은 클라이언트에서 role만으로 추정하면 안 된다.
+   * - 서버(RSC)가 "세션 언락"까지 반영해 내려준 stream.requiresPassword를 SSOT로 사용한다.
+   *   (언락 후 뒤로가기/복원에서도 잠금 표시가 즉시 해제되도록)
+   *
+   * ※ 호환/방어:
+   * - stream.requiresPassword가 없는 구버전 데이터/타입이 섞여 있어도 동작하도록 fallback 로직을 둔다.
+   */
   const isFollowersTeaser =
     stream.visibility === "FOLLOWERS" && role === "VISITOR";
+
+  const isPrivateLocked =
+    // SSOT: 서버가 계산해 준 requiresPassword(언락 반영)
+    typeof stream.requiresPassword === "boolean"
+      ? stream.requiresPassword
+      : // fallback: 구버전 호환(언락 반영이 없는 경우)
+        stream.visibility === "PRIVATE" && role !== "OWNER";
+
   const isPlayable = !isPrivateLocked && !isFollowersTeaser;
 
   return (

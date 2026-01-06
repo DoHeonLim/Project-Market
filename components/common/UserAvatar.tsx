@@ -9,6 +9,7 @@
  * 2024.12.16  임도헌   Modified  다크모드 적용
  * 2025.11.12  임도헌   Modified  className 지원 및 아바타 표시 조건/접근성 보강
  * 2025.11.16  임도헌   Modified  compact 옵션 + inline-flex/shrink-0, 빈 텍스트 래퍼 제거
+ * 2025.12.12  임도헌   Modified  created_at 없을 때 빈 여백 제거, CSS size와 이미지 px 정합
  */
 
 "use client";
@@ -43,16 +44,16 @@ export default function UserAvatar({
   className,
   compact = false,
 }: UserAvatarProps) {
+  // CSS box size와 실제 이미지 요청 px를 맞춰서 흐림 방지
   const sizes = {
-    sm: { box: "size-8", px: 32 },
-    md: { box: "size-28", px: 40 },
-    lg: { box: "size-52", px: 200 },
-  };
+    sm: { box: "size-8", px: 32 }, // 32px
+    md: { box: "size-28", px: 112 }, // 112px
+    lg: { box: "size-52", px: 208 }, // 208px
+  } as const;
 
   const root = (
     <div
       className={cn(
-        // 핵심: inline-flex + shrink-0 로 링크/컨테이너가 가로로 퍼지지 않도록
         "inline-flex shrink-0 items-center rounded-md",
         compact ? "p-0" : "p-2",
         disabled
@@ -88,7 +89,6 @@ export default function UserAvatar({
         />
       )}
 
-      {/* showUsername/text/created_at 중 하나라도 있을 때만 텍스트 블록 렌더 */}
       {(showUsername || text || created_at) && (
         <div className={cn("flex items-start h-full min-w-0", "pl-2")}>
           {showUsername && (
@@ -97,9 +97,13 @@ export default function UserAvatar({
               {text ?? ""}
             </div>
           )}
-          <div className="ml-2 text-xs text-gray-600 dark:text-gray-400">
-            {created_at && <TimeAgo date={created_at?.toString() ?? null} />}
-          </div>
+
+          {/* created_at이 없으면 이 블록 자체를 렌더하지 않아 '빈 간격'이 생기지 않음 */}
+          {created_at && (
+            <div className="ml-2 text-xs text-gray-600 dark:text-gray-400">
+              <TimeAgo date={created_at.toString()} />
+            </div>
+          )}
         </div>
       )}
     </div>

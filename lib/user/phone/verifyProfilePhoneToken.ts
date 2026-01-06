@@ -7,14 +7,19 @@
  * Date        Author   Status     Description
  * 2025.10.08  임도헌   Created    SMS 로그인 로직 재사용하여 프로필 수정용 검증 분리
  * 2025.10.08  임도헌   Modified   토큰 삭제, 휴대폰 중복(Unique) 처리, 뱃지 체크
+ * 2025.12.07  임도헌   Modified   VERIFIED_SAILOR 뱃지 체크를 badgeChecks.onVerificationUpdate로 통일
+ * 2025.12.22  임도헌   Modified  Prisma 에러 가드 유틸로 변경
  */
 
 "use server";
 
 import db from "@/lib/db";
 import getSession from "@/lib/session";
+import * as T from "@/lib/cache/tags";
 import { phoneSchema, tokenSchema } from "@/lib/auth/sms/smsSchema";
-import { checkVerifiedSailorBadge } from "@/lib/check-badge-conditions";
+import { badgeChecks } from "@/lib/check-badge-conditions";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { isUniqueConstraintError } from "@/lib/errors";
 
 export async function verifyProfilePhoneToken(formData: FormData) {
   const tokenRaw = formData.get("token");
@@ -65,12 +70,20 @@ export async function verifyProfilePhoneToken(formData: FormData) {
       data: { phone: phoneResult.data },
     });
   } catch (e) {
+    if (isUniqueConstraintError(e, ["phone"])) {
+      return { success: false, error: "이미 등록된 전화번호입니다." };
+    }
     console.error(e);
-    return { success: false, error: "이미 등록된 전화번호입니다." };
+    return { success: false, error: "전화번호 저장 중 오류가 발생했습니다." };
   }
 
-  // 인증 배지 부여
-  await checkVerifiedSailorBadge(verified.userId);
+  // 인증 기반 뱃지 체크(전화번호 인증)
+  await badgeChecks.onVerificationUpdate(verified.userId);
+
+  revalidateTag(T.USER_CORE_ID(verified.userId));
+  revalidateTag(T.USER_BADGES_ID(verified.userId));
+  revalidatePath("/profile");
+  revalidatePath("/profile/edit");
 
   return { success: true };
 }

@@ -16,7 +16,7 @@
 
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import type { Category } from "@prisma/client";
+import type { Category } from "@/generated/prisma/client";
 import { FilterState } from "@/lib/constants";
 import { useSearchParamsUtils } from "@/hooks/useSearchParamsUtils";
 import CategoryFilter from "./filters/CategoryFilter";

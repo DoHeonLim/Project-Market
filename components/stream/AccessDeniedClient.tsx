@@ -25,12 +25,14 @@ export default function AccessDeniedClient({
   callbackUrl,
   streamId,
   ownerId,
+  viewerId,
 }: {
   reason: Reason;
   username: string;
-  callbackUrl: string; // ← 통일
+  callbackUrl: string; // 통일
   streamId?: number;
   ownerId?: number;
+  viewerId: number | null;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -54,6 +56,7 @@ export default function AccessDeniedClient({
     let loginRequired = false;
 
     await toggle(ownerId, false, {
+      viewerId,
       refresh: false,
       onRequireLogin: () => {
         loginRequired = true;

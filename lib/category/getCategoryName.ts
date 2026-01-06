@@ -9,7 +9,7 @@
  2025.06.12  임도헌   Modified  getCategoryName이 children 포함된 구조가 아니라 flat list 기반으로 작동하도록 수정
 */
 
-import type { Category } from "@prisma/client";
+import type { Category } from "@/generated/prisma/client";
 
 export const getCategoryName = (
   categoryId: string,

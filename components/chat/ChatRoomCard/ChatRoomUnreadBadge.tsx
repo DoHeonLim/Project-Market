@@ -7,6 +7,7 @@
  * Date        Author   Status    Description
  * 2025.07.15  임도헌   Created   읽지 않은 메시지 뱃지 분리
  * 2025.07.17  임도헌   Modified  시간과 뱃지 따로 처리
+ * 2025.12.02  임도헌   Modified  메세지 없을 시 null 처리
  */
 "use client";
 
@@ -21,6 +22,8 @@ export default function ChatRoomUnreadBadge({
   count,
   date,
 }: ChatRoomUnreadBadgeProps) {
+  if (!date) return null;
+
   if (count <= 0) {
     return (
       <p className="text-xs text-muted-foreground whitespace-nowrap">

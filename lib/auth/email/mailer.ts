@@ -9,7 +9,7 @@
  * 2025.10.14  임도헌   Moved      app/api/email/verify/actions → lib/auth/email/mailer.ts 로 이동
  * 2025.10.14  임도헌   Modified   sendEmail 단일 책임 함수로 분리
  */
-"use server";
+import "server-only";
 
 import { Resend } from "resend";
 

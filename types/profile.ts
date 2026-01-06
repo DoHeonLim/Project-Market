@@ -7,6 +7,7 @@
  * Date        Author   Status     Description
  * 2025.10.05  임도헌   Created    MyProfile에서 사용하는 필드만 정의
  * 2025.10.12  임도헌   Modified   팔로우 목록 전용 타입 추가(FollowListUser, FollowListCursor)
+ * 2026.01.06  임도헌   Modified   FollowListUser.isMutualWithOwner를 boolean 필수로 강제(섹션 분리 SSOT 안정화)
  */
 
 export interface UserProfile {
@@ -36,7 +37,16 @@ export type FollowListUser = {
   id: number;
   username: string;
   avatar: string | null;
+
+  // 버튼(토글) SSOT: viewer -> rowUser
   isFollowedByViewer: boolean;
+
+  /**
+   * 섹션 분리용(SSOT): owner 기준 맞팔 여부 (필수)
+   * - followers 모달: owner가 rowUser를 팔로우하면 true (owner -> rowUser)
+   * - following 모달: rowUser가 owner를 팔로우하면 true (rowUser -> owner)
+   */
+  isMutualWithOwner: boolean;
 };
 
 export type FollowListCursor = { lastId: number } | null;

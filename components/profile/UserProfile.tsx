@@ -22,20 +22,26 @@
  * 2025.10.22  임도헌   Modified   viewerInfo prop 제거(개인화 최소화 유지, 낙관 표시용은 클라 훅에서 해결)
  * 2025.11.12  임도헌   Modified  MyProfile UI와 통일(섹션 헤더/btn-ghost/타일)
  * 2025.11.26  임도헌   Modified  방송국 섹션에 StreamCard 추가
+ * 2025.12.20  임도헌   Modified  헤더 팔로우 토글 상태(isFollowing) 로컬 동기화로 rail 잠금 즉시 반영
+ *                                FOLLOWERS 잠금 CTA: 헤더 팔로우 버튼(id) 클릭 유도로 UX 통일
+ *                                비로그인 시 /login?callbackUrl=... 리다이렉트 통일(onRequireLogin 공용)
+ *                                PRIVATE 잠금은 팔로우로 해제되지 않으므로 서버 플래그(requiresPassword) 유지
  */
-
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
+import { useMemo, useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
 import ProfileHeader from "./ProfileHeader";
-import ProfileReviewsModal from "./ProfileReviewsModal";
 import UserBadges from "./UserBadges";
 import ProductCard from "../product/productCard";
 import StreamCard from "../stream/StreamCard";
 import { ListBulletIcon, Squares2X2Icon } from "@heroicons/react/24/outline";
+const ProfileReviewsModal = dynamic(() => import("./ProfileReviewsModal"), {
+  ssr: false,
+});
 
 import type { Paginated, ProductType, ViewMode } from "@/types/product";
 import type {
@@ -76,10 +82,11 @@ export default function UserProfile({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const next = useMemo(
-    () => pathname + (searchParams.size ? `?${searchParams.toString()}` : ""),
-    [pathname, searchParams]
-  );
+  const qs = searchParams.toString();
+  const next = useMemo(() => pathname + (qs ? `?${qs}` : ""), [pathname, qs]);
+
+  // 팔로우 상태(클라) — 헤더 토글 후 rail 잠금/CTA가 즉시 반영되도록
+  const [isFollowing, setIsFollowing] = useState<boolean>(!!user.isFollowing);
 
   // 뷰/탭/모달
   const [viewMode, setViewMode] = useState<ViewMode>("list");
@@ -116,8 +123,41 @@ export default function UserProfile({
     threshold: 0.01,
   });
 
+  // StreamCard 잠금 CTA → 헤더 팔로우 버튼 클릭 유도
+  // (ProfileHeader에 followButtonId를 심어두는 방식)
+  const followButtonId = "user-profile-follow-btn";
+
+  const onRequireLogin = useCallback(() => {
+    router.push(`/login?callbackUrl=${encodeURIComponent(next)}`);
+  }, [router, next]);
+
+  const requestFollowFromRail = useCallback(() => {
+    // 비로그인 → 로그인으로
+    if (!viewerId) {
+      onRequireLogin();
+      return;
+    }
+
+    // 이미 팔로잉이면 할 일 없음
+    if (isFollowing) return;
+
+    // 헤더 팔로우 버튼을 찾아 클릭(UX 일관)
+    const btn = document.getElementById(
+      followButtonId
+    ) as HTMLButtonElement | null;
+    if (btn) {
+      btn.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (!btn.disabled) btn.click();
+      else btn.focus(); // pending이면 포커스만
+      return;
+    }
+
+    // fallback: 못 찾으면 그냥 상단으로 유도(최소 안전)
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [viewerId, isFollowing, onRequireLogin]);
+
   return (
-    <div className="flex flex-col gap-6 text-left mx-4">
+    <div className="flex flex-col gap-6 text-left">
       {/* 헤더 : 내 프로필과 동일 레이아웃, 팔로우 버튼 노출 */}
       <div className="pt-2">
         <ProfileHeader
@@ -131,9 +171,11 @@ export default function UserProfile({
           initialIsFollowing={!!user.isFollowing}
           avatarUrl={user.avatar ?? null}
           showFollowButton
-          onRequireLogin={() =>
-            router.push(`/login?callbackUrl=${encodeURIComponent(next)}`)
-          }
+          onRequireLogin={onRequireLogin}
+          // 헤더에서 팔로우 토글되면 UserProfile의 isFollowing도 동기화
+          onFollowingChange={setIsFollowing}
+          // rail CTA가 헤더 버튼을 찾을 수 있도록 id 주입
+          followButtonId={followButtonId}
         />
       </div>
 
@@ -159,39 +201,64 @@ export default function UserProfile({
             아직 방송한 내역이 없습니다.
           </p>
         ) : (
-          <div className="mt-2 flex gap-3 overflow-x-auto pb-2 items-stretch">
-            {(myStreams ?? []).map((s) => (
-              <StreamCard
-                key={s.id}
-                id={s.id}
-                title={s.title}
-                thumbnail={s.thumbnail}
-                isLive={s.status === "CONNECTED"}
-                streamer={{
-                  username: s.user.username,
-                  avatar: s.user.avatar ?? undefined,
-                }}
-                startedAt={s.started_at ?? undefined}
-                category={
-                  s.category
-                    ? {
-                        id: s.category.id,
-                        kor_name: s.category.kor_name,
-                        icon: s.category.icon ?? undefined,
-                      }
-                    : undefined
-                }
-                tags={s.tags}
-                followersOnlyLocked={s.followersOnlyLocked}
-                requiresPassword={s.requiresPassword}
-                visibility={s.visibility}
-                // onRequestFollow는 헤더 FollowSection에서 담당하므로 생략
-                layout="rail"
-              />
-            ))}
+          <div
+            className="
+              mt-2
+              -mx-4 sm:-mx-5 px-4 sm:px-5
+              flex gap-3 items-stretch
+              overflow-x-auto scrollbar pb-3
+              snap-x snap-mandatory
+              scroll-px-4 sm:scroll-px-5
+              overscroll-x-contain
+            "
+          >
+            {(myStreams ?? []).map((s) => {
+              // FOLLOWERS 잠금은 서버 플래그가 아니라 "현재 팔로우 상태"로 즉시 반영
+              const followersOnlyLocked =
+                s.visibility === "FOLLOWERS" && !isFollowing;
+
+              // PRIVATE는 팔로우로 풀리는 게 아니라 언락 흐름이므로 서버 플래그 유지
+              const requiresPassword = !!s.requiresPassword;
+
+              return (
+                <StreamCard
+                  key={s.id}
+                  id={s.id}
+                  vodIdForRecording={s.latestVodId ?? undefined}
+                  title={s.title}
+                  thumbnail={s.thumbnail}
+                  isLive={s.status === "CONNECTED"}
+                  streamer={{
+                    username: s.user.username,
+                    avatar: s.user.avatar ?? undefined,
+                  }}
+                  startedAt={s.started_at ?? undefined}
+                  category={
+                    s.category
+                      ? {
+                          id: s.category.id,
+                          kor_name: s.category.kor_name,
+                          icon: s.category.icon ?? undefined,
+                        }
+                      : undefined
+                  }
+                  tags={s.tags}
+                  followersOnlyLocked={followersOnlyLocked}
+                  requiresPassword={requiresPassword}
+                  visibility={s.visibility}
+                  isPrivateType={s.visibility === "PRIVATE"}
+                  // 잠겨있을 때만 CTA 제공 (없으면 클릭이 "아무 반응 없음"이 될 수 있음)
+                  onRequestFollow={
+                    followersOnlyLocked ? requestFollowFromRail : undefined
+                  }
+                  layout="rail"
+                />
+              );
+            })}
           </div>
         )}
       </section>
+
       {/* 받은 거래 후기 */}
       <section aria-labelledby="s-reviews">
         <div className="section-h">
@@ -226,7 +293,7 @@ export default function UserProfile({
       </section>
 
       {/* 판매 제품 탭 */}
-      <section aria-labelledby="s-products" className="">
+      <section aria-labelledby="s-products">
         <h2
           id="s-products"
           className="text-[15px] font-semibold text-neutral-900 dark:text-neutral-50 mb-2"
@@ -339,12 +406,14 @@ export default function UserProfile({
       </section>
 
       {/* 모달들 */}
-      <ProfileReviewsModal
-        isOpen={isReviewModalOpen}
-        onClose={() => setIsReviewModalOpen(false)}
-        reviews={initialReviews}
-        userId={user.id}
-      />
+      {isReviewModalOpen && (
+        <ProfileReviewsModal
+          isOpen={isReviewModalOpen}
+          onClose={() => setIsReviewModalOpen(false)}
+          reviews={initialReviews}
+          userId={user.id}
+        />
+      )}
     </div>
   );
 }

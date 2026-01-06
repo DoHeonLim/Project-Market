@@ -10,6 +10,8 @@
  * 2025.09.09  임도헌   Modified   CF 요청 타임아웃/응답 검증 강화를 추가, 태그 정규화/중복제거, 로깅/가드 개선
  * 2025.09.15  임도헌   Modified  LiveInput/Broadcast/VodAsset 스키마 반영, 단일 채널(1인 1 LiveInput) 정책 적용
  * 2025.09.16  임도헌   Modified  내보내기 이름을 createBroadcast로 리네이밍
+ * 2025.12.22  임도헌   Modified  Prisma 에러 가드 유틸로 변경
+ * 2026.01.02  임도헌   Modified  생성 후 방송국/상세 캐시 태그 무효화 추가
  *
  * 개요
  * - 유저가 폼 제출 시:
@@ -27,6 +29,9 @@ import { streamFormSchema } from "@/lib/stream/form/streamFormSchema"; // 경로
 import { STREAM_VISIBILITY } from "@/lib/constants";
 import { createStreamChatRoom } from "@/lib/chat/room/create/createStreamChatRoom";
 import type { CreateBroadcastResult } from "@/types/stream";
+import { isUniqueConstraintError } from "@/lib/errors";
+import { revalidateTag } from "next/cache";
+import * as T from "@/lib/cache/tags";
 
 /* 필수 ENV */
 const CF_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID;
@@ -127,8 +132,8 @@ async function ensureLiveInput(userId: number, nameHint: string) {
       created: true,
     };
   } catch (e: any) {
-    if (e?.code === "P2002") {
-      // 다른 요청이 먼저 생성함 → 우리가 방금 만든 CF 자원 정리(베스트 에포트)
+    if (isUniqueConstraintError(e, ["userId"])) {
+      // 다른 요청이 먼저 생성함 → 우리가 방금 만든 CF 자원 정리
       try {
         await fetch(
           `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/stream/live_inputs/${uid}`,
@@ -246,7 +251,6 @@ export const createBroadcast = async (
         status: INITIAL_STATUS, // "DISCONNECTED"
         streamCategoryId,
 
-        // 태그는 고유 name 기준 connectOrCreate
         tags:
           tags && tags.length
             ? {
@@ -266,6 +270,10 @@ export const createBroadcast = async (
     } catch (chatErr) {
       console.error("[createBroadcast] chat room create failed:", chatErr);
     }
+
+    // 생성 직후 캐시 무효화(방송국 1페이지 캐시/상세 캐시)
+    revalidateTag(T.USER_STREAMS_ID(session.id));
+    revalidateTag(T.BROADCAST_DETAIL(broadcast.id));
 
     return {
       success: true,

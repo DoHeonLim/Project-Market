@@ -20,20 +20,25 @@
  * 2025.09.16  임도헌   Modified   네이밍 정리(checkBroadcastAccess/isBroadcastUnlocked), 캐시 태그 상수화
  * 2025.09.30  임도헌   Modified   데스크톱, 모바일 UI 변경
  * 2025.11.15  임도헌   Modified   layout으로 back버튼 이동
+ * 2025.12.09  임도헌   Modified   403 리다이렉트 파라미터 정리
+ * 2026.01.02  임도헌   Modified   상세 캐시 wrapper를 base + 태그 주입 방식으로 정리
+ * 2026.01.03  임도헌   Modified   getSession() 후 유저 조회를 getUserInfo() → getUserInfoById(session.id)로 변경(중복 세션 조회 제거)s
  */
+
 export const dynamic = "force-dynamic";
 
 import { unstable_cache as nextCache } from "next/cache";
+import * as T from "@/lib/cache/tags";
 import { notFound, redirect } from "next/navigation";
 
 import getSession from "@/lib/session";
-import { getUserInfo } from "@/lib/user/getUserInfo";
+import { getUserInfoById } from "@/lib/user/getUserInfo";
 import {
   getBroadcastDetail,
   StreamDetailDTO,
 } from "@/lib/stream/getBroadcastDetail";
 import { getStreamChatRoom } from "@/lib/chat/room/getStreamChatRoom";
-import { isBroadcastUnlocked } from "@/lib/stream/unlockPrivateBroadcast";
+import { isBroadcastUnlockedFromSession } from "@/lib/stream/privateUnlockSession";
 import { checkBroadcastAccess } from "@/lib/stream/checkBroadcastAccess";
 import { getInitialStreamMessages } from "@/lib/chat/messages/getInitialStreamMessages";
 import type { StreamVisibility } from "@/types/stream";
@@ -41,6 +46,15 @@ import StreamDetail from "@/components/stream/StreamDetail";
 import StreamChatRoom from "@/components/stream/StreamChatRoom";
 import StreamTopbar from "@/components/stream/StreamTopBar";
 import StreamMobileChatSection from "@/components/stream/StreamMobileChatSection";
+
+/** base: tags 없는 캐시 함수 */
+const _getCachedBroadcastBase = nextCache(
+  getBroadcastDetail,
+  ["broadcast-detail-by-id"],
+  {
+    tags: [],
+  }
+);
 
 export default async function StreamDetailPage({
   params,
@@ -50,19 +64,18 @@ export default async function StreamDetailPage({
   const broadcastId = Number(params.id);
   if (!Number.isFinite(broadcastId) || broadcastId <= 0) notFound();
 
-  // 캐시 태그 상수화
-  const CACHE_TAG = `broadcast-detail-${broadcastId}` as const;
-
   // 상세 캐시 (태그로 무효화)
-  const getCachedBroadcast = nextCache(getBroadcastDetail, [CACHE_TAG], {
-    tags: [CACHE_TAG],
-  });
+  const getCachedBroadcast = nextCache(
+    () => _getCachedBroadcastBase(broadcastId),
+    ["broadcast-detail-by-id"],
+    { tags: [T.BROADCAST_DETAIL(broadcastId)] }
+  );
 
-  // 로그인 전제(미들웨어)라도 널 가드 유지
   const [session, fetched] = await Promise.all([
     getSession(),
-    getCachedBroadcast(broadcastId),
+    getCachedBroadcast(),
   ]);
+
   if (!session?.id) {
     redirect(
       `/login?callbackUrl=${encodeURIComponent(`/streams/${broadcastId}`)}`
@@ -78,10 +91,8 @@ export default async function StreamDetailPage({
   const isOwner = !!session?.id && session.id === ownerId;
 
   if (!isOwner) {
-    // 접근 가드 (비공개/팔로워 전용/언락 반영)
-    const isUnlocked = await isBroadcastUnlocked(broadcastId);
+    const isUnlocked = isBroadcastUnlockedFromSession(session, broadcastId);
 
-    // visibility를 StreamVisibility로 명시
     const guard = await checkBroadcastAccess(
       {
         userId: initialBroadcast.userId,
@@ -93,20 +104,21 @@ export default async function StreamDetailPage({
 
     if (!guard.allowed) {
       const ownerUsername = initialBroadcast.user.username;
-      const next = encodeURIComponent(`/streams/${broadcastId}`);
-      // 403 핸들러로 위임 (사유/다음경로 전달)
+      const callbackUrl = `/streams/${broadcastId}`;
+
       redirect(
-        `/403?reason=${guard.reason}&username=${encodeURIComponent(
-          ownerUsername
-        )}&next=${next}&sid=${broadcastId}`
+        `/403?reason=${guard.reason}` +
+          `&username=${encodeURIComponent(ownerUsername)}` +
+          `&callbackUrl=${encodeURIComponent(callbackUrl)}` +
+          `&sid=${broadcastId}` +
+          `&uid=${ownerId}`
       );
     }
   }
 
-  // 채팅방/유저 정보 로드 (로그인 전제)
   const [streamChatRoom, user] = await Promise.all([
     getStreamChatRoom(broadcastId),
-    getUserInfo(),
+    getUserInfoById(session.id!),
   ]);
   if (!streamChatRoom || !user) notFound();
 
@@ -120,13 +132,9 @@ export default async function StreamDetailPage({
         visibility={initialBroadcast.visibility}
         backFallbackHref="/streams"
       />
-      {/* 데스크탑: 중앙 컬럼 + 오른쪽 고정 채팅(360px)
-            모바일: 오른쪽 채팅은 숨기고 아래에 렌더 */}
       <div className="xl:grid xl:grid-cols-[1fr,min(100%,900px),400px] ">
-        {/* 왼쪽 gutter (빈 칸) */}
         <div className="hidden xl:block" />
 
-        {/* 중앙: 비디오 + 메타 (max width 고정) */}
         <div className="mx-auto w-full">
           <StreamDetail
             stream={initialBroadcast}
@@ -135,7 +143,6 @@ export default async function StreamDetailPage({
           />
         </div>
 
-        {/* 오른쪽: 데스크탑 전용 고정 채팅 패널 */}
         <div
           className="hidden xl:block xl:ml-2 h-[calc(100vh-96px)] max-w-[50vh]"
           aria-label="stream chat panel"
@@ -149,7 +156,7 @@ export default async function StreamDetailPage({
           />
         </div>
       </div>
-      {/* 모바일/태블릿: 정보 + 채팅을 같은 컬럼에서 배치, 남는 공간은 채팅이 먹음 */}
+
       <div className="xl:hidden mt-1">
         <StreamMobileChatSection
           initialStreamMessage={initialStreamMessage}

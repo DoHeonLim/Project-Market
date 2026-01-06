@@ -7,6 +7,9 @@
  * Date        Author   Status     Description
  * 2025.11.10  임도헌   Created    MyProfile 헤더 UI를 공용 컴포넌트로 분리
  * 2025.11.18  임도헌   Modified   xl 미만에서 아바타/평점 사이즈 축소
+ * 2025.12.12  임도헌   Modified   matchMedia change 이벤트 Safari 폴백(addListener) 추가
+ * 2025.12.14  임도헌   Modified   ProfileHeader에 onFollowingChange prop 추가 → FollowSection으로 전달
+ * 2025.12.20  임도헌   Modified   rail CTA 지원: followButtonId prop 추가 → FollowSection 버튼 id 주입
  */
 
 "use client";
@@ -45,7 +48,11 @@ type Props = {
   className?: string;
 
   /** 내 프로필이 아니라면 true로 넘겨 버튼 노출 */
-  showFollowButton?: boolean; // 기본값: true (FollowSection 내부에서 viewerId===ownerId면 자동 숨김)
+  showFollowButton?: boolean;
+  onFollowingChange?: (now: boolean) => void;
+
+  // 팔로우 버튼 DOM id(rail에서 클릭 유도용)
+  followButtonId?: string;
 };
 
 export default function ProfileHeader({
@@ -59,22 +66,34 @@ export default function ProfileHeader({
   initialIsFollowing,
   avatarUrl,
   onRequireLogin,
-  // className,
   showFollowButton = true,
+  onFollowingChange,
+  followButtonId,
 }: Props) {
-  // xl 이상 여부 감지
   const [isXL, setIsXL] = useState(false);
 
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 1280px)");
     const apply = () => setIsXL(mq.matches);
     apply();
-    mq.addEventListener("change", apply);
-    return () => mq.removeEventListener("change", apply);
+
+    // Safari 폴백
+    const anyMq = mq as unknown as {
+      addEventListener?: (type: "change", cb: () => void) => void;
+      removeEventListener?: (type: "change", cb: () => void) => void;
+      addListener?: (cb: () => void) => void;
+      removeListener?: (cb: () => void) => void;
+    };
+
+    if (anyMq.addEventListener) {
+      anyMq.addEventListener("change", apply);
+      return () => anyMq.removeEventListener?.("change", apply);
+    }
+
+    anyMq.addListener?.(apply);
+    return () => anyMq.removeListener?.(apply);
   }, []);
 
-  // xl 이상: avatar=lg, rating=md
-  // xl 미만: avatar=md, rating=sm
   const avatarSize: "sm" | "md" | "lg" = isXL ? "lg" : "md";
   const ratingSize: "sm" | "md" | "lg" = isXL ? "md" : "sm";
 
@@ -99,7 +118,6 @@ export default function ProfileHeader({
               가입일 <TimeAgo date={createdAt} />
             </p>
 
-            {/* 별점: 위/아래 블록과 간격 살짝만 */}
             <div className="mt-2">
               <UserRating
                 average={averageRating?.averageRating ?? 0}
@@ -110,7 +128,6 @@ export default function ProfileHeader({
           </div>
         </div>
 
-        {/* 팔로우/카운트: 헤더 하단과 시각 분리되도록 여백만 정리 */}
         <div className="mt-2.5">
           <FollowSection
             ownerId={ownerId}
@@ -125,6 +142,8 @@ export default function ProfileHeader({
             size="compact"
             align="start"
             onRequireLogin={onRequireLogin}
+            onFollowingChange={onFollowingChange}
+            followButtonId={followButtonId}
           />
         </div>
       </div>

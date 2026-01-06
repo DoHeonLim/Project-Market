@@ -20,6 +20,8 @@
  * 2025.10.20  임도헌   Modified  예약자 선택 onConfirm 위임 + reserved 경로 낙관 이동 추가
  * 2025.10.21  임도헌   Modified  UI 통일(상태Pill/메타칩/타임라인/상대방/지표 뱃지) 추가
  * 2025.11.06  임도헌   Modified  리뷰 삭제 확인을 ConfirmDialog로 일원화 + 삭제 로딩/닫힘 제어
+ * 2025.12.30  임도헌   Modified  sold 낙관 이동 시 구매자 표시 동기화, 리뷰 삭제 patch를 로컬 최신 상태 기준으로 통일
+ * 2026.01.03  임도헌   Modified  purchase_userId 기반 구매자 지연 조회를 getUserInfo(id) → getUserInfoById(id)로 변경(세션 불필요 경로 명확화)
  */
 
 "use client";
@@ -40,7 +42,7 @@ import { EyeIcon, HeartIcon } from "@heroicons/react/24/solid";
 
 import { useReview } from "@/hooks/useReview";
 import { formatToWon } from "@/lib/utils";
-import { getUserInfo } from "@/lib/user/getUserInfo";
+import { getUserInfoById } from "@/lib/user/getUserInfo";
 import { updateProductStatus } from "@/lib/product/updateProductStatus";
 import { deleteReview } from "@/lib/review/deleteReview";
 import { deleteAllProductReviews } from "@/lib/review/deleteAllProductReviews";
@@ -175,11 +177,29 @@ export default function MySalesProductItem({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product.reviews]);
 
+  /**
+   * sold 낙관 이동/서버 갱신으로 purchase_user가 주입되면
+   * purchaseUserInfo 상태도 즉시 동기화하여 카드 UI가 갱신되도록 한다.
+   */
+  const purchaseUser = product.purchase_user;
+  useEffect(() => {
+    if (!purchaseUser) return;
+
+    setPurchaseUserInfo({
+      username: purchaseUser.username ?? "",
+      avatar: purchaseUser.avatar ?? null,
+    });
+  }, [purchaseUser]);
+
+  /**
+   * purchase_user를 함께 받지 못한 경우(예: reserved->sold 직후 일부 반환/레거시 응답 등)
+   * purchase_userId 기반으로 구매자 정보를 지연 조회한다.
+   */
   useEffect(() => {
     if (!product.purchase_user && product.purchase_userId) {
       let mounted = true;
       (async () => {
-        const info = await getUserInfo(product.purchase_userId!);
+        const info = await getUserInfoById(product.purchase_userId!);
         if (mounted && info) setPurchaseUserInfo(info);
       })();
       return () => {
@@ -193,10 +213,7 @@ export default function MySalesProductItem({
     rating: number
   ): Promise<boolean> => {
     const res = await submitReview(text, rating);
-    if (res.ok) {
-      return true;
-    }
-    return false;
+    return !!res.ok;
   };
 
   // 삭제 버튼 클릭 → 확인 모달 오픈
@@ -215,11 +232,18 @@ export default function MySalesProductItem({
       }
       setIsDeleting(true);
       await deleteReview(reviewId);
-      setReviews((prev) => prev.filter((r) => r.id !== reviewId));
-      setIsSellerReviewModalOpen(false);
-      onReviewChanged?.({
-        reviews: (product.reviews ?? []).filter((r) => r.id !== reviewId),
+
+      /**
+       * (중요) patch는 항상 "로컬 최신 상태" 기준으로 만든 next를 그대로 사용한다.
+       * props(product.reviews) 기반으로 patch를 만들면 타이밍에 따라 stale 데이터가 섞일 수 있다.
+       */
+      setReviews((prev) => {
+        const next = prev.filter((r) => r.id !== reviewId);
+        onReviewChanged?.({ reviews: next });
+        return next;
       });
+
+      setIsSellerReviewModalOpen(false);
       toast.success("리뷰를 삭제했어요.");
     } catch (e) {
       console.error("리뷰 삭제 중 오류 발생:", e);
@@ -241,6 +265,7 @@ export default function MySalesProductItem({
           setOpLoading(false);
         }
       }
+
       const rollback = onOptimisticMove?.({ from: type, to, product });
 
       setOpLoading(true);
@@ -368,7 +393,7 @@ export default function MySalesProductItem({
               priority={type === "selling"}
             />
           ) : (
-            <div className="absolute inset-0 bg-neutral-100 dark:bg-neutral-800 animate-pulse" />
+            <div className="absolute inset-0 animate-pulse bg-neutral-100 dark:bg-neutral-800" />
           )}
         </Link>
 
@@ -590,7 +615,7 @@ export default function MySalesProductItem({
           <div className="space-y-3">
             <p className="text-neutral-700 dark:text-neutral-200">
               <strong className="font-medium">{product.title}</strong> 제품을
-              <span className="mx-1 font-medium">“판매 중”</span>으로
+              <span className="mx-1 font-medium">&quot;판매 중&quot;</span>으로
               변경하시겠습니까?
             </p>
             <div className="rounded-lg bg-red-50 p-3 dark:bg-red-900/20">

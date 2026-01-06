@@ -9,23 +9,24 @@ Date        Author   Status    Description
 2024.12.15  임도헌   Modified  카테고리 시드 추가
 2025.04.13  임도헌   Modified  뱃지 시드 추가
 2025.05.08  임도헌   Modified  스트리밍 카테고리 시드 추가
+2025.12.07  임도헌   Modified  뱃지 설명 수정
 */
 
-import { PrismaClient } from "@prisma/client";
+// prisma db seed 사용해서 데이터 추가
 
-const prisma = new PrismaClient();
+import db from "@/lib/db";
 
 async function main() {
   // 기존 데이터 삭제 (순서 중요)
-  await prisma.productMessage.deleteMany();
-  await prisma.productChatRoom.deleteMany();
-  await prisma.productImage.deleteMany();
-  await prisma.productLike.deleteMany();
-  await prisma.review.deleteMany();
-  await prisma.product.deleteMany();
-  await prisma.badge.deleteMany();
-  await prisma.category.deleteMany();
-  await prisma.streamCategory.deleteMany();
+  await db.productMessage.deleteMany();
+  await db.productChatRoom.deleteMany();
+  await db.productImage.deleteMany();
+  await db.productLike.deleteMany();
+  await db.review.deleteMany();
+  await db.product.deleteMany();
+  await db.badge.deleteMany();
+  await db.category.deleteMany();
+  await db.streamCategory.deleteMany();
 
   const categories = [
     {
@@ -176,13 +177,13 @@ async function main() {
   for (const category of categories) {
     const { subcategories, ...categoryData } = category;
 
-    const mainCategory = await prisma.category.create({
+    const mainCategory = await db.category.create({
       data: categoryData,
     });
 
     // 서브카테고리 생성 및 부모 카테고리와 연결
     for (const subcategory of subcategories) {
-      await prisma.category.create({
+      await db.category.create({
         data: {
           ...subcategory,
           parentId: mainCategory.id,
@@ -303,13 +304,13 @@ async function main() {
   for (const category of streamCategories) {
     const { subcategories, ...categoryData } = category;
 
-    const mainCategory = await prisma.streamCategory.create({
+    const mainCategory = await db.streamCategory.create({
       data: categoryData,
     });
 
     // 서브카테고리 생성 및 부모 카테고리와 연결
     for (const subcategory of subcategories) {
-      await prisma.streamCategory.create({
+      await db.streamCategory.create({
         data: {
           ...subcategory,
           parentId: mainCategory.id,
@@ -336,7 +337,7 @@ async function main() {
       name: "QUICK_RESPONSE",
       icon: "https://imagedelivery.net/3o3hwIVwLhMgAkoMCda2JQ/b5a00613-399d-476f-2c00-fe3bd0297100",
       description:
-        "90% 이상의 응답률과 30분 이내의 빠른 답변을 기록한 신속한 교신병입니다. 조개껍데기 무전기로 발 빠른 소통을 이어가고 있어요!",
+        "최근 60일 기준 50개 이상의 메시지, 80% 이상의 응답률과 60분 이내의 빠른 답변을 기록한 신속한 교신병입니다. 조개껍데기 무전기로 발 빠른 소통을 이어가고 있어요!",
     },
     {
       name: "FIRST_POST",
@@ -348,25 +349,25 @@ async function main() {
       name: "POPULAR_WRITER",
       icon: "https://imagedelivery.net/3o3hwIVwLhMgAkoMCda2JQ/6791fdc6-dac2-4858-2db6-448b246a1e00",
       description:
-        "5개 이상의 게시글에서 총 100개 이상의 좋아요를 받은 인기 항해사입니다. 난파선 카페의 유명 작가가 되었어요!",
+        "최근 6개월 동안 5개 이상의 게시글과 총 50개 이상의 좋아요를 받은 인기 항해사입니다. 난파선 카페의 유명 작가가 되었어요!",
     },
     {
       name: "ACTIVE_COMMENTER",
       icon: "https://imagedelivery.net/3o3hwIVwLhMgAkoMCda2JQ/9cc7214f-ae58-43ab-ba4d-75d31a9f6500",
       description:
-        "50개 이상의 댓글과 규칙/후기 게시글 댓글 비율이 30% 이상인 열정적인 통신사입니다.",
+        "최근 30일 동안 30개 이상의 댓글을 남기고, 그 중 규칙/후기 게시글에 남긴 댓글 비율이 30% 이상인 열정적인 통신사입니다.",
     },
     {
       name: "GAME_COLLECTOR",
       icon: "https://imagedelivery.net/3o3hwIVwLhMgAkoMCda2JQ/ee622a84-9d9c-4201-7dc6-a778069e2e00",
       description:
-        "10개 이상의 다양한 보드게임과 3개 이상의 카테고리에서 거래한 보물선 수집가입니다.",
+        "20회 이상 다양한 장르와 카테고리의 보드게임을 거래한 보물선 수집가입니다. 여러 항구를 넘나들며 풍부한 게임 경험을 쌓고 있어요!",
     },
     {
       name: "GENRE_MASTER",
       icon: "https://imagedelivery.net/3o3hwIVwLhMgAkoMCda2JQ/bb30cb4b-d65a-481b-e65e-f5aead306100",
       description:
-        "한 장르에서 15회 이상의 거래와 4.5 이상의 평점을 기록한 장르의 항해사입니다.",
+        "한 장르(카테고리)에서 10회 이상의 거래와 4.4 이상의 평점을 기록한 장르의 항해사입니다.",
     },
     {
       name: "RULE_SAGE",
@@ -384,13 +385,13 @@ async function main() {
       name: "FAIR_TRADER",
       icon: "https://imagedelivery.net/3o3hwIVwLhMgAkoMCda2JQ/04b908dd-e9c7-40bb-4786-fe2b5af89900",
       description:
-        "5회 이상의 거래에서 4.8 이상의 높은 평점을 기록한 정직한 상인입니다. 공정한 거래로 신뢰를 쌓고 있어요!",
+        "5회 이상의 거래에서 4.5 이상의 높은 평점을 기록한 정직한 상인입니다. 공정한 거래로 신뢰를 쌓고 있어요!",
     },
     {
       name: "QUALITY_MASTER",
       icon: "https://imagedelivery.net/3o3hwIVwLhMgAkoMCda2JQ/4b6ed65a-732d-439e-4509-faa53dcb9400",
       description:
-        "5회 이상 거래, 80% 이상의 완벽한 품질을 유지하는 품질의 달인입니다!",
+        "8회 이상 판매를 완료하고, 그 중 70% 이상을 새제품급/거의 새것 상태와 완벽한 구성으로 유지한 품질의 달인입니다!",
     },
     {
       name: "EARLY_SAILOR",
@@ -402,19 +403,19 @@ async function main() {
       name: "PORT_FESTIVAL",
       icon: "https://imagedelivery.net/3o3hwIVwLhMgAkoMCda2JQ/7abfbeaa-f4e4-4499-f4ce-fb6bf9745d00",
       description:
-        "최근 한 달 동안 3개 이상의 게시글, 10개 이상의 댓글 작성, 그리고 성공적인 거래를 통해 항구를 풍성하게 만든 축제의 주인공입니다. 당신의 활발한 활동이 우리 항구를 빛나게 만들어요!",
+        "최근 한 달 동안 3개 이상의 게시글, 10개 이상의 댓글, 1회 이상의 성공적인 거래로 항구를 뜨겁게 달군 축제의 주인공입니다. 당신의 활발한 활동이 우리 항구를 빛나게 만들어요!",
     },
     {
       name: "BOARD_EXPLORER",
       icon: "https://imagedelivery.net/3o3hwIVwLhMgAkoMCda2JQ/c033d8e8-a96f-4632-6f86-cc76b62a9700",
       description:
-        "5가지 이상의 게임 타입을 거래하고, 항해 일지 게시글 10개 이상이고, 커뮤니티 기여도 평점4.5이상의 보드게임 탐험가입니다. 새로운 게임의 세계를 탐험하고 있어요!",
+        "4가지 이상의 게임 타입을 거래하고, MAP/LOG 게시글 7개 이상을 남기며, 최근 6개월 기준 댓글 10개와 좋아요 30개 이상의 커뮤니티 기여도를 보여준 보드게임 탐험가입니다. 새로운 게임의 바다를 끝없이 탐험하고 있어요!",
     },
   ];
 
   // 뱃지 생성
   for (const badge of badges) {
-    await prisma.badge.create({
+    await db.badge.create({
       data: badge,
     });
   }
@@ -428,5 +429,5 @@ main()
     process.exit(1);
   })
   .finally(async () => {
-    await prisma.$disconnect();
+    await db.$disconnect();
   });

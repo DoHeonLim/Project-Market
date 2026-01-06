@@ -10,7 +10,7 @@
 
 import "server-only";
 import db from "@/lib/db";
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
 
 type DeleteResult = { success: true } | { success: false; error: string };
 

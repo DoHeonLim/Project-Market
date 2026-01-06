@@ -28,7 +28,7 @@ import { redirect } from "next/navigation";
 export default async function MySalesPage() {
   const session = await getSession();
   if (!session?.id) {
-    redirect("/login?callbackUrl=/profile/(product)/my-sales");
+    redirect("/login?callbackUrl=/profile/my-sales");
   }
   const userId = session.id;
 

@@ -11,13 +11,14 @@
 
 import db from "@/lib/db";
 import { notFound } from "next/navigation";
+import { normalizeUsername } from "@/lib/user/normalizeUsername";
 
 /** 채널 전용 경량 프로필 (카운트만 포함) */
 export const getUserChannel = async (username: string) => {
-  const decoded = decodeURIComponent(username);
+  const uname = normalizeUsername(username);
 
   const user = await db.user.findUnique({
-    where: { username: decoded },
+    where: { username: uname },
     select: {
       id: true,
       username: true,

@@ -9,6 +9,7 @@ Date        Author   Status    Description
 2025.05.30  임도헌   Modified  SMS 로그인 폼 컴포넌트로 분리
 2025.06.05  임도헌   Modified  버튼 클릭 시 아무 반응 없던 것 수정. (z.object로 감싸니 작동)
 2025.06.07  임도헌   Modified  toast및 router.push로 페이지 이동
+2025.12.12  임도헌   Modified  서버 액션(success/error) 구조에 맞춰 에러 표시 로직 정리
 */
 
 // react-hook-form에 사용되는 schema가 z.object가 아닌 단일 필드라서 전체 폼 검증이 무효화됨.
@@ -46,6 +47,8 @@ export default function SmsForm() {
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
+    mode: "onBlur",
+    reValidateMode: "onChange",
   });
 
   const router = useRouter();
@@ -57,6 +60,7 @@ export default function SmsForm() {
         const formData = new FormData();
         formData.append("phone", data.phone);
         const res = await sendPhoneToken(formData);
+
         if (res?.error) {
           setFormError(res.error);
         } else {
@@ -74,15 +78,25 @@ export default function SmsForm() {
         formData.append("token", data.token);
         formData.append("phone", phone);
         const res = await verifyPhoneToken(formData);
+
         if (res?.error) {
           setFormError(res.error);
         } else {
           toast.success("📱 인증 완료! 항해를 위한 탑승 절차가 끝났습니다.");
-          router.push("profile");
+          router.push("/profile");
         }
       }
     });
   };
+
+  const phoneError =
+    errors.phone?.message || formError
+      ? [errors.phone?.message ?? formError ?? ""]
+      : [];
+  const tokenError =
+    errors.token?.message || formError
+      ? [errors.token?.message ?? formError ?? ""]
+      : [];
 
   return (
     <form
@@ -94,7 +108,7 @@ export default function SmsForm() {
           {...register("phone")}
           type="text"
           placeholder="선원 연락처(phone)"
-          errors={[errors.phone?.message ?? formError ?? ""]}
+          errors={phoneError}
           required
           icon={
             <svg
@@ -119,7 +133,7 @@ export default function SmsForm() {
           placeholder="등대 신호 코드(code)"
           min={100000}
           max={999999}
-          errors={[errors.token?.message ?? formError ?? ""]}
+          errors={tokenError}
           required
           icon={
             <svg

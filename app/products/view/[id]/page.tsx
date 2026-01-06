@@ -33,10 +33,12 @@ Date        Author   Status    Description
 2025.04.13  임도헌   Modified  game_type 필드를 영어로 변경
 2025.06.08  임도헌   Modified  데이터 fetch와 UI 컨테이너로 분리 리팩토링
 2025.11.13  임도헌   Modified  뒤로가기 layout으로 위임
+2026.01.04  임도헌   Modified  generateMetadata에서 getProductDetailData 호출 제거(redirect/조회수/개인화 부작용 방지) → title 전용 fetch로 분리
 */
 
 import { notFound } from "next/navigation";
 import { getProductDetailData } from "@/lib/product/getProductDetailData";
+import { getProductTitleForMetadata } from "@/lib/product/getProductTitleForMetadata";
 import ProductDetailContainer from "@/components/product/productDetail";
 
 export const dynamic = "force-dynamic";
@@ -44,9 +46,15 @@ export const revalidate = 0;
 
 export async function generateMetadata({ params }: { params: { id: string } }) {
   const id = Number(params.id);
-  const data = await getProductDetailData(id);
+
+  // NOTE:
+  // getProductDetailData()는 로그인 redirect + 조회수 증가 + 좋아요/오너 개인화를 포함하므로
+  // metadata 경로에서 호출하면 의도치 않은 부작용이 생길 수 있다.
+  // → title 전용 fetch로 분리하여 안정성/비용을 개선한다.
+  const title = await getProductTitleForMetadata(id);
+
   return {
-    title: data?.product?.title || "제품 상세",
+    title: title || "제품 상세",
   };
 }
 
@@ -61,9 +69,5 @@ export default async function ProductDetail({
   const data = await getProductDetailData(id);
   if (!data) return notFound();
 
-  return (
-    <>
-      <ProductDetailContainer {...data} />
-    </>
-  );
+  return <ProductDetailContainer {...data} />;
 }

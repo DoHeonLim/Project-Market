@@ -14,6 +14,7 @@ Date        Author   Status    Description
 import { createChatRoom } from "@/lib/chat/room/create/createChatRoom";
 import getSession from "@/lib/session";
 import { revalidateTag } from "next/cache";
+import * as T from "@/lib/cache/tags";
 import { redirect } from "next/navigation";
 
 /**
@@ -27,6 +28,6 @@ export const createChatRoomAction = async (productId: number) => {
 
   const chatRoomId = await createChatRoom(session.id, productId);
 
-  revalidateTag("chat-rooms");
+  revalidateTag(T.CHAT_ROOMS());
   return redirect(`/chats/${chatRoomId}`);
 };

@@ -1,4 +1,11 @@
-// lib/auth/safeRedirect.ts
+/**
+ * File Name : lib/auth/safeRedirect
+ * Description : callbackUrl 안전하게 정제하는 유틸
+ * Author : 임도헌
+ *
+ * History
+ * 2025.11.01  임도헌   Created   외부 URL/이중 인코딩 방지용
+ */
 export function sanitizeCallbackUrl(raw: unknown): string {
   const val = typeof raw === "string" ? raw : "";
   if (!val) return "/";

@@ -41,14 +41,24 @@
 // 2025.09.06  임도헌   Modified   StreamMessage모델에 인덱스를 추가
 // 2025.09.15  임도헌   Modified   라이브 스트리밍 관련 모델 전면 재구성
 // 2025.10.29  임도헌   Modified   Follow 키셋 페이지네이션 최적화용 복합 인덱스 추가([followerId,id], [followingId,id])
+// 2025.11.28  임도헌   Modified   Prisma 7로 업그레이드
+// 2026.01.03  암도헌   Modified   조회수 쿨다운을 위해서 ViewThrottle 모델 추가
 
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  // 프로젝트 루트 기준: ./generated/prisma
+  // (schema.prisma가 prisma/ 안에 있으니까 ../generated/prisma)
+  output   = "../generated/prisma"
 }
 
+// // URL은 prisma.config.ts + .env에서 관리
+// datasource db {
+//   provider = "sqlite"
+// }
+
+// URL은 prisma.config.ts + .env에서 관리
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider = "postgresql"
 }
 
 // 유저 모델
@@ -88,6 +98,7 @@ model User {
   recordingLikes           RecordingLike[] // 녹화 좋아요
   recordingComments        RecordingComment[] // 녹화 댓글
   liveInputs               LiveInput? // 
+  viewThrottles            ViewThrottle[]
 
   @@index([username]) // 사용자명 검색용
 }
@@ -114,6 +125,7 @@ model Review {
   rate       Int //리뷰 별점
   created_at DateTime @default(now())
 
+  @@unique([userId, productId]) //  한 유저가 한 상품에 리뷰 1개만 허용
   @@index([productId]) // 제품별 리뷰
   @@index([userId]) // 사용자별 리뷰
   @@index([rate]) // 평점 기준 정렬
@@ -405,7 +417,7 @@ model PushSubscription {
   @@index([isActive]) // 활성 구독 필터링
 }
 
-// 알림 설정 모델
+// 알림 설정 모델(유저가 어떤 타입의 알림을 받길 원하는지)
 model NotificationPreferences {
   id     Int  @id @default(autoincrement())
   user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -417,6 +429,7 @@ model NotificationPreferences {
   review Boolean @default(true) // 리뷰 알림
   badge  Boolean @default(true) // 뱃지 알림
   system Boolean @default(true) // 시스템 알림
+  stream Boolean @default(true) // 방송 알림
 
   // 푸시 알림 설정
   pushEnabled Boolean @default(true) // 푸시 알림 전체 설정
@@ -667,4 +680,26 @@ model RecordingComment {
   vodId  Int
 
   @@index([vodId, created_at])
+}
+
+// 조회수 타입
+enum ViewTargetType {
+  POST
+  PRODUCT
+  VOD
+}
+
+// 조회수
+model ViewThrottle {
+  id           Int            @id @default(autoincrement())
+  userId       Int
+  targetType   ViewTargetType
+  targetId     Int
+  lastViewedAt DateTime       @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, targetType, targetId])
+  @@index([targetType, targetId])
+  @@index([userId])
 }

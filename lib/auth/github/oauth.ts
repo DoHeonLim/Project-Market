@@ -1,12 +1,12 @@
 /**
- File Name : lib/auth/github/oauth
- Description : github oauth 인증 로직
- Author : 임도헌
- 
- History
- Date        Author   Status    Description
- 2025.05.30  임도헌   Created
- 2025.05.30  임도헌   Modified  getAccessToken, getGithubProfile 함수로 분리
+ * File Name : lib/auth/github/oauth
+ * Description : github oauth 인증 로직
+ * Author : 임도헌
+ *
+ * History
+ * Date        Author   Status    Description
+ * 2025.05.30  임도헌   Created
+ * 2025.05.30  임도헌   Modified  getAccessToken, getGithubProfile 함수로 분리
  */
 
 // accessToken 요청 함수

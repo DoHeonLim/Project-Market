@@ -14,13 +14,14 @@
 "use server";
 import db from "@/lib/db";
 import { unstable_cache as nextCache } from "next/cache";
+import * as T from "@/lib/cache/tags";
 import type { ProfileAverageRating } from "@/types/profile";
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
 
 /**
  * revalidateTag 메모
  * - 리뷰 생성/수정/삭제 후:
- *   await revalidateTag(`user-average-rating-id-${sellerId}`);
+ *   revalidateTag(`user-average-rating-id-${sellerId}`);
  */
 
 // 프로필 받은 후기(판매+구매) 공통 where
@@ -57,9 +58,9 @@ export const getUserAverageRating = async (
 export const getCachedUserAverageRating = (userId: number) => {
   const cached = nextCache(
     async (uid: number) => getUserAverageRating(uid),
-    // 키는 “함수 성격 + by-id”로 고정, 파라미터는 인자 해시로 구분됨
+    // 키는 "함수 성격 + by-id"로 고정, 파라미터는 인자 해시로 구분됨
     ["user-average-rating-by-id"],
-    { tags: [`user-average-rating-id-${userId}`] }
+    { tags: [T.USER_AVERAGE_RATING_ID(userId)] }
   );
   return cached(userId);
 };

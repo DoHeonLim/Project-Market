@@ -16,9 +16,10 @@ import { useEffect, useRef, useState } from "react";
 
 type Props = {
   emailVerified?: boolean;
+  hasEmail?: boolean;
 };
 
-export default function ProfileSettingMenu({ emailVerified }: Props) {
+export default function ProfileSettingMenu({ emailVerified, hasEmail }: Props) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -49,6 +50,8 @@ export default function ProfileSettingMenu({ emailVerified }: Props) {
         '[data-menuitem="true"]:not([aria-disabled="true"])'
       )
     );
+
+    if (focusables.length === 0) return; // 가드 추가
 
     const onKey = (e: KeyboardEvent) => {
       if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(e.key)) return;
@@ -151,7 +154,7 @@ export default function ProfileSettingMenu({ emailVerified }: Props) {
             >
               이메일 인증됨
             </div>
-          ) : (
+          ) : hasEmail ? (
             <button
               role="menuitem"
               data-menuitem="true"
@@ -166,6 +169,17 @@ export default function ProfileSettingMenu({ emailVerified }: Props) {
             >
               이메일 인증
             </button>
+          ) : (
+            <Link
+              href="/profile/edit"
+              role="menuitem"
+              data-menuitem="true"
+              className="block px-3 py-2.5 text-sm text-neutral-900 dark:text-neutral-100
+               hover:bg-neutral-50 dark:hover:bg-neutral-800 focus-visible:ring-2"
+              onClick={() => setOpen(false)}
+            >
+              이메일 설정 필요
+            </Link>
           )}
         </div>
       )}

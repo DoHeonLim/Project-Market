@@ -1,13 +1,13 @@
 /**
- File Name : lib/auth/create-account/createAccount
- Description : 유저 회원가입 비즈니스 로직
- Author : 임도헌
- 
- History
- Date        Author   Status    Description
- 2025.05.30  임도헌   Created
- 2025.05.30  임도헌   Modified  유저 회원가입 함수 분리
- 2025.06.07  임도헌   Modified  saveUserSession 사용으로 변경
+ * File Name : lib/auth/create-account/createAccount
+ * Description : 유저 회원가입 비즈니스 로직
+ * Author : 임도헌
+ *
+ * History
+ * Date        Author   Status    Description
+ * 2025.05.30  임도헌   Created
+ * 2025.05.30  임도헌   Modified  유저 회원가입 함수 분리
+ * 2025.06.07  임도헌   Modified  saveUserSession 사용으로 변경
  */
 
 import bcrypt from "bcrypt";

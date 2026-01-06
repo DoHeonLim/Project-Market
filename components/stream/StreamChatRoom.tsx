@@ -266,7 +266,7 @@ export default function StreamChatRoom({
   const sendDisabled =
     Date.now() < cooldownUntil || message.trim().length === 0;
 
-  /** 닫힘 상태면 렌더X — Topbar에서 “채팅 열기” 버튼만 노출 */
+  /** 닫힘 상태면 렌더X — Topbar에서 "채팅 열기" 버튼만 노출 */
   if (!isOpen) return null;
 
   return (

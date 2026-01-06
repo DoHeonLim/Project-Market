@@ -13,7 +13,7 @@ Date        Author   Status    Description
 */
 "use client";
 
-import { User } from "@prisma/client";
+import { User } from "@/generated/prisma/client";
 import CommentForm from "./CommentForm";
 import CommentProvider from "@/components/providers/CommentProvider";
 import CommentsList from "./CommentsList";

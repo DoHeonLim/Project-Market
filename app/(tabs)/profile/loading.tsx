@@ -121,8 +121,8 @@ export default function Loading() {
           </section>
 
           {/* 로그아웃 버튼 */}
-          <div className="w-full max-w-md">
-            <div className="h-11 w-full rounded-lg bg-rose-400/70 dark:bg-rose-800/70 animate-pulse" />
+          <div className="w-full flex items-center justify-center max-w-md">
+            <div className="w-full px-4 py-3 mt-2 text-[13px] rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium" />
           </div>
 
           {/* SR 전용 상태 */}

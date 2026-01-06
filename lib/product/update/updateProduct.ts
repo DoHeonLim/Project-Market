@@ -14,6 +14,7 @@
 import db from "@/lib/db";
 import getSession from "@/lib/session";
 import { revalidateTag } from "next/cache";
+import * as T from "@/lib/cache/tags";
 import { productFormSchema } from "../form/productFormSchema";
 import { ProductFormResponse } from "@/types/product";
 
@@ -121,16 +122,18 @@ export async function updateProduct(
     );
 
     // 제품 상세 및 프로필 판매 탭/카운트 캐시 무효화
-    revalidateTag(`product-detail-id-${updated.id}`);
-    revalidateTag(`user-products-SELLING-id-${updated.userId}`);
-    revalidateTag(`user-products-RESERVED-id-${updated.userId}`);
-    revalidateTag(`user-products-SOLD-id-${updated.userId}`);
-    revalidateTag(`user-products-counts-id-${updated.userId}`);
+    revalidateTag(T.PRODUCT_DETAIL_ID(updated.id));
+    revalidateTag(T.USER_PRODUCTS_SCOPE_ID("SELLING", updated.userId));
+    revalidateTag(T.USER_PRODUCTS_SCOPE_ID("RESERVED", updated.userId));
+    revalidateTag(T.USER_PRODUCTS_SCOPE_ID("SOLD", updated.userId));
+    revalidateTag(T.USER_PRODUCTS_COUNTS_ID(updated.userId));
 
     // SOLD 상품을 수정했다면, 구매자 my-purchases 리스트/카운트도 최신화
     if (updated.purchase_userId) {
-      revalidateTag(`user-products-PURCHASED-id-${updated.purchase_userId}`);
-      revalidateTag(`user-products-counts-id-${updated.purchase_userId}`);
+      revalidateTag(
+        T.USER_PRODUCTS_SCOPE_ID("PURCHASED", updated.purchase_userId)
+      );
+      revalidateTag(T.USER_PRODUCTS_COUNTS_ID(updated.purchase_userId));
     }
 
     return {

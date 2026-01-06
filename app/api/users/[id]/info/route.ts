@@ -6,10 +6,13 @@
  * History
  * Date        Author   Status    Description
  * 2025.10.22  임도헌   Created   공개 필드만 반환하는 라이트 엔드포인트 추가(SSR 캐시 영향 없음)
+ * 2026.01.04  임도헌   Modified  Prisma Route Handler runtime=nodejs 명시
  */
 
 import { NextResponse } from "next/server";
 import db from "@/lib/db";
+
+export const runtime = "nodejs";
 
 type Params = { params: { id: string } };
 

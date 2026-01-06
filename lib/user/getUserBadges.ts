@@ -16,14 +16,15 @@
 
 import db from "@/lib/db";
 import { unstable_cache as nextCache } from "next/cache";
+import * as T from "@/lib/cache/tags";
 import type { Badge } from "@/types/profile";
 
 /**
  * revalidateTag 트리거 메모
  * - 전역 배지 추가/수정:
- *   await revalidateTag("badges-all");
+ *   revalidateTag("badges-all");
  * - 유저 배지 변경(획득/회수):
- *   await revalidateTag(`user-badges-id-${userId}`);
+ *   revalidateTag(`user-badges-id-${userId}`);
  */
 
 /** 전역 배지 목록 (최소 필드만) */
@@ -51,7 +52,7 @@ export const getUserBadges = async (userId: number): Promise<Badge[]> => {
 /** 전역 배지 캐시(전체) — 전역 태그 */
 export const getCachedAllBadges = () => {
   const cached = nextCache(getAllBadges, ["badges-all"], {
-    tags: ["badges-all"],
+    tags: [T.BADGES_ALL()],
   });
   return cached();
 };
@@ -61,7 +62,7 @@ export const getCachedUserBadges = (userId: number) => {
   const cached = nextCache(
     async (uid: number) => getUserBadges(uid),
     ["user-badges-by-id"],
-    { tags: [`user-badges-id-${userId}`] }
+    { tags: [T.USER_BADGES_ID(userId)] }
   );
   return cached(userId);
 };

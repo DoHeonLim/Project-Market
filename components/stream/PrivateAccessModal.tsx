@@ -12,13 +12,14 @@
  * 2025.09.05  임도헌   Modified  (a11y) ESC 닫기/포커스 트랩/스크롤 락/autoComplete 보강
  * 2025.09.10  임도헌   Modified  진행 중 닫기 가드(ESC/배경/취소), a11y 보강(htmlFor/id, role="alert"), 라우팅 중복 정리
  * 2025.09.10  임도헌   Modified  열릴 때 현재 포커스 요소를 저장했다가 닫을 때 복귀
+ * 2026.01.03  임도헌   Modified  actions/private 제거: 모달에서 lib/stream/unlockPrivateBroadcast 직접 호출로 단순화
  */
 
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { unlockPrivateStreamAction } from "@/app/(tabs)/streams/actions/private";
+import { unlockPrivateBroadcast } from "@/lib/stream/unlockPrivateBroadcast";
 import { unlockErrorMessage } from "@/types/stream";
 
 interface PrivateAccessModalProps {
@@ -41,7 +42,7 @@ export default function PrivateAccessModal({
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
-  const lastActiveElRef = useRef<HTMLElement | null>(null); // 실제로 저장해서 복귀
+  const lastActiveElRef = useRef<HTMLElement | null>(null);
 
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -117,7 +118,7 @@ export default function PrivateAccessModal({
     setError("");
 
     startTransition(async () => {
-      const res = await unlockPrivateStreamAction(streamId, pwd);
+      const res = await unlockPrivateBroadcast(streamId, pwd);
 
       if (!res.success) {
         const code = res.error;
@@ -136,7 +137,6 @@ export default function PrivateAccessModal({
           }
           case "NOT_PRIVATE_STREAM":
           case "NO_PASSWORD_SET": {
-            // 이동만으로 최신 상태 렌더 → refresh 불필요
             close();
             router.replace(targetHref);
             return;
@@ -151,7 +151,6 @@ export default function PrivateAccessModal({
         }
       }
 
-      // 성공: 이동으로 충분 (세션 기반 가드라 새 페이지에서 최신 상태 반영됨)
       close();
       onSuccess?.();
       router.push(targetHref);
@@ -200,7 +199,7 @@ export default function PrivateAccessModal({
               value={password}
               onChange={(e) => {
                 setPassword(e.target.value);
-                if (error) setError(""); // 입력 시 에러 해제
+                if (error) setError("");
               }}
               placeholder="비밀번호를 입력하세요"
               className="w-full rounded-md border border-neutral-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-neutral-600 dark:bg-neutral-700 dark:text-white"

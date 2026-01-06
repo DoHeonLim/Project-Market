@@ -8,7 +8,7 @@
  2025.05.29  임도헌   Created
  2025.05.29  임도헌   Modified  기존 select 쿼리 상수로 분리
 */
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 
 export const POST_SELECT: Prisma.PostSelect = {
   id: true,

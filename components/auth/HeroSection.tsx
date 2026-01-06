@@ -14,11 +14,7 @@ import Logo from "../common/Logo";
 export default function HeroSection() {
   return (
     <div className="my-auto flex flex-col items-center gap-4 z-10 animate-fade-in px-4">
-      <Logo
-        variant="full"
-        size={256}
-        className="w-48 h-48 sm:w-64 sm:h-64 md:w-72 md:h-72 lg:w-80 lg:h-80"
-      />
+      <Logo variant="full" />
       <div className="text-center text-white dark:text-gray-200 mt-2 drop-shadow-md space-y-2">
         <p className="text-base sm:text-lg md:text-xl">
           보드게임과 TRPG의 새로운 항구,

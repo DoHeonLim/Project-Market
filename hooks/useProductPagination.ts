@@ -10,6 +10,7 @@
  * 2025.10.19  임도헌   Modified  제네릭 T 도입 (ProductType | MySalesListItem | MyPurchasedListItem)
  * 2025.10.23  임도헌   Modified  분기별 안전 캡처(useMemo deps 정리) + 중복요청 방지/에러 상태 추가
  * 2025.11.06  임도헌   Modified  아이템 부분 갱신(updateOne) 추가
+ * 2025.12.31  임도헌   Modified  loadMore 병합 시 id 기준 중복 제거 + 기존(로컬 patch) 우선 정책으로 정합성 강화
  */
 
 "use client";
@@ -110,7 +111,16 @@ export function useProductPagination<T extends { id: number }>(
     try {
       const data = await pagedFetcher(cursor);
       if (data.products.length > 0) {
-        setProducts((prev) => [...prev, ...data.products]);
+        setProducts((prev) => {
+          const map = new Map<number, T>();
+          // prev 우선(로컬 patch 보존)
+          for (const p of prev) map.set(p.id, p);
+          // 새로 온 것은 없던 것만 추가 (또는 필요하면 덮기 정책 선택)
+          for (const p of data.products) {
+            if (!map.has(p.id)) map.set(p.id, p);
+          }
+          return Array.from(map.values());
+        });
       }
       setCursor(data.nextCursor);
       setHasMore(data.nextCursor !== null);

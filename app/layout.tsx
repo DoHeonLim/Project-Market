@@ -3,17 +3,16 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import ThemeProvider from "@/components/providers/ThemeProvider";
 import { Toaster } from "sonner";
-import NotificationListener from "@/components/common/NotificationListener";
-import getSession from "@/lib/session";
 import AppWrapper from "@/components/layout/AppWrapper";
+import NotificationBoot from "@/components/common/NotificationBoot";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  // maximumScale: 1,
+  // userScalable: false,
   themeColor: "#1E40AF",
 };
 
@@ -49,7 +48,6 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await getSession();
   return (
     <html lang="ko" suppressHydrationWarning>
       <body className={inter.className}>
@@ -66,11 +64,11 @@ export default async function RootLayout({
               toastOptions={{
                 closeButton: true,
                 classNames: {
-                  closeButton: "text-black", // 모든 토스트의 X 버튼을 검은색으로
+                  closeButton: "text-neutral-700 dark:text-neutral-200",
                 },
               }}
             />
-            {session.id && <NotificationListener userId={session.id} />}
+            <NotificationBoot />
             {children}
           </ThemeProvider>
         </AppWrapper>

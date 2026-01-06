@@ -9,10 +9,12 @@
  * 2025.09.06  임도헌   Modified  unstable_cache/revalidateTag 제거, 멱등/경합 내성 유지
  * 2025.09.10  임도헌   Modified  like/dislike가 즉시 isLiked/likeCount 반환 (클라 1회왕복)
  * 2025.09.20  임도헌   Modified  VodAsset 단위로 전환 (RecordingLike: @@id([userId, vodId]))
+ * 2025.12.22  임도헌   Modified  Prisma 에러 가드 유틸로 변경
  */
 "use server";
 
 import db from "@/lib/db";
+import { isUniqueConstraintError } from "@/lib/errors";
 import getSession from "@/lib/session";
 
 /** 현재 VodAsset에 대한 좋아요 상태/개수 조회 */
@@ -48,7 +50,7 @@ export async function likeRecording(vodId: number): Promise<LikeResult> {
     });
   } catch (e: any) {
     // 이미 존재(P2002)는 멱등으로 무시, 나머지는 전파
-    if (e?.code !== "P2002") throw e;
+    if (!isUniqueConstraintError(e, ["userId", "vodId"])) throw e;
   }
 
   const likeCount = await db.recordingLike.count({ where: { vodId } });

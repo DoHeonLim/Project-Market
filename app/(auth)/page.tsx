@@ -22,7 +22,7 @@ import Stars from "@/components/auth/background/Stars";
 import Waves from "@/components/auth/background/Waves";
 import HeroSection from "@/components/auth/HeroSection";
 
-export default function Login() {
+export default function Main() {
   return (
     <div
       className="flex flex-col items-center justify-between min-h-screen 
@@ -39,12 +39,12 @@ export default function Login() {
       {/* 갈매기 애니메이션 */}
       <Seagulls />
 
-      {/* 메인 콘텐츠 */}
-      <HeroSection />
-
-      {/* 버튼 영역 */}
-      <AccountBox />
-
+      <div className="relative z-10 flex flex-1 flex-col items-center px-4 pt-10 pb-28 sm:pb-32">
+        {/* 메인 콘텐츠 */}
+        <HeroSection />
+        {/* 버튼 영역 */}
+        <AccountBox />
+      </div>
       {/* 파도 애니메이션 */}
       <Waves />
     </div>

@@ -33,7 +33,7 @@ import Select from "@/components/common/Select";
 import TagInput from "@/components/common/TagInput";
 
 import { STREAM_VISIBILITY, STREAM_VISIBILITY_DISPLAY } from "@/lib/constants";
-import { StreamCategory } from "@prisma/client";
+import { StreamCategory } from "@/generated/prisma/client";
 import { getUploadUrl } from "@/lib/cloudflare/getUploadUrl";
 import RTMPInfoModal from "./RTMPInfoModal";
 import { toast } from "sonner";

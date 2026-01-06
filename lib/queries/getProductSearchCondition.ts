@@ -8,7 +8,7 @@
  2025.05.29  임도헌   Created
  2025.05.29  임도헌   Modified  제품 검색 조건 쿼리 분리
 */
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 import db from "@/lib/db";
 
 interface SearchParams {

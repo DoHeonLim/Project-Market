@@ -18,20 +18,28 @@
  * 2025.10.06  임도헌   Modified  BroadcastSummary 타입 단언 수정
  * 2025.11.22  임도헌   Modified  viewerRole 기반 isFollowing 유도, getIsFollowing 제거,
  *                                dynamic 적용(개인화 페이지 캐시 회피)
+ * 2026.01.06  임도헌   Modified  VOD 조회 상한(MAX_VODS) + endedIds 상한(MAX_STREAMS) 적용,
+ *                                PRIVATE 언락 세션 기반 requiresPassword 보정(채널/그리드 일관성)
  */
 
 import { notFound } from "next/navigation";
+
 import getSession from "@/lib/session";
 import db from "@/lib/db";
 import UserStreamsClient from "@/components/stream/UserStreamsClient";
 import { getUserStreams } from "@/lib/stream/getUserStreams";
 import { getUserChannel } from "@/lib/user/getUserChannel";
+import { isBroadcastUnlockedFromSession } from "@/lib/stream/privateUnlockSession";
+
 import type { BroadcastSummary, ViewerRole, VodForGrid } from "@/types/stream";
 
 type Params = { username: string };
 
 // 세션/팔로우 상태에 따라 UI가 달라지는 페이지 → 캐시 강제 비활성화
 export const dynamic = "force-dynamic";
+
+const MAX_STREAMS = 30; // 채널에서 보여줄 스트림 상한(기존 take 유지)
+const MAX_VODS = 30; // VOD 그리드 조회 상한(쿼리 비용 상한)
 
 export default async function ChannelPage({ params }: { params: Params }) {
   const username = decodeURIComponent(params.username);
@@ -45,17 +53,41 @@ export default async function ChannelPage({ params }: { params: Params }) {
   const ownerId = userInfo.id;
 
   // 2) 방송 목록 + 뷰어 역할
-  const streamsWithRole = await getUserStreams({ ownerId, viewerId, take: 30 });
+  const streamsWithRole = await getUserStreams({
+    ownerId,
+    viewerId,
+    take: MAX_STREAMS,
+    // 채널은 FOLLOWERS/PRIVATE 락 표시가 정확해야 해서 role 계산 유지
+    includeViewerRole: true,
+  });
+
   const { items: userStreams = [], role = "VISITOR" } = streamsWithRole ?? {};
   const resolvedRole = role as ViewerRole;
 
   // ROLE → isFollowing 유도 (OWNER/FOLLOWER = true, VISITOR = false)
   const isFollowing = resolvedRole === "OWNER" || resolvedRole === "FOLLOWER";
-
   const streams: BroadcastSummary[] = userStreams ?? [];
 
+  // 2-1) PRIVATE 언락 보정(뒤로가기/복원 시에도 잠금 즉시 해제 표시)
+  // - PRIVATE는 팔로우로 풀리지 않음 → 세션 언락 상태를 반드시 반영해야 함
+  // - OWNER는 항상 잠금 해제
+  const streamsForUI: BroadcastSummary[] = streams.map((s) => {
+    if (s.visibility !== "PRIVATE") return s;
+    if (resolvedRole === "OWNER") return { ...s, requiresPassword: false };
+
+    const unlocked = isBroadcastUnlockedFromSession(session, s.id);
+    return { ...s, requiresPassword: !unlocked };
+  });
+
   // 3) ENDED 방송들의 VOD 조회 → 평탄화
-  const endedBroadcasts = streams.filter((s) => s.status === "ENDED");
+  // - ENDED 후보는 최근 MAX_STREAMS개로 상한
+  // - VOD 조회는 MAX_VODS로 상한 (force-dynamic 트래픽 비용 방어)
+  const endedBroadcastsAll = streamsForUI
+    .filter((s) => s.status === "ENDED")
+    // getUserStreams가 id desc라면 사실상 필요 없지만, 미래 변경 내성을 위해 안전하게 보정
+    .sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
+
+  const endedBroadcasts = endedBroadcastsAll.slice(0, MAX_STREAMS);
   const endedIds = endedBroadcasts.map((s) => s.id);
 
   let recordingsForGrid: VodForGrid[] = [];
@@ -70,43 +102,57 @@ export default async function ChannelPage({ params }: { params: Params }) {
         duration_sec: true,
         ready_at: true,
         views: true,
+        created_at: true,
       },
       orderBy: [{ ready_at: "desc" }, { created_at: "desc" }],
+      take: MAX_VODS,
     });
 
     const byBroadcast = new Map<number, BroadcastSummary>();
     for (const s of endedBroadcasts) byBroadcast.set(s.id, s);
 
-    recordingsForGrid = vods.map((v) => {
-      const rec = byBroadcast.get(v.broadcastId)!;
-      const isFollowersOnly = rec.visibility === "FOLLOWERS";
-      const requiresPassword =
-        rec.visibility === "PRIVATE" && resolvedRole !== "OWNER";
-      const followersOnlyLocked =
-        isFollowersOnly &&
-        !(resolvedRole === "OWNER" || resolvedRole === "FOLLOWER");
+    recordingsForGrid = vods
+      .map((v) => {
+        const rec = byBroadcast.get(v.broadcastId);
+        if (!rec) return null;
 
-      return {
-        vodId: v.id,
-        broadcastId: v.broadcastId,
-        title: rec.title,
-        thumbnail: v.thumbnail_url ?? rec.thumbnail,
-        visibility: rec.visibility,
-        user: rec.user,
-        href: `/streams/${v.id}/recording`,
-        readyAt: v.ready_at ?? null,
-        duration:
-          typeof v.duration_sec === "number" ? v.duration_sec : undefined,
-        viewCount: v.views ?? 0,
-        requiresPassword,
-        followersOnlyLocked,
-      } satisfies VodForGrid;
-    });
+        const isFollowersOnly = rec.visibility === "FOLLOWERS";
+
+        // VOD 그리드에서도 PRIVATE 언락(세션) 반영
+        const isPrivate = rec.visibility === "PRIVATE";
+        const unlocked = isPrivate
+          ? isBroadcastUnlockedFromSession(session, rec.id)
+          : false;
+
+        const requiresPassword =
+          isPrivate && resolvedRole !== "OWNER" && !unlocked;
+
+        const followersOnlyLocked =
+          isFollowersOnly &&
+          !(resolvedRole === "OWNER" || resolvedRole === "FOLLOWER");
+
+        return {
+          vodId: v.id,
+          broadcastId: v.broadcastId,
+          title: rec.title,
+          thumbnail: v.thumbnail_url ?? rec.thumbnail,
+          visibility: rec.visibility,
+          user: rec.user,
+          href: `/streams/${v.id}/recording`,
+          readyAt: v.ready_at ?? null,
+          duration:
+            typeof v.duration_sec === "number" ? v.duration_sec : undefined,
+          viewCount: v.views ?? 0,
+          requiresPassword,
+          followersOnlyLocked,
+        } satisfies VodForGrid;
+      })
+      .filter(Boolean) as VodForGrid[];
   }
 
   return (
     <UserStreamsClient
-      userStreams={streams}
+      userStreams={streamsForUI}
       recordings={recordingsForGrid}
       userInfo={{ ...userInfo, isFollowing }}
       me={resolvedRole === "OWNER"}

@@ -11,6 +11,7 @@
 "use server";
 
 import { revalidateTag } from "next/cache";
+import * as T from "@/lib/cache/tags";
 import db from "../db";
 import getSession from "@/lib/session";
 
@@ -27,8 +28,8 @@ export const deleteAllProductReviews = async (productId: number) => {
 
   await db.review.deleteMany({ where: { productId } });
 
-  revalidateTag(`user-average-rating-id-${prod.userId}`);
-  revalidateTag(`user-reviews-initial-id-${prod.userId}`);
-  revalidateTag(`product-detail-id-${productId}`);
+  revalidateTag(T.USER_AVERAGE_RATING_ID(prod.userId));
+  revalidateTag(T.USER_REVIEWS_INITIAL_ID(prod.userId));
+  revalidateTag(T.PRODUCT_DETAIL_ID(productId));
   return { success: true };
 };

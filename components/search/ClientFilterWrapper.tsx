@@ -12,7 +12,7 @@
 
 import { useState } from "react";
 import SearchFilters from "./SearchFilters";
-import type { Category } from "@prisma/client";
+import type { Category } from "@/generated/prisma/client";
 import { FilterState } from "@/lib/constants";
 import { AdjustmentsHorizontalIcon } from "@heroicons/react/24/outline";
 

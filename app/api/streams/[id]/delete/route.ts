@@ -8,13 +8,17 @@
  * 2025.09.15  임도헌   Created   기본 삭제 라우트
  * 2025.09.17  임도헌   Modified  비즈니스 로직 분리: deleteBroadcastTx 호출 구조
  * 2025.11.22  임도헌   Modified  broadcast-list 캐시 태그 제거 및 user-streams-id 태그 무효화 추가
+ * 2026.01.04  임도헌   Modified  Prisma Route Handler runtime=nodejs 명시
  */
 
-import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import db from "@/lib/db";
 import getSession from "@/lib/session";
+import { revalidateTag } from "next/cache";
+import * as T from "@/lib/cache/tags";
 import { deleteBroadcastTx } from "@/lib/stream/delete/deleteBroadcast";
+
+export const runtime = "nodejs";
 
 export async function DELETE(
   req: NextRequest,
@@ -91,9 +95,9 @@ export async function DELETE(
 
     // 삭제 후 관련 캐시 태그 무효화
     try {
-      revalidateTag(`broadcast-detail-${row.id}`);
+      revalidateTag(T.BROADCAST_DETAIL(row.id));
       if (row.liveInput?.userId) {
-        revalidateTag(`user-streams-id-${row.liveInput.userId}`);
+        revalidateTag(T.USER_STREAMS_ID(row.liveInput.userId));
       }
     } catch (err) {
       console.warn(

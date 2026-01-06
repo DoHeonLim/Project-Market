@@ -1,5 +1,5 @@
 /**
- * File Name : app/posts/[id]/actions/post
+ * File Name : app/posts/[id]/actions/posts
  * Description : 게시글 조회 및 삭제 관련 서버 액션
  * Author : 임도헌
  *
@@ -7,15 +7,25 @@
  * Date        Author   Status    Description
  * 2025.07.06  임도헌   Created   게시글 관련 서버 액션 분리
  * 2025.11.20  임도헌   Modified  조회수 증가 로직 캐시에서 분리, revalidate 태그/경로 정리
+ * 2026.01.02  임도헌   Modified  getCachedPost 캐시 wrapper 고정(prefix) + 호출 시점 태그 주입 방식으로 정리
+ * 2026.01.03  임도헌   Modified  게시글 삭제 후 POST_DETAIL + POST_LIST 무효화 및 /posts 경로 무효화로 목록 즉시 반영
+ * 2026.01.03  임도헌   Modified  getCachedPost 구독 태그에 POST_VIEWS 추가(상세 정합성)
+ * 2026.01.04  임도헌   Modified  incrementPostViews wrapper 제거 → page에서 lib/views/incrementViews 직접 호출로 단일 진입점 고정
  */
+
 "use server";
+
+import "server-only";
 
 import db from "@/lib/db";
 import getSession from "@/lib/session";
 import { notFound } from "next/navigation";
-import { revalidateTag, unstable_cache as nextCache } from "next/cache";
-
-const POST_DETAIL_TAG_PREFIX = "post-detail-id-";
+import {
+  revalidateTag,
+  unstable_cache as nextCache,
+  revalidatePath,
+} from "next/cache";
+import * as T from "@/lib/cache/tags";
 
 /**
  * 게시글 상세 조회 (순수 쿼리, 부수효과 없음)
@@ -51,53 +61,49 @@ export const getPost = async (id: number) => {
 };
 
 /**
- * 조회수 1 증가 (캐시와 분리된 부수효과 전용)
- */
-export const incrementPostViews = async (id: number) => {
-  try {
-    await db.post.update({
-      where: { id },
-      data: { views: { increment: 1 } },
-    });
-  } catch (e) {
-    // 조회수는 실패해도 치명적이지 않으니 로그만 남김
-    console.error(e);
-  }
-};
-
-/**
- * 게시글 상세 조회 캐싱 함수
+ * 게시글 상세 캐시 wrapper
+ * - 호출 시점에 postId 기반 tag 주입
  */
 export const getCachedPost = async (postId: number) => {
-  const cachedOperation = nextCache(getPost, ["post-detail", String(postId)], {
-    tags: [`${POST_DETAIL_TAG_PREFIX}${postId}`],
-  });
+  const cached = nextCache(
+    async () => getPost(postId),
+    ["post-detail", String(postId)],
+    {
+      tags: [T.POST_DETAIL(postId), T.POST_VIEWS(postId)],
+    }
+  );
 
-  return cachedOperation(postId);
+  return cached();
 };
 
 /**
  * 게시글 삭제
  */
-export const deletePost = async (id: number) => {
-  try {
-    await db.post.delete({ where: { id } });
+export async function deletePost(postId: number) {
+  const session = await getSession();
+  if (!session?.id) return notFound();
 
-    // 상세/리스트 모두 무효화
-    revalidateTag(`${POST_DETAIL_TAG_PREFIX}${id}`);
+  if (!Number.isFinite(postId) || postId <= 0) return notFound();
 
-    return { success: true };
-  } catch (e) {
-    console.error(e);
-    return {
-      success: false,
-      error: "게시글 삭제 중 오류가 발생했습니다.",
-    };
-  }
-};
+  const post = await db.post.findUnique({
+    where: { id: postId },
+    select: { id: true, userId: true },
+  });
+
+  if (!post) return notFound();
+  if (post.userId !== session.id) return notFound();
+
+  await db.post.delete({ where: { id: postId } });
+
+  // 상세/목록 캐시 및 경로 무효화
+  revalidateTag(T.POST_DETAIL(postId));
+  revalidateTag(T.POST_LIST());
+  revalidatePath("/posts");
+}
 
 /**
  * 현재 로그인한 사용자 정보 조회
+ * - 미들웨어 로그인 강제를 신뢰하더라도, SSR에서 안전하게 notFound 처리한다.
  */
 export const getUser = async () => {
   const session = await getSession();

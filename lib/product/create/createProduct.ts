@@ -14,7 +14,8 @@
 import db from "@/lib/db";
 import getSession from "@/lib/session";
 import { revalidateTag } from "next/cache";
-import { Prisma } from "@prisma/client";
+import * as T from "@/lib/cache/tags";
+import { Prisma } from "@/generated/prisma/client";
 import { productFormSchema } from "../form/productFormSchema";
 import { ProductFormResponse } from "@/types/product";
 
@@ -108,9 +109,9 @@ export const CreateProduct = async (
     });
 
     // 프로필 판매 탭/카운트 및 제품 상세 캐시 무효화
-    revalidateTag(`user-products-SELLING-id-${session.id}`);
-    revalidateTag(`user-products-counts-id-${session.id}`);
-    revalidateTag(`product-detail-id-${product.id}`);
+    revalidateTag(T.USER_PRODUCTS_SCOPE_ID("SELLING", session.id));
+    revalidateTag(T.USER_PRODUCTS_COUNTS_ID(session.id));
+    revalidateTag(T.PRODUCT_DETAIL_ID(product.id));
 
     return {
       success: true,

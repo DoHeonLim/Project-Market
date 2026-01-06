@@ -18,13 +18,14 @@
  * 2025.10.17  임도헌   Modified  lib/review 경로로 교체, /products/view 경로 통일, 이미지 /public
  * 2025.11.02  임도헌   Modified  썸네일 안전화(빈 src 방지 + 스켈레톤), TimeAgo 타입 안전화, a11y 라벨 보강
  * 2025.11.06  임도헌   Modified  ConfirmDialog로 리뷰 삭제 일원화 + 삭제 로딩/닫힘 제어 + onReviewChanged 유지
+ * 2025.12.31  임도헌   Modified  리뷰를 로컬 state로 관리하여 작성/삭제 patch를 최신 상태 기준으로 통일(스테일 patch 방지)
  */
 
 "use client";
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { formatToWon } from "@/lib/utils";
 import TimeAgo from "../common/TimeAgo";
@@ -33,7 +34,7 @@ import ReviewDetailModal from "../profile/ReviewDetailModal";
 import ConfirmDialog from "@/components/common/ConfirmDialog";
 import { useReview } from "@/hooks/useReview";
 import { deleteReview } from "@/lib/review/deleteReview";
-import type { MyPurchasedListItem } from "@/types/product";
+import type { MyPurchasedListItem, ProductReview } from "@/types/product";
 import UserAvatar from "../common/UserAvatar";
 
 type Props = {
@@ -58,26 +59,47 @@ export default function MyPurchasesProductItem({
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  /**
+   * 리뷰는 로컬 state로 관리
+   * - 작성/삭제 즉시 UI에 반영
+   * - onReviewChanged patch도 항상 "최신(prev)" 기반으로 생성(스테일 방지)
+   */
+  const [reviews, setReviews] = useState<ProductReview[]>(
+    product.reviews ?? []
+  );
+
+  // 상위 리스트(updateOne)나 서버 리페치 등으로 product.reviews가 갱신되면 동기화
+  useEffect(() => {
+    setReviews(product.reviews ?? []);
+  }, [product.reviews]);
+
+  const buyerUserId = product.purchase_userId;
+
+  const buyerReview = useMemo(
+    () => reviews.find((r) => r.userId === buyerUserId),
+    [reviews, buyerUserId]
+  );
+
+  const sellerReview = useMemo(
+    () => reviews.find((r) => r.userId !== buyerUserId),
+    [reviews, buyerUserId]
+  );
+
   const { isLoading, error, submitReview } = useReview({
     productId: product.id,
     type: "buyer",
     onSuccess: (newReview) => {
-      const nextReviews = [
-        newReview,
-        ...allReviews.filter((r) => r.userId !== product.purchase_userId),
-      ];
+      setReviews((prev) => {
+        const next = [
+          newReview,
+          ...prev.filter((r) => r.userId !== buyerUserId),
+        ];
+        onReviewChanged?.({ reviews: next });
+        return next;
+      });
       setIsReviewModalOpen(false);
-      onReviewChanged?.({ reviews: nextReviews });
     },
   });
-
-  const allReviews = product.reviews ?? [];
-  const buyerReview = allReviews.find(
-    (r) => r.userId === product.purchase_userId
-  );
-  const sellerReview = allReviews.find(
-    (r) => r.userId !== product.purchase_userId
-  );
 
   const handleSubmitReview = async (
     text: string,
@@ -103,13 +125,21 @@ export default function MyPurchasesProductItem({
     try {
       setIsDeleting(true);
       await deleteReview(reviewId);
+
+      /**
+       * 삭제 patch도 로컬 최신(prev) 기준으로 생성
+       * props(product.reviews) 기반 필터링은 타이밍에 따라 stale 가능
+       */
+      setReviews((prev) => {
+        const next = prev.filter((r) => r.id !== reviewId);
+        onReviewChanged?.({ reviews: next });
+        return next;
+      });
+
       setIsBuyerReviewModalOpen(false);
-      const nextReviews = allReviews.filter((r) => r.id !== reviewId);
-      onReviewChanged?.({ reviews: nextReviews });
     } catch (e) {
       console.error("리뷰 삭제 중 오류 발생:", e);
-      // 이 컴포넌트는 토스트 대신 경고창을 쓰던 컨벤션이었으나,
-      // ConfirmDialog로 일원화되었으므로 추가 alert는 제거
+      // ConfirmDialog로 일원화: 별도 alert/토스트는 여기서 추가하지 않는다
     } finally {
       setIsDeleting(false);
       setIsDeleteConfirmOpen(false);
@@ -119,6 +149,7 @@ export default function MyPurchasesProductItem({
   const purchasedAt = product.purchased_at
     ? new Date(product.purchased_at)
     : undefined;
+
   const sellerName = product.user?.username ?? "판매자";
   const sellerAvatar = product.user?.avatar ?? null;
 
@@ -142,7 +173,7 @@ export default function MyPurchasesProductItem({
               alt={product.title}
             />
           ) : (
-            <div className="absolute inset-0 bg-neutral-100 dark:bg-neutral-800 animate-pulse" />
+            <div className="absolute inset-0 animate-pulse bg-neutral-100 dark:bg-neutral-800" />
           )}
         </Link>
 
@@ -155,16 +186,15 @@ export default function MyPurchasesProductItem({
             </Link>
 
             {/* 상태 + 판매자 표시 */}
-            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+            <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
               <UserAvatar
                 avatar={sellerAvatar}
                 username={sellerName}
                 size="sm"
               />
-              <span className="rounded-full px-2.5 py-1 text-xs font-semibold text-white bg-emerald-600 dark:bg-emerald-500">
+              <span className="rounded-full bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white dark:bg-emerald-500">
                 구매 완료
               </span>
-              {/* 옵션: 판매자 아바타 노출 */}
             </div>
           </div>
 
@@ -182,12 +212,13 @@ export default function MyPurchasesProductItem({
         </div>
       </div>
 
-      <div className="mt-5 grid gap-3 grid-cols-1 sm:grid-cols-2">
+      <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
         {buyerReview ? (
           <button
             onClick={() => setIsBuyerReviewModalOpen(true)}
             className="btn-primary flex-1 py-2.5"
             disabled={isLoading}
+            aria-disabled={isLoading}
           >
             내가 쓴 리뷰 보기
           </button>
@@ -196,6 +227,7 @@ export default function MyPurchasesProductItem({
             onClick={() => setIsReviewModalOpen(true)}
             className="btn-primary flex-1 py-2.5"
             disabled={isLoading}
+            aria-disabled={isLoading}
           >
             거래 후기 보내기
           </button>
@@ -205,20 +237,21 @@ export default function MyPurchasesProductItem({
           onClick={() => setIsSellerReviewModalOpen(true)}
           className="btn-secondary flex-1 py-2.5"
           disabled={isLoading}
+          aria-disabled={isLoading}
         >
           {sellerName} 님의 리뷰 보기
         </button>
       </div>
 
       {error && (
-        <div className="mt-4 p-4 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg">
+        <div className="mt-4 rounded-lg bg-red-100 p-4 text-red-600 dark:bg-red-900/20 dark:text-red-400">
           {error}
         </div>
       )}
 
       {isLoading && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="p-4 bg-white dark:bg-neutral-800 rounded-lg shadow-xl">
+          <div className="rounded-lg bg-white p-4 shadow-xl dark:bg-neutral-800">
             <span className="text-neutral-900 dark:text-white">
               리뷰를 등록하는 중...
             </span>

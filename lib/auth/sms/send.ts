@@ -1,13 +1,13 @@
 /**
- File Name : lib/auth/sms/send
- Description : 유저 SMS 전송
- Author : 임도헌
- 
- History
- Date        Author   Status    Description
- 2025.05.30  임도헌   Created
- 2025.05.30  임도헌   Modified  coolsms 유틸 분리
-*/
+ * File Name : lib/auth/sms/send
+ * Description : 유저 SMS 전송
+ * Author : 임도헌
+ *
+ * History
+ * Date        Author   Status    Description
+ * 2025.05.30  임도헌   Created
+ * 2025.05.30  임도헌   Modified  coolsms 유틸 분리
+ */
 import coolsms from "coolsms-node-sdk";
 
 export async function sendSMS(phone: string, token: string) {

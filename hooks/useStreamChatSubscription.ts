@@ -60,7 +60,7 @@ export function useStreamChatSubscription({
   useEffect(() => {
     const name = channelName ?? `room-${streamChatRoomId}`;
     const channel: RealtimeChannel = supabase.channel(name);
-    setChannelState(channel); // ← 외부에 알려줄 값
+    setChannelState(channel); // 외부에 알려줄 값
 
     // 가시성 변화에 따라 일시중단 플래그 관리
     const onVisibility = () => {

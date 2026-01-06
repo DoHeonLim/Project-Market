@@ -6,6 +6,7 @@
  * History
  * Date        Author   Status    Description
  * 2025.11.03  임도헌   Created   클라이언트 호출용 초기 목록 API 추가(서버 전용 함수 우회)
+ * 2026.01.04  임도헌   Modified  Prisma Route Handler runtime=nodejs 명시
  */
 
 import { NextResponse } from "next/server";
@@ -15,6 +16,8 @@ import {
   getInitialUserProducts,
   type UserProductsScope,
 } from "@/lib/product/getUserProducts";
+
+export const runtime = "nodejs";
 
 const BodySchema = z.object({
   type: z.enum(["SELLING", "RESERVED", "SOLD", "PURCHASED"]),

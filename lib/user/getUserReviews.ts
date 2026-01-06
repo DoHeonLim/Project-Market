@@ -15,16 +15,17 @@
 "use server";
 import db from "@/lib/db";
 import { unstable_cache as nextCache } from "next/cache";
+import * as T from "@/lib/cache/tags";
 import type { ProfileReview } from "@/types/profile";
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
 
 export type ReviewCursor = { lastCreatedAt: Date; lastId: number } | null;
 
 /**
  * revalidateTag 메모
  * - 리뷰 생성/수정/삭제 후:
- *   await revalidateTag(`user-reviews-initial-id-${sellerId}`);
- *   await revalidateTag(`user-average-rating-id-${sellerId}`);
+ *   revalidateTag(`user-reviews-initial-id-${sellerId}`);
+ *   revalidateTag(`user-average-rating-id-${sellerId}`);
  *
  * 인덱스(스키마 기준):
  * - Review: @@index([created_at]), @@index([userId]), @@index([productId])
@@ -133,7 +134,7 @@ export const getCachedInitialUserReviews = (userId: number, limit = 10) => {
   const cached = nextCache(
     async (uid: number, lim: number) => getInitialUserReviews(uid, lim),
     ["user-reviews-initial-by-id"],
-    { tags: [`user-reviews-initial-id-${userId}`] }
+    { tags: [T.USER_REVIEWS_INITIAL_ID(userId)] }
   );
   return cached(userId, limit);
 };

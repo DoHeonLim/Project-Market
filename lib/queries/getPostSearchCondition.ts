@@ -8,7 +8,7 @@
  * 2025.06.26  임도헌   Created   게시글 검색 조건 쿼리 함수 생성
  */
 
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 
 export interface PostSearchParams {
   keyword?: string;

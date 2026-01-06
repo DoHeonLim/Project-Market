@@ -9,6 +9,8 @@
  * 2025.09.10  임도헌   Modified  append 중복 방지(Map), 에러 메시지/aria 보강, 사소한 정리
  * 2025.09.17  임도헌   Modified  StreamCardItem 필드(startedAt/isLive) 정합화, append 병합 정리
  * 2025.09.17  임도헌   Modified  BroadcastSummary로 변경
+ * 2026.01.03  임도헌   Modified  병합 로직 O(n²) 제거(Map 기반 O(n+m)으로 최적화)
+ * 2026.01.04  임도헌   Modified  팔로우 즉시 반영: followDelta 구독으로 FOLLOWERS 잠금 카드 즉시 갱신
  */
 
 "use client";
@@ -19,6 +21,7 @@ import { getMoreStreams } from "@/app/(tabs)/streams/actions/init";
 import StreamCard from "./StreamCard";
 import type { BroadcastSummary } from "@/types/stream";
 import { usePageVisibility } from "@/hooks/usePageVisibility";
+import { onFollowDelta } from "@/lib/user/follow/followDeltaClient";
 
 type Scope = "all" | "following";
 
@@ -45,13 +48,54 @@ export default function StreamList({
   const [hasMore, setHasMore] = useState<boolean>(initialCursor !== null);
   const [error, setError] = useState<string | null>(null);
 
-  // 검색 파라미터 변경 시 리스트 상태 리셋
+  /**
+   * 검색 파라미터/초기값 변경 시 리스트 상태 리셋
+   * - page.tsx에서 key={JSON.stringify(searchParams)}로 리마운트를 유도하고 있지만,
+   *   혹시나 재사용되는 경우에도 안전하게 동작하도록 방어적으로 유지한다.
+   */
   useEffect(() => {
     setItems(initialItems);
     setCursor(initialCursor);
     setHasMore(initialCursor !== null);
     setError(null);
   }, [initialItems, initialCursor]);
+
+  /**
+   * 팔로우 즉시 반영(리스트):
+   * - FollowSection이 아닌 곳에서는 followersOnlyLocked가 서버 플래그로만 남기 쉬움.
+   * - 같은 탭에서 내가 팔로우/언팔한 결과를 followDelta로 구독해
+   *   해당 스트리머의 FOLLOWERS 방송 카드 잠금을 즉시 갱신한다.
+   */
+  useEffect(() => {
+    if (!viewerId) return;
+
+    return onFollowDelta((d) => {
+      // 내 액션만 반영(다른 사용자의 이벤트/테스트 노이즈 방지)
+      if ((d.viewerId ?? null) !== viewerId) return;
+
+      const serverIsFollowing = d.server?.isFollowing;
+      if (typeof serverIsFollowing !== "boolean") return;
+
+      const targetUserId = d.targetUserId;
+
+      setItems((prev) => {
+        let changed = false;
+
+        const next = prev.map((s) => {
+          if (s.user.id !== targetUserId) return s;
+          if (s.visibility !== "FOLLOWERS") return s;
+
+          const nextLocked = !serverIsFollowing;
+          if (!!s.followersOnlyLocked === nextLocked) return s;
+
+          changed = true;
+          return { ...s, followersOnlyLocked: nextLocked };
+        });
+
+        return changed ? next : prev;
+      });
+    });
+  }, [viewerId]);
 
   const triggerRef = useRef<HTMLDivElement>(null);
   const isVisible = usePageVisibility();
@@ -66,8 +110,10 @@ export default function StreamList({
     isLoading,
     onLoadMore: async () => {
       if (isLoading || !hasMore) return;
+
       setIsLoading(true);
       setError(null);
+
       try {
         const data = await getMoreStreams(
           scope,
@@ -76,18 +122,39 @@ export default function StreamList({
           viewerId
         );
 
+        /**
+         * 병합 정책(성능 최적화)
+         * - 기존 순서 유지
+         * - 동일 id는 “신규 데이터”로 덮어써 최신 상태 반영
+         * - prev에 없던 신규만 뒤에 추가
+         * - O(n²) find 제거 → O(n+m)
+         */
         if (data.streams.length > 0) {
           setItems((prev) => {
-            const map = new Map<number, BroadcastSummary>();
-            // 기존 유지
-            for (const v of prev) map.set(v.id, v);
-            // 신규 반영(덮어쓰기)
-            for (const v of data.streams) map.set(v.id, v);
-            // order: 기존 + 신규(기존에 없던 것만 뒤에 추가)
-            const next = [...prev];
-            for (const v of data.streams)
-              if (!next.find((p) => p.id === v.id)) next.push(v);
-            // 위 로직은 신규가 기존과 겹칠 경우 기존 위치 유지, 새로운 항목만 뒤에 붙임
+            const byId = new Map<number, BroadcastSummary>();
+
+            // 1) prev로 기본 상태 확보(순서/기존 값)
+            for (const item of prev) byId.set(item.id, item);
+
+            // 2) 신규 데이터로 덮어쓰기(같은 id면 최신 상태)
+            for (const item of data.streams) byId.set(item.id, item);
+
+            // 3) 결과 배열: 기존 순서 유지 + 최신 값 반영
+            const next: BroadcastSummary[] = [];
+            for (const item of prev) {
+              const latest = byId.get(item.id);
+              if (latest) next.push(latest);
+              byId.delete(item.id); // 남는 건 “prev에 없던 신규”만 남김
+            }
+
+            // 4) prev에 없던 신규만 뒤에 추가
+            for (const item of data.streams) {
+              if (byId.has(item.id)) {
+                next.push(item);
+                byId.delete(item.id);
+              }
+            }
+
             return next;
           });
         }
@@ -110,6 +177,7 @@ export default function StreamList({
     <>
       <div className="grid grid-cols-2 gap-4">
         {items.map((s) => {
+          // 과거 호환: tags가 string[]로 들어오는 케이스 방어
           const tags =
             Array.isArray(s.tags) && s.tags.length > 0
               ? typeof (s.tags as any)[0] === "string"
@@ -123,7 +191,7 @@ export default function StreamList({
               id={s.id}
               title={s.title}
               thumbnail={s.thumbnail ?? null}
-              isLive={!!s.isLive}
+              isLive={s.status === "CONNECTED"}
               streamer={{
                 username: s.user.username,
                 avatar: s.user.avatar ?? null,

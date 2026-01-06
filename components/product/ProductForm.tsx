@@ -35,7 +35,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { Category } from "@prisma/client";
+import { Category } from "@/generated/prisma/client";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import ImageUploader from "@/components/image/ImageUploader";
 import Input from "@/components/common/Input";

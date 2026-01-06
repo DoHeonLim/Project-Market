@@ -16,6 +16,7 @@ import db from "@/lib/db";
 import getSession from "@/lib/session";
 import { revalidateTag } from "next/cache";
 import { postFormSchema } from "@/lib/post/form/postFormSchema";
+import * as T from "@/lib/cache/tags";
 
 export async function updatePost(formData: FormData) {
   const session = await getSession();
@@ -88,7 +89,7 @@ export async function updatePost(formData: FormData) {
       );
     }
 
-    revalidateTag(`post-detail-id-${updatedPost.id}`);
+    revalidateTag(T.POST_DETAIL(updatedPost.id));
 
     return { success: true, postId: updatedPost.id };
   } catch (error) {

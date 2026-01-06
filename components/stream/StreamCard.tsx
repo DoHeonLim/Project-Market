@@ -21,6 +21,7 @@
  *                                내/채널/리스트 공용 카드 폭 제어
  * 2025.11.23  임도헌   Modified  카드 하단 레이아웃을 제목/유저/메타 3단 구조로 재배치
  * 2025.11.26  임도헌   Modified  라이브/녹화용 id를 분리하도록 수정
+ * 2025.12.20  임도헌   Modified  rail 레이아웃에서 FOLLOWERS 잠금 시 CTA 노출 + onRequestFollow 콜백 호출(프로필 헤더 팔로우 유도)
  */
 
 "use client";
@@ -146,7 +147,6 @@ export default function StreamCard(props: StreamCardProps) {
   }, [startedAt]);
 
   // ======== Hover/Focus 기반 Preview 로직 (IntersectionObserver 제거) ========
-  const containerRef = useRef<HTMLDivElement>(null);
   const hoverTimerRef = useRef<number | null>(null);
   const [isHoveredOrFocused, setIsHoveredOrFocused] = useState(false);
   const [previewError, setPreviewError] = useState(false);
@@ -185,9 +185,9 @@ export default function StreamCard(props: StreamCardProps) {
     };
   }, []);
 
-  // 렌더 조건: 호버/포커스 중이거나(접근성 포함) 썸네일이 없을 때만 프리뷰 허용
+  // 렌더 조건: 호버/포커스 중일때(접근성 포함) 프리뷰 허용
   const shouldRenderPreview =
-    shouldPreview && (isHoveredOrFocused || !thumb) && !previewError;
+    shouldPreview && isHoveredOrFocused && !previewError;
 
   const handleStreamClick = (e: React.MouseEvent) => {
     if (followersOnlyLocked) {
@@ -228,7 +228,9 @@ export default function StreamCard(props: StreamCardProps) {
     : title;
 
   const layoutClass =
-    layout === "rail" ? "w-[260px] flex-none h-full" : "w-full";
+    layout === "rail"
+      ? "w-[240px] sm:w-[260px] flex-none h-full snap-start"
+      : "w-full";
 
   return (
     <article
@@ -245,7 +247,6 @@ export default function StreamCard(props: StreamCardProps) {
         prefetch={false}
       >
         <div
-          ref={containerRef}
           className="relative aspect-video w-full bg-neutral-100 dark:bg-neutral-900"
           data-preview={shouldRenderPreview ? "true" : "false"}
           onMouseEnter={startHover}
@@ -320,7 +321,11 @@ export default function StreamCard(props: StreamCardProps) {
           {followersOnlyLocked && (
             <div
               className="absolute inset-0 flex items-center justify-center bg-black/55"
-              onClick={(e) => e.preventDefault()}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onRequestFollow?.();
+              }}
               aria-label="팔로워 전용 잠금"
             >
               <div className="p-4 text-center">
@@ -335,11 +340,13 @@ export default function StreamCard(props: StreamCardProps) {
                     aria-describedby={`lock-msg-${id}`}
                     onClick={(e) => {
                       e.preventDefault();
+                      e.stopPropagation();
                       onRequestFollow();
                     }}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
+                        e.stopPropagation();
                         onRequestFollow?.();
                       }
                     }}
@@ -415,12 +422,14 @@ export default function StreamCard(props: StreamCardProps) {
       </div>
 
       {/* 공용 비밀번호 모달: redirectHref는 계산된 경로 사용 */}
-      <PrivateAccessModal
-        open={isModalOpen}
-        onOpenChange={setIsModalOpen}
-        streamId={id}
-        redirectHref={computedHref}
-      />
+      {isModalOpen && (
+        <PrivateAccessModal
+          open={isModalOpen}
+          onOpenChange={setIsModalOpen}
+          streamId={id}
+          redirectHref={computedHref}
+        />
+      )}
     </article>
   );
 }

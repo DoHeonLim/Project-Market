@@ -13,6 +13,7 @@
 "use server";
 
 import { revalidateTag } from "next/cache";
+import * as T from "@/lib/cache/tags";
 import db from "../db";
 import getSession from "@/lib/session";
 
@@ -38,11 +39,11 @@ export const deleteReview = async (reviewId: number) => {
   await db.review.delete({ where: { id: reviewId } });
 
   if (rev.product?.userId) {
-    revalidateTag(`user-average-rating-id-${rev.product.userId}`);
-    revalidateTag(`user-reviews-initial-id-${rev.product.userId}`);
+    revalidateTag(T.USER_AVERAGE_RATING_ID(rev.product.userId));
+    revalidateTag(T.USER_REVIEWS_INITIAL_ID(rev.product.userId));
   }
   if (rev.product?.id) {
-    revalidateTag(`product-detail-id-${rev.product.id}`);
+    revalidateTag(T.PRODUCT_DETAIL_ID(rev.product.id));
   }
 
   return { success: true };

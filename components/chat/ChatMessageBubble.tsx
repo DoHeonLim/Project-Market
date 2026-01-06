@@ -42,7 +42,7 @@ export default function ChatMessageBubble({
     >
       {/* 왼쪽 유저 아바타 */}
       {!isOwnMessage && (
-        <div className="self-start w-12">
+        <div className="self-start w-10 sm:w-12">
           {showAvatar && (
             <UserAvatar
               avatar={message.user.avatar}
@@ -58,31 +58,39 @@ export default function ChatMessageBubble({
       <div
         className={`flex ${
           isOwnMessage ? "flex-row-reverse" : "flex-row"
-        } gap-1 items-end`}
+        } gap-1 sm:gap-1.5 items-end`}
       >
         {/* 말풍선 */}
         <div
-          className={`relative max-w-[70%] ${!isOwnMessage ? "ml-2" : "mr-2"}`}
+          className={`relative max-w-[76%] sm:max-w-[70%] ${
+            !isOwnMessage ? "ml-1.5 sm:ml-2" : "mr-1.5 sm:mr-2"
+          }`}
         >
           <div
-            className={`relative p-3 rounded-2xl shadow text-sm
-            ${
-              isOwnMessage
-                ? "bg-primary text-white"
-                : "bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
-            }`}
+            className={`
+              relative rounded-2xl shadow
+              px-3 py-2.5 sm:px-4 sm:py-3
+              text-[13px] sm:text-sm leading-relaxed
+              ${
+                isOwnMessage
+                  ? "bg-primary text-white"
+                  : "bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+              }
+            `}
           >
             {message.payload}
 
             {/* 꼬리 */}
             {showTail && (
               <span
-                className={`absolute w-3 h-3 bg-inherit rounded-br
-              ${
-                isOwnMessage
-                  ? "right-[-6px] top-1/2 transform -translate-y-1/2 rotate-45"
-                  : "left-[-6px] top-1/2 transform -translate-y-1/2 rotate-45"
-              }`}
+                className={`
+                  absolute w-3 h-3 bg-inherit rounded-br
+                  ${
+                    isOwnMessage
+                      ? "right-[-6px] top-1/2 -translate-y-1/2 rotate-45"
+                      : "left-[-6px] top-1/2 -translate-y-1/2 rotate-45"
+                  }
+                `}
               />
             )}
           </div>
@@ -90,14 +98,15 @@ export default function ChatMessageBubble({
 
         {/* 시간 + 읽음 여부 */}
         <div
-          className={`flex flex-col gap-0.5 text-xs text-neutral-700 dark:text-neutral-300 hover:text-neutral-800 dark:hover:text-neutral-400 ${
-            isOwnMessage ? "items-start pr-1" : "items-end pl-1"
-          }`}
+          className={`
+            flex flex-col gap-0.5
+            text-[11px] sm:text-xs
+            text-neutral-700 dark:text-neutral-300
+            hover:text-neutral-800 dark:hover:text-neutral-400
+            ${isOwnMessage ? "items-start pr-1" : "items-end pl-1"}
+          `}
         >
-          {/* 읽음 여부 (내 메시지에만 표시) */}
           {isOwnMessage && <span>{message.isRead ? "읽음" : "안 읽음"}</span>}
-
-          {/* 시간 표시 */}
           <TimeAgo date={message.created_at.toString()} />
         </div>
       </div>

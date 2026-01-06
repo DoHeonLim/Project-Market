@@ -26,7 +26,7 @@ export default function RecordingEmptyState({
   const showFollowButton = role !== "OWNER" && isFollowing === false; // 팔로우 상태일 경우 버튼 숨김
 
   return (
-    <div className="rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/80 p-6 text-center shadow-sm">
+    <div className="rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/80 p-6 mx-6 text-center shadow-sm">
       <div className="mx-auto mb-3 h-10 w-10 rounded-full bg-neutral-100 dark:bg-neutral-700/60 flex items-center justify-center">
         <span className="text-xl">🎞️</span>
       </div>

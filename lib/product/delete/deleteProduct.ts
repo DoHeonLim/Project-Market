@@ -13,6 +13,7 @@
 
 import db from "@/lib/db";
 import { revalidateTag } from "next/cache";
+import * as T from "@/lib/cache/tags";
 
 export async function deleteProduct(id: number) {
   // 삭제 전 소유자/상태 조회
@@ -31,14 +32,14 @@ export async function deleteProduct(id: number) {
   await db.product.delete({ where: { id } });
 
   // 상세 페이지 및 프로필 탭/카운트 캐시 무효화
-  revalidateTag(`product-detail-id-${id}`);
-  revalidateTag(`user-products-SELLING-id-${prod.userId}`);
-  revalidateTag(`user-products-RESERVED-id-${prod.userId}`);
-  revalidateTag(`user-products-SOLD-id-${prod.userId}`);
-  revalidateTag(`user-products-counts-id-${prod.userId}`);
+  revalidateTag(T.PRODUCT_DETAIL_ID(id));
+  revalidateTag(T.USER_PRODUCTS_SCOPE_ID("SELLING", prod.userId));
+  revalidateTag(T.USER_PRODUCTS_SCOPE_ID("RESERVED", prod.userId));
+  revalidateTag(T.USER_PRODUCTS_SCOPE_ID("SOLD", prod.userId));
+  revalidateTag(T.USER_PRODUCTS_COUNTS_ID(prod.userId));
 
   if (prod.purchase_userId) {
-    revalidateTag(`user-products-PURCHASED-id-${prod.purchase_userId}`);
-    revalidateTag(`user-products-counts-id-${prod.purchase_userId}`);
+    revalidateTag(T.USER_PRODUCTS_SCOPE_ID("PURCHASED", prod.purchase_userId));
+    revalidateTag(T.USER_PRODUCTS_COUNTS_ID(prod.purchase_userId));
   }
 }

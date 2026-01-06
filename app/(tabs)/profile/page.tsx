@@ -51,18 +51,17 @@ import type {
   Badge,
   ProfileAverageRating,
   ProfileReview,
-  UserProfile,
 } from "@/types/profile";
 
 export const dynamic = "force-dynamic"; // 개인화 페이지 → 전체 응답 캐시 회피
 
 export default async function ProfilePage() {
-  const user = (await getUserProfile()) as UserProfile | null;
-  if (!user) return redirect("/login");
+  const user = await getUserProfile();
+  if (!user) redirect(`/login?callbackUrl=${encodeURIComponent("/profile")}`);
 
   const [initialReviews, averageRating, badgesPair, streams]: [
     ProfileReview[],
-    ProfileAverageRating,
+    ProfileAverageRating | null,
     { badges: Badge[]; userBadges: Badge[] },
     BroadcastSummary[],
   ] = await Promise.all([
@@ -80,6 +79,7 @@ export default async function ProfilePage() {
         ownerId: user.id,
         viewerId: user.id, // OWNER 버킷 히트
         take: 6,
+        includeViewerRole: false,
       });
       return items;
     })(),
@@ -94,7 +94,10 @@ export default async function ProfilePage() {
         aria-label="프로필 도구 모음"
       >
         <div className="flex justify-end gap-2">
-          <ProfileSettingMenu emailVerified={!!user.emailVerified} />
+          <ProfileSettingMenu
+            emailVerified={!!user.emailVerified}
+            hasEmail={!!user.email}
+          />
           <ThemeToggle />
         </div>
       </div>

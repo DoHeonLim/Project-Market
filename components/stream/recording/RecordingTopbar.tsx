@@ -43,7 +43,7 @@ export default function RecordingTopbar({
       role="banner"
     >
       <div className="mx-auto max-w-3xl h-12 sm:h-14 flex items-center gap-2 px-2 sm:px-4">
-        {/* ← 뒤로가기 */}
+        {/* 뒤로가기 */}
         <BackButton fallbackHref={safeBack} />
 
         {/* 작성자 */}

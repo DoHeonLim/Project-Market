@@ -18,10 +18,11 @@
  * 2025.11.12  임도헌   Modified  MyProfile 레이아웃/톤 통일
  * 2025.11.22  임도헌   Modified  getIsFollowing 중복 호출 제거(getUserProfile.isFollowing만 사용)
  * 2025.11.26  임도헌   Modified  방송국 섹션에 최근 방송 목록 추가
+ * 2026.01.04  임도헌   Modified  getSession 중복 호출 제거(getUserProfile.viewerId 재사용)로 RSC 부하 감소
  */
 
-import { notFound, redirect } from "next/navigation";
-import getSession from "@/lib/session";
+import { notFound } from "next/navigation";
+
 import { getUserProfile } from "@/lib/user/getUserProfile";
 import { getCachedInitialUserReviews } from "@/lib/user/getUserReviews";
 import { getCachedUserAverageRating } from "@/lib/user/getUserAverageRating";
@@ -40,9 +41,6 @@ export default async function UserProfilePage({
 }: {
   params: { username: string };
 }) {
-  const session = await getSession();
-  const viewerId = session?.id ?? null;
-
   // 프로필 조회 (본인이면 /profile로 redirect)
   const user = (await getUserProfile({
     username: params.username,
@@ -50,7 +48,10 @@ export default async function UserProfilePage({
   })) as UserProfileType | null;
 
   if (!user) return notFound();
-  if (viewerId && user.id === viewerId) redirect("/profile");
+
+  // getUserProfile이 session을 이미 읽어 viewerId를 주입한다.
+  // 동일 요청 내 중복 getSession 호출을 피하기 위해 user.viewerId를 재사용한다.
+  const viewerId = user.viewerId ?? null;
 
   // 공용 데이터는 캐시, 개인화는 최소(팔로우 여부는 getUserProfile.isFollowing 사용)
   const [
@@ -69,8 +70,9 @@ export default async function UserProfilePage({
     (async () => {
       const { items } = await getUserStreams({
         ownerId: user.id,
-        viewerId, // 시청자 기준 역할(OWNER/FOLLOWER/VISITOR)에 따라 followersOnlyLocked 등 계산
+        viewerId,
         take: 6,
+        includeViewerRole: false,
       });
       return items as BroadcastSummary[];
     })(),

@@ -29,8 +29,8 @@ export default function PostCard({ post, viewMode }: PostCardProps) {
       href={`/posts/${post.id}`}
       className={`${
         viewMode === "grid"
-          ? "flex flex-col h-full p-4 border border-neutral-200 dark:border-neutral-700 rounded-lg hover:bg-neutral-100/50 dark:hover:bg-neutral-800/50 hover:shadow-lg transition-all group"
-          : "flex flex-row gap-4 p-4 border-b border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100/50 dark:hover:bg-neutral-800/50 transition-all group"
+          ? "flex flex-col h-full p-4 border border-neutral-200 dark:border-neutral-700 rounded-md hover:bg-neutral-100/50 dark:hover:bg-neutral-800/50 hover:shadow-lg transition-all group"
+          : "flex flex-row gap-4 p-4 border-b border-neutral-200 dark:border-neutral-700 rounded-lg hover:bg-neutral-100/50 dark:hover:bg-neutral-800/50 transition-all group"
       }`}
     >
       <PostCardThumbnail images={post.images} viewMode={viewMode} />

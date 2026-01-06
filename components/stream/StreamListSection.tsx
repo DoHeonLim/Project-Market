@@ -48,12 +48,13 @@ export default function StreamListSection(props: Props) {
       if (isPending(userId)) return; // 중복 클릭 방지
 
       await follow(userId, {
+        viewerId: props.viewerId ?? null,
         // 미들웨어로 대부분 로그인 상태지만, 재사용을 위해 훅 옵션 유지
         onRequireLogin: () =>
           router.push(`/login?callbackUrl=${encodeURIComponent(nextPath)}`),
       });
     },
-    [follow, isPending, nextPath, router]
+    [follow, isPending, nextPath, router, props.viewerId]
   );
 
   return (

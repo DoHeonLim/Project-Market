@@ -6,15 +6,22 @@
  * History
  * 2025.09.20  임도헌   Modified  LiveInput/Broadcast 스키마 반영
  * 2025.09.23  임도헌   Modified  visibility 가드/언락/팔로워 검사 추가 + 404 대신 블랙 폴백
+ * 2026.01.03  임도헌   Modified  PRIVATE 언락 체크에서 session 중복 조회 제거(isBroadcastUnlockedFromSession)
+ * 2026.01.04  임도헌   Modified  robots 차단 + revalidate=0 명시 + iframe sandbox/referrerPolicy 보강
  */
 import Image from "next/image";
 import { unstable_noStore as noStore } from "next/cache";
 import db from "@/lib/db";
 import getSession from "@/lib/session";
 import { checkBroadcastAccess } from "@/lib/stream/checkBroadcastAccess";
-import { isBroadcastUnlocked } from "@/lib/stream/unlockPrivateBroadcast";
+import { isBroadcastUnlockedFromSession } from "@/lib/stream/privateUnlockSession";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+export const metadata = {
+  robots: { index: false, follow: false },
+};
 
 function ThumbnailFallback({ thumbnailUrl }: { thumbnailUrl?: string | null }) {
   return (
@@ -71,11 +78,11 @@ export default async function LivePreviewPage({
   const isOwner = !!viewerId && viewerId === ownerId;
 
   if (!isOwner) {
-    const unlocked = await isBroadcastUnlocked(broadcastId);
+    const isUnlocked = isBroadcastUnlockedFromSession(session, broadcastId);
     const guard = await checkBroadcastAccess(
       { userId: ownerId, visibility: row.visibility },
       viewerId,
-      { isPrivateUnlocked: unlocked }
+      { isPrivateUnlocked: isUnlocked }
     );
     if (!guard.allowed) {
       return <ThumbnailFallback thumbnailUrl={row?.thumbnail} />;
@@ -106,6 +113,8 @@ export default async function LivePreviewPage({
         allow="autoplay; encrypted-media; picture-in-picture; accelerometer; gyroscope"
         allowFullScreen
         loading="lazy"
+        referrerPolicy="no-referrer"
+        sandbox="allow-same-origin allow-scripts allow-presentation allow-popups"
         className="h-full w-full relative"
       />
     </div>

@@ -16,7 +16,7 @@ import {
   FilterState,
 } from "@/lib/constants";
 import { getCategoryName } from "@/lib/category/getCategoryName";
-import type { Category } from "@prisma/client";
+import type { Category } from "@/generated/prisma/client";
 import clsx from "clsx";
 
 interface SearchChipsProps {

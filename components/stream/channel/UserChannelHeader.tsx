@@ -63,6 +63,7 @@ export default function UserChannelHeader({
               align="center"
               onRequireLogin={onRequireLogin}
               onFollowingChange={onFollowingChange}
+              followButtonId="channel-follow-button"
             />
           </div>
         </div>

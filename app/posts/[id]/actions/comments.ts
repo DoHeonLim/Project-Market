@@ -8,20 +8,14 @@
  * 2025.07.06  임도헌   Created   댓글 관련 서버 액션 분리
  * 2025.07.11  임도헌   Modified  댓글 무한 스크롤 구현
  * 2025.11.20  임도헌   Modified  revalidate 태그 네이밍 통일
+ * 2025.12.07  임도헌   Modified  조회 전용으로 정리(getComments/getCachedComments만 사용)
  */
 "use server";
 
 import db from "@/lib/db";
-import getSession from "@/lib/session";
-import {
-  badgeChecks,
-  checkBoardExplorerBadge,
-} from "@/lib/check-badge-conditions";
-import { revalidateTag, unstable_cache as nextCache } from "next/cache";
-import { commentFormSchema } from "@/lib/post/form/commentFormSchema";
+import { unstable_cache as nextCache } from "next/cache";
 import { PostComment } from "@/types/post";
-
-const POST_COMMENTS_TAG_PREFIX = "post-comments-id-";
+import * as T from "@/lib/cache/tags";
 
 // 게시글 댓글 목록 조회
 export const getComments = async (
@@ -55,57 +49,11 @@ export const getCachedComments = (postId: number): Promise<PostComment[]> => {
     getComments,
     ["post-comments", String(postId)],
     {
-      tags: [`${POST_COMMENTS_TAG_PREFIX}${postId}`],
+      tags: [T.POST_COMMENTS(postId)],
     }
   );
   return cachedOperation(postId);
 };
 
-// 게시글에 댓글 작성
-export const createComment = async (_: any, formData: FormData) => {
-  const data = {
-    payload: formData.get("payload"),
-    postId: Number(formData.get("postId")),
-  };
-  const session = await getSession();
-  const result = commentFormSchema.safeParse(data);
-
-  if (!result.success) {
-    return { success: false, errors: result.error.flatten() };
-  }
-
-  try {
-    await db.comment.create({
-      data: {
-        payload: result.data.payload,
-        postId: result.data.postId,
-        userId: session.id!,
-      },
-    });
-    await badgeChecks.onCommentCreate(session.id!);
-    await badgeChecks.onEventParticipation(session.id!);
-    const post = await db.post.findUnique({
-      where: { id: result.data.postId },
-      select: { userId: true },
-    });
-    if (post) await checkBoardExplorerBadge(post.userId);
-
-    revalidateTag(`${POST_COMMENTS_TAG_PREFIX}${result.data.postId}`);
-    return { success: true };
-  } catch (e) {
-    console.error(e);
-    return { success: false, error: "댓글 생성 중 오류가 발생했습니다." };
-  }
-};
-
-// 댓글 삭제
-export const deleteComment = async (id: number, postId: number) => {
-  try {
-    await db.comment.delete({ where: { id } });
-    revalidateTag(`${POST_COMMENTS_TAG_PREFIX}${postId}`);
-    return { success: true };
-  } catch (e) {
-    console.error(e);
-    return { success: false, error: "댓글 삭제 중 오류가 발생했습니다." };
-  }
-};
+// createComment / deleteComment 는 더 이상 사용하지 않으므로 제거
+// 댓글 생성/삭제는 lib/post/comment/create/delete 를 통해서만 동작하도록 통일.

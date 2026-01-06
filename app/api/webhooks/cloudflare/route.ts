@@ -16,9 +16,11 @@
 import "server-only";
 import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
+import * as T from "@/lib/cache/tags";
 import crypto from "node:crypto";
 import db from "@/lib/db";
 import { sendLiveStatusFromServer } from "@/lib/stream/status/serverBroadcast";
+import { sendLiveStartNotifications } from "@/lib/notification/sendLiveStartNotifications";
 
 export const runtime = "nodejs";
 
@@ -360,8 +362,8 @@ async function tryFillThumbnailFromCloudflare(
         });
 
         // 방송 상세/리스트/유저 방송 목록 캐시 무효화
-        revalidateTag(`broadcast-detail-${broadcastId}`);
-        revalidateTag(`user-streams-id-${ownerId}`);
+        revalidateTag(T.BROADCAST_DETAIL(broadcastId));
+        revalidateTag(T.USER_STREAMS_ID(ownerId));
       }
     }
   } catch (err) {
@@ -402,7 +404,7 @@ async function onConnected(liveInputUid: string) {
     const updated = await db.broadcast.update({
       where: { id: b.id },
       data: { status: "CONNECTED", started_at: b.started_at ?? now },
-      select: { id: true, thumbnail: true },
+      select: { id: true, title: true, thumbnail: true },
     });
 
     // 썸네일 자동 채우기 시도 (이미지는 있어도 무시)
@@ -414,8 +416,8 @@ async function onConnected(liveInputUid: string) {
 
     // 상태 변경에 대한 캐시 무효화 (썸네일 여부와 무관하게 항상 수행)
     try {
-      revalidateTag(`broadcast-detail-${updated.id}`);
-      revalidateTag(`user-streams-id-${li.userId}`);
+      revalidateTag(T.BROADCAST_DETAIL(updated.id));
+      revalidateTag(T.USER_STREAMS_ID(li.userId));
     } catch (err) {
       console.warn("[onConnected] revalidateTag failed:", err);
     }
@@ -430,9 +432,19 @@ async function onConnected(liveInputUid: string) {
     } catch {
       // 브로드캐스트 실패는 치명적이지 않으므로 무시 (필요시 별도 로깅)
     }
+    // 방송 시작 알림: 팔로워에게 STREAM 알림 + 푸시
+    try {
+      await sendLiveStartNotifications({
+        broadcasterId: li.userId,
+        broadcastId: updated.id,
+        broadcastTitle: updated.title,
+        broadcastThumbnail: updated.thumbnail,
+      });
+    } catch (err) {
+      console.warn("[onConnected] sendLiveStartNotifications failed:", err);
+    }
   }
 }
-
 /*                         이벤트 핸들러: DISCONNECTED                         */
 /**
  * live_input.disconnected 이벤트 처리
@@ -469,8 +481,8 @@ async function onDisconnected(liveInputUid: string) {
     });
 
     // 방송 상세/리스트/유저 방송 목록 캐시 무효화
-    revalidateTag(`broadcast-detail-${b.id}`);
-    revalidateTag(`user-streams-id-${li.userId}`);
+    revalidateTag(T.BROADCAST_DETAIL(b.id));
+    revalidateTag(T.USER_STREAMS_ID(li.userId));
 
     // 상태 변경 브로드캐스트
     try {
@@ -576,7 +588,7 @@ async function onVideoReady(liveInputUid: string | null, assetBody: any) {
   });
 
   // 해당 방송 상세 캐시 무효화 (VOD 탭/버튼 등 갱신)
-  revalidateTag(`broadcast-detail-${broadcastIdResolved}`);
+  revalidateTag(T.BROADCAST_DETAIL(broadcastIdResolved));
 
   // 리스트/유저 방송 목록 캐시도 최신화
   try {
@@ -591,7 +603,7 @@ async function onVideoReady(liveInputUid: string | null, assetBody: any) {
 
     const ownerId = owner?.liveInput?.userId;
     if (ownerId) {
-      revalidateTag(`user-streams-id-${ownerId}`);
+      revalidateTag(T.USER_STREAMS_ID(ownerId));
     }
   } catch (err) {
     console.warn("[onVideoReady] revalidateTag failed:", err);

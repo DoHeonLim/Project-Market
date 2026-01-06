@@ -9,8 +9,10 @@
  * 2024.12.11  임도헌   Modified  뒤로가기 버튼 컴포넌트 추가
  * 2025.04.28  임도헌   Modified  href props 추가
  * 2025.11.13  임도헌   Modified  UI 변경
+ * 2025.12.02  임도헌   Modified  appbar 사이즈/반응형 조정
  */
 "use client";
+
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -39,7 +41,7 @@ export default function BackButton({
     if (
       canGoBack &&
       document.referrer &&
-      new URL(document.referrer)?.origin === window.location.origin
+      new URL(document.referrer).origin === window.location.origin
     ) {
       router.back();
     } else {
@@ -53,10 +55,18 @@ export default function BackButton({
 
   const styles =
     variant === "appbar"
-      ? "h-10 w-10 md:h-9 md:w-9 border border-neutral-200/70 dark:border-neutral-700 " +
-        "bg-white/80 dark:bg-neutral-900/80 backdrop-blur text-neutral-700 dark:text-neutral-200"
-      : "h-9 px-2 text-sm text-neutral-600 hover:text-neutral-900 dark:text-neutral-300 " +
-        "dark:hover:text-white";
+      ? [
+          // 모바일에서 살짝 작은 사이즈, sm 이상에서 약간 키움
+          "h-8 w-8 sm:h-9 sm:w-9",
+          "border border-neutral-200/70 dark:border-neutral-700",
+          "bg-white/80 dark:bg-neutral-900/80",
+          "backdrop-blur text-neutral-700 dark:text-neutral-200",
+        ].join(" ")
+      : [
+          "h-9 px-2 text-sm",
+          "text-neutral-600 hover:text-neutral-900",
+          "dark:text-neutral-300 dark:hover:text-white",
+        ].join(" ");
 
   return (
     <button
@@ -65,8 +75,7 @@ export default function BackButton({
       className={`${base} ${styles} ${className}`}
       aria-label={label}
     >
-      {/* 아이콘은 텍스트보다 의미 전달이 중요: */}
-      <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
+      <svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true">
         <path
           fill="currentColor"
           d="M12.7 4.7a1 1 0 0 1 0 1.4L9.8 9l2.9 2.9a1 1 0 1 1-1.4 1.4l-3.6-3.6a1 1 0 0 1 0-1.4l3.6-3.6a1 1 0 0 1 1.4 0z"

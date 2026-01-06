@@ -14,6 +14,8 @@
  * 2025.09.22  임도헌   Modified  VodForGrid(readyAt/duration/viewCount) 기준으로 정리
  * 2025.11.23  임도헌   Modified  StreamCard layout(grid) 명시 및 카드 래퍼 정리,
  *                                다시보기 메타 영역(길이/조회수) 높이 일관화
+ * 2025.12.20  임도헌   Modified  FOLLOWERS/PRIVATE 잠금 정책 주석 보강(팔로우 vs 언락 플로우 구분)
+ * 2026.01.04  임도헌   Modified  팔로우 즉시 반영: FOLLOWERS 잠금은 role/isFollowing을 SSOT로 계산
  */
 "use client";
 
@@ -38,92 +40,103 @@ export default function RecordingGrid({
   isFollowing,
   onFollow,
 }: Props) {
+  // 상단에서 이미 빈 배열을 거르는 게 단순/안전
+  if (!recordings?.length)
+    return (
+      <RecordingEmptyState
+        role={role}
+        isFollowing={isFollowing}
+        onFollow={onFollow}
+      />
+    );
+
   return (
     <div className="mx-auto max-w-3xl px-4 mt-8">
       <h2 className="text-black dark:text-white text-lg font-semibold mb-3">
         다시보기
       </h2>
 
-      {recordings.length === 0 ? (
-        <RecordingEmptyState
-          role={role}
-          isFollowing={isFollowing}
-          onFollow={onFollow}
-        />
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {recordings.map((rec) => {
-            // 표시 시간 = readyAt (없으면 생략)
-            const when = rec.readyAt ?? null;
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {recordings.map((rec) => {
+          // 표시 시간 = readyAt (없으면 생략)
+          const when = rec.readyAt ?? null;
 
-            // 길이
-            const hasDuration =
-              typeof rec.duration === "number" && rec.duration > 0;
+          // 길이
+          const hasDuration =
+            typeof rec.duration === "number" && rec.duration > 0;
 
-            // 조회수
-            const hasViews =
-              typeof rec.viewCount === "number" && rec.viewCount >= 0;
+          // 조회수
+          const hasViews =
+            typeof rec.viewCount === "number" && rec.viewCount >= 0;
 
-            const isFollowersOnly = rec.visibility === "FOLLOWERS";
-            const followersOnlyLocked =
-              typeof rec.followersOnlyLocked === "boolean"
-                ? rec.followersOnlyLocked
-                : isFollowersOnly && role === "VISITOR";
+          // 팔로워 방송인지
+          const isFollowersOnly = rec.visibility === "FOLLOWERS";
 
-            const requiresPassword =
-              typeof rec.requiresPassword === "boolean"
-                ? rec.requiresPassword
-                : rec.visibility === "PRIVATE" && role !== "OWNER";
+          /**
+           * FOLLOWERS 잠금은 "팔로우 직후 즉시 반영"이 필요하다.
+           * - 서버 플래그(rec.followersOnlyLocked)는 초기 렌더의 기본값으로만 사용하고,
+           * - 클라이언트 상태(role/isFollowing)를 SSOT로 한 번 더 적용해 잠금 여부를 계산한다.
+           *
+           * 규칙:
+           * - OWNER는 항상 잠금 없음
+           * - FOLLOWERS 타입이고 OWNER가 아니면: isFollowing이 false일 때만 잠금
+           * - 그 외 타입은 서버 플래그를 그대로 따른다.
+           */
+          const followersOnlyLocked = isFollowersOnly
+            ? role !== "OWNER" && !isFollowing
+            : !!rec.followersOnlyLocked;
 
-            // unlock 타깃 = 부모 Broadcast id
-            const unlockTargetId = rec.broadcastId;
+          // PRIVATE는 팔로우로 풀리는 게 아니라 "언락 여부"라 서버 플래그 유지가 맞음
+          const requiresPassword = !!rec.requiresPassword;
 
-            // 상세 경로: 없으면 vodId로 폴백
-            const href = rec.href ?? `/streams/${rec.vodId}/recording`;
+          // unlock 타깃 = 부모 Broadcast id
+          const unlockTargetId = rec.broadcastId;
 
-            // key = vodId
-            const key = `vod-${rec.vodId}`;
+          // 상세 경로: 없으면 vodId로 폴백
+          const href = rec.href ?? `/streams/${rec.vodId}/recording`;
 
-            return (
-              <div key={key} className="rounded-xl overflow-hidden shadow">
-                <StreamCard
-                  id={unlockTargetId}
-                  title={rec.title}
-                  thumbnail={rec.thumbnail}
-                  isLive={false}
-                  streamer={{
-                    username: rec.user.username,
-                    avatar: rec.user.avatar ?? null,
-                  }}
-                  href={href}
-                  requiresPassword={!!requiresPassword}
-                  isFollowersOnly={!!isFollowersOnly}
-                  followersOnlyLocked={!!followersOnlyLocked}
-                  onRequestFollow={followersOnlyLocked ? onFollow : undefined}
-                  isPrivateType={rec.visibility === "PRIVATE"}
-                  layout="grid" // 기본값이라 생략 가능
-                />
+          // key = vodId
+          const key = `vod-${rec.vodId}`;
 
-                {(when || hasDuration || hasViews) && (
-                  <div className="p-2">
-                    <div className="text-[11px] text-neutral-500 dark:text-neutral-400">
-                      {when ? <TimeAgo date={when} /> : null}
-                      {when && (hasDuration || hasViews) ? " • " : ""}
+          return (
+            <div key={key} className="rounded-xl overflow-hidden shadow">
+              <StreamCard
+                id={unlockTargetId}
+                title={rec.title}
+                thumbnail={rec.thumbnail}
+                isLive={false}
+                streamer={{
+                  username: rec.user.username,
+                  avatar: rec.user.avatar ?? null,
+                }}
+                href={href}
+                requiresPassword={requiresPassword}
+                isFollowersOnly={isFollowersOnly}
+                followersOnlyLocked={followersOnlyLocked}
+                onRequestFollow={followersOnlyLocked ? onFollow : undefined}
+                isPrivateType={rec.visibility === "PRIVATE"}
+                layout="grid"
+              />
 
-                      {hasDuration ? formatDuration(rec.duration!) : null}
-                      {hasDuration && hasViews ? " • " : ""}
+              {(when || hasDuration || hasViews) && (
+                <div className="p-2">
+                  <div className="text-[11px] text-neutral-500 dark:text-neutral-400">
+                    {when ? <TimeAgo date={when} /> : null}
+                    {when && (hasDuration || hasViews) ? " • " : ""}
 
-                      {hasViews
-                        ? `조회수 ${rec.viewCount!.toLocaleString()}`
-                        : null}
-                    </div>
+                    {hasDuration ? formatDuration(rec.duration!) : null}
+                    {hasDuration && hasViews ? " • " : ""}
+
+                    {hasViews
+                      ? `조회수 ${rec.viewCount!.toLocaleString()}`
+                      : null}
                   </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

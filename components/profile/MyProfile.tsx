@@ -22,10 +22,12 @@
  * 2025.10.14  임도헌   Modified   FollowSection 도입
  * 2025.10.29  임도헌   Modified   날짜 포맷 유틸/모달 지연 로드/a11y 보강
  * 2025.11.12  임도헌   Modified   액션 툴바 제거 → 섹션 헤더 우측 링크형 액션으로 통일,
- *                                SettingsMenu 커스텀 이벤트 리스너 도입
+ *                                 SettingsMenu 커스텀 이벤트 리스너 도입
  * 2025.11.23  임도헌   Modified   내 방송국 섹션 StreamCard(layout="rail") 적용,
- *                                가로 스크롤 카드 폭/간격 반응형 정리
- * 2025.11.26  임도헌   Modified  StreamCard에 vodIdForRecording Props 추가
+ *                                 가로 스크롤 카드 폭/간격 반응형 정리
+ * 2025.11.26  임도헌   Modified   StreamCard에 vodIdForRecording Props 추가
+ * 2025.11.29  임도헌   Modified   알림 설정 섹션 텍스트 정리 및 상세 설정 링크 추가
+ * 2025.12.12  임도헌   Modified   상위 padding과 중복되는 mx 제거, 모달 조건부 렌더로 진짜 지연 로드
  */
 
 "use client";
@@ -38,6 +40,14 @@ import ProfileHeader from "./ProfileHeader";
 import UserBadges from "./UserBadges";
 import StreamCard from "../stream/StreamCard";
 import { PushNotificationToggle } from "../common/PushNotificationToggle";
+
+import type { BroadcastSummary } from "@/types/stream";
+import type {
+  Badge,
+  ProfileAverageRating,
+  ProfileReview,
+  UserProfile,
+} from "@/types/profile";
 
 const ProfileReviewsModal = dynamic(() => import("./ProfileReviewsModal"), {
   ssr: false,
@@ -52,14 +62,6 @@ const EmailVerificationModal = dynamic(
   () => import("./EmailVerificationModal"),
   { ssr: false }
 );
-
-import type { BroadcastSummary } from "@/types/stream";
-import type {
-  Badge,
-  ProfileAverageRating,
-  ProfileReview,
-  UserProfile,
-} from "@/types/profile";
 
 type Props = {
   user: UserProfile;
@@ -101,6 +103,7 @@ export default function MyProfile({
       "open-email-verification-modal",
       onOpenEmail as unknown as EventListener
     );
+
     return () => {
       window.removeEventListener(
         "open-password-modal",
@@ -114,8 +117,7 @@ export default function MyProfile({
   }, []);
 
   return (
-    // 중앙정렬은 상위 레이아웃 책임 → 내부는 좌정렬/풀폭
-    <div className="flex flex-col gap-6 text-left mx-4">
+    <div className="flex flex-col gap-6 text-left">
       {/* 헤더 */}
       <div className="pt-2">
         <ProfileHeader
@@ -133,21 +135,28 @@ export default function MyProfile({
 
       {/* 알림 설정 */}
       <section aria-labelledby="s-notify">
-        <h2
-          id="s-notify"
-          className="text-[15px] font-semibold text-neutral-900 dark:text-neutral-50 mb-2"
-        >
-          알림 설정
-        </h2>
-        <div className="panel">
+        <div className="section-h">
+          <h2
+            id="s-notify"
+            className="text-[15px] font-semibold text-neutral-900 dark:text-neutral-50"
+          >
+            알림 설정
+          </h2>
+          <Link
+            href="/profile/notifications"
+            className="btn-ghost text-[12px]"
+            aria-label="알림 상세 설정 페이지로 이동"
+          >
+            상세 설정
+          </Link>
+        </div>
+
+        <div className="panel mt-2">
           <div className="flex items-center justify-between gap-4 px-4 py-3">
             <div className="min-w-0">
-              <h3 className="font-medium text-neutral-900 dark:text-neutral-100">
-                푸시 알림
+              <h3 className="font-medium text-sm sm:text-base text-neutral-900 dark:text-neutral-100">
+                푸시 알림 받기
               </h3>
-              <p className="text-[12.5px] text-neutral-600 dark:text-neutral-400">
-                새로운 메시지나 거래 알림을 받아보세요
-              </p>
             </div>
             <PushNotificationToggle />
           </div>
@@ -176,7 +185,17 @@ export default function MyProfile({
             아직 방송한 내역이 없습니다.
           </p>
         ) : (
-          <div className="mt-2 flex gap-3 overflow-x-auto scrollbar pb-2 items-stretch">
+          <div
+            className="
+              mt-2
+              -mx-4 sm:-mx-5 px-4 sm:px-5
+              flex gap-3 items-stretch
+              overflow-x-auto scrollbar pb-3
+              snap-x snap-mandatory
+              scroll-px-4 sm:scroll-px-5
+              overscroll-x-contain
+            "
+          >
             {(myStreams ?? []).map((s) => (
               <StreamCard
                 key={s.id}
@@ -203,8 +222,8 @@ export default function MyProfile({
                 followersOnlyLocked={s.followersOnlyLocked}
                 requiresPassword={s.requiresPassword}
                 visibility={s.visibility}
-                // shortDescription
-                layout="rail" // 가로 스크롤용 고정 폭 카드
+                isPrivateType={s.visibility === "PRIVATE"}
+                layout="rail"
               />
             ))}
           </div>
@@ -304,28 +323,39 @@ export default function MyProfile({
         </button>
       </form>
 
-      {/* 모달들 */}
-      <ProfileReviewsModal
-        isOpen={isReviewModalOpen}
-        onClose={() => setIsReviewModalOpen(false)}
-        reviews={initialReviews}
-        userId={user.id}
-      />
-      <ProfileBadgesModal
-        isOpen={isBadgeModalOpen}
-        closeModal={() => setIsBadgeModalOpen(false)}
-        badges={badges}
-        userBadges={userBadges}
-      />
-      <EmailVerificationModal
-        isOpen={isEmailVerificationModalOpen}
-        onClose={() => setIsEmailVerificationModalOpen(false)}
-        email={user.email || ""}
-      />
-      <PasswordChangeModal
-        isOpen={isPasswordModalOpen}
-        onClose={() => setIsPasswordModalOpen(false)}
-      />
+      {/* 모달들: "열릴 때만" 렌더해서 진짜 지연 로드 */}
+      {isReviewModalOpen && (
+        <ProfileReviewsModal
+          isOpen={isReviewModalOpen}
+          onClose={() => setIsReviewModalOpen(false)}
+          reviews={initialReviews}
+          userId={user.id}
+        />
+      )}
+
+      {isBadgeModalOpen && (
+        <ProfileBadgesModal
+          isOpen={isBadgeModalOpen}
+          closeModal={() => setIsBadgeModalOpen(false)}
+          badges={badges}
+          userBadges={userBadges}
+        />
+      )}
+
+      {isEmailVerificationModalOpen && (
+        <EmailVerificationModal
+          isOpen={isEmailVerificationModalOpen}
+          onClose={() => setIsEmailVerificationModalOpen(false)}
+          email={user.email || ""}
+        />
+      )}
+
+      {isPasswordModalOpen && (
+        <PasswordChangeModal
+          isOpen={isPasswordModalOpen}
+          onClose={() => setIsPasswordModalOpen(false)}
+        />
+      )}
     </div>
   );
 }

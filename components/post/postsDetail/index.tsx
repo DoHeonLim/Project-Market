@@ -12,7 +12,7 @@
 "use client";
 
 import { PostDetail } from "@/types/post";
-import { User } from "@prisma/client";
+import { User } from "@/generated/prisma/client";
 import { motion } from "framer-motion";
 import PostDetailTitle from "./PostDetailTitle";
 import PostDetailDescription from "./PostDetailDescription";
@@ -34,7 +34,7 @@ export default function PostDetailWrapper({
   likeCount,
   isLiked,
 }: PostDetailWrapperProps) {
-  const canEdit = post.user.id === user.id; // ← 숫자 PK 비교 (권장)
+  const canEdit = post.user.id === user.id; // 숫자 PK 비교
 
   return (
     <div className="max-w-3xl mx-auto min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100 dark:from-neutral-900 dark:to-neutral-950">

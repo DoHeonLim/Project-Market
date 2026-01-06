@@ -12,13 +12,15 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
+    "useUnknownInCatchVariables": false,
     "plugins": [
       {
         "name": "next"
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@/generated/prisma/*": ["./generated/prisma/*"]
     },
     "target": "ES2017"
   },

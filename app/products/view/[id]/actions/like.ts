@@ -13,6 +13,7 @@ Date        Author   Status    Description
 import db from "@/lib/db";
 import getSession from "@/lib/session";
 import { unstable_cache as nextCache, revalidateTag } from "next/cache";
+import * as T from "@/lib/cache/tags";
 
 /**
  * 좋아요 상태 확인 함수 (내부 전용)
@@ -43,9 +44,9 @@ export const getCachedProductLikeStatus = async (productId: number) => {
 
   const cachedOperation = nextCache(
     getProductLikeStatus,
-    [`product-like-status-${productId}`],
+    ["product-like-status-by-id"],
     {
-      tags: [`product-like-status-${productId}`],
+      tags: [T.PRODUCT_LIKE_STATUS(productId)],
     }
   );
 
@@ -66,7 +67,7 @@ export const likeProduct = async (productId: number) => {
     },
   });
 
-  revalidateTag(`product-like-status-${productId}`);
+  revalidateTag(T.PRODUCT_LIKE_STATUS(productId));
 };
 
 /**
@@ -85,5 +86,5 @@ export const dislikeProduct = async (productId: number) => {
     },
   });
 
-  revalidateTag(`product-like-status-${productId}`);
+  revalidateTag(T.PRODUCT_LIKE_STATUS(productId));
 };

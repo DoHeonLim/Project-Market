@@ -1,14 +1,14 @@
 /**
- File Name : lib/auth/sms/smsSchema
- Description : 유저 SMS 로그인 스키마
- Author : 임도헌
- 
- History
- Date        Author   Status    Description
- 2025.05.30  임도헌   Created
- 2025.05.30  임도헌   Modified  기존 app/(auth)/sms/actions 에 있던 스키마 분리
- 2025.06.07  임도헌   Modified  전화번호 11자리 숫자 검증으로 변경.
-*/
+ * File Name : lib/auth/sms/smsSchema
+ * Description : 유저 SMS 로그인 스키마
+ * Author : 임도헌
+ *
+ * History
+ * Date        Author   Status    Description
+ * 2025.05.30  임도헌   Created
+ * 2025.05.30  임도헌   Modified  기존 app/(auth)/sms/actions 에 있던 스키마 분리
+ * 2025.06.07  임도헌   Modified  전화번호 11자리 숫자 검증으로 변경.
+ */
 
 import { z } from "zod";
 import validator from "validator";

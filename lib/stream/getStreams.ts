@@ -11,6 +11,7 @@
  * 2025.11.22 임도헌 Modified 커서 조건 분기(id < cursor) 가독성/안전성 개선
  * 2025.11.23 임도헌 Modified FOLLOWERS 방송에서 본인 방송은 항상 노출되도록 예외 추가
  * 2025.11.23 임도헌 Modified 팔로잉 탭에서도 본인 방송이 함께 노출되도록 조건 보강
+ * 2026.01.03 임도헌 Modified viewer follow-state(select followers) 조회를 옵션화하여 리스트 페이지 DB 부담 감소(기본 OFF)
  */
 
 import "server-only";
@@ -27,8 +28,26 @@ export async function getStreams(params: {
   viewerId: number | null;
   cursor: number | null; // id < cursor
   take: number; // TAKE(+1) 권장
+
+  /**
+   * includeViewerFollowState
+   * - true: 카드/리스트에서 “해당 유저를 내가 팔로우 중인지”를 정확히 계산하기 위해
+   *   followers(where: { followerId: viewerId }, take: 1) 조인을 포함한다.
+   * - false(기본): 스트리밍 리스트에서는 보통 필요한 것이 잠금 여부/내 방송 여부이며,
+   *   where 조건으로 FOLLOWERS는 접근 가능한 것만 노출을 유지하는 경우
+   *   row별 팔로우 조인이 불필요하므로 DB 부담을 줄이기 위해 OFF로 둔다.
+   */
+  includeViewerFollowState?: boolean;
 }): Promise<BroadcastSummary[]> {
-  const { scope, category, keyword, viewerId, cursor, take } = params;
+  const {
+    scope,
+    category,
+    keyword,
+    viewerId,
+    cursor,
+    take,
+    includeViewerFollowState = false,
+  } = params;
 
   // 비로그인 + following 탭 → 빈 결과 (팔로잉 탭은 로그인 필요)
   if (scope === "following" && !viewerId) return [];
@@ -190,6 +209,14 @@ export async function getStreams(params: {
     }
   }
 
+  /**
+   * select 최적화
+   * - includeViewerFollowState=false(기본)일 때는 row별 followers 조인을 제거한다.
+   * - 리스트 페이지에서 FOLLOWERS 잠금 여부는 where 조건으로 이미 보장되는 케이스가 많아
+   *   (예: all 로그인, following 탭) 불필요한 조인을 줄이는 것이 핵심이다.
+   */
+  const shouldJoinFollowers = !!viewerId && includeViewerFollowState === true;
+
   const rows = await db.broadcast.findMany({
     where,
     select: {
@@ -210,11 +237,11 @@ export async function getStreams(params: {
               id: true,
               username: true,
               avatar: true,
-              // isFollowing 계산을 위해 viewer가 있을 때만 followers 조회
-              ...(viewerId
+              // viewer 기준 팔로우 상태가 필요할 때만 조인(기본 OFF)
+              ...(shouldJoinFollowers
                 ? {
                     followers: {
-                      where: { followerId: viewerId },
+                      where: { followerId: viewerId! },
                       select: { id: true },
                       take: 1,
                     },
@@ -235,10 +262,19 @@ export async function getStreams(params: {
 
   const mapped: BroadcastSummary[] = rows.map((b) => {
     const isMine = !!viewerId && b.liveInput.userId === viewerId;
-    const isFollowing =
-      !!viewerId &&
-      Array.isArray(b.liveInput.user.followers) &&
-      b.liveInput.user.followers.length > 0;
+
+    /**
+     * isFollowing 계산(옵션화)
+     * - includeViewerFollowState=true: followers 조인 결과로 정확 계산
+     * - false(기본):
+     *   - FOLLOWERS 방송이 결과로 포함되는 경우(로그인 all / following 탭)는 where 조건상
+     *     “접근 가능한 방송만” 노출되는 구성이므로 잠금 플래그가 켜지지 않도록 true 처리한다.
+     *   - PUBLIC/PRIVATE는 잠금 계산에 isFollowing이 관여하지 않으므로 false로 둔다.
+     */
+    const isFollowing = shouldJoinFollowers
+      ? Array.isArray((b.liveInput.user as any).followers) &&
+        (b.liveInput.user as any).followers.length > 0
+      : (b.visibility as any) === "FOLLOWERS";
 
     return serializeStream(
       {

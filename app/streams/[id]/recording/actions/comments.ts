@@ -14,6 +14,7 @@
 import getSession from "@/lib/session";
 import db from "@/lib/db";
 import { revalidateTag, unstable_cache as nextCache } from "next/cache";
+import * as T from "@/lib/cache/tags";
 import { streamCommentFormSchema } from "@/lib/stream/form/streamCommentFormSchema";
 
 // 페이징 조회
@@ -46,7 +47,7 @@ export const getCachedRecordingComments = (vodId: number, limit = 10) => {
     async (vid: number, lim: number) =>
       getRecordingComments(vid, undefined, lim),
     ["recording-comments", String(vodId), String(limit)],
-    { tags: [`recording-comments-${vodId}`] }
+    { tags: [T.RECORDING_COMMENTS(vodId)] }
   );
   return cached(vodId, limit);
 };
@@ -73,7 +74,7 @@ export const createRecordingComment = async (formData: FormData) => {
       },
     });
     // 목록 캐시 무효화
-    revalidateTag(`recording-comments-${result.data.vodId}`);
+    revalidateTag(T.RECORDING_COMMENTS(result.data.vodId));
     return { success: true as const };
   } catch (e) {
     console.error("댓글 생성 실패:", e);
@@ -100,7 +101,7 @@ export const deleteRecordingComment = async (
     }
 
     await db.recordingComment.delete({ where: { id: commentId } });
-    revalidateTag(`recording-comments-${vodId}`);
+    revalidateTag(T.RECORDING_COMMENTS(vodId));
     return { success: true as const };
   } catch (e) {
     console.error("댓글 삭제 실패:", e);

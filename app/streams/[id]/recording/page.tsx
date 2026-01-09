@@ -1,0 +1,164 @@
+/**
+ * File Name : app/streams/[id]/recording/page
+ * Description : 라이브 스트리밍 녹화본 페이지 (Broadcast × VodAsset)
+ * Author : 임도헌
+ *
+ * History
+ * Date        Author   Status    Description
+ * 2024.11.19  임도헌   Created
+ * 2024.11.19  임도헌   Modified  라이브 스트리밍 녹화본 페이지 추가
+ * 2024.11.21  임도헌   Modified  console.log 삭제
+ * 2024.12.07  임도헌   Modified  프로필 이미지 컴포넌트 분리
+ * 2024.12.12  임도헌   Modified  녹화본 생성 시간 표시 변경
+ * 2025.08.04  임도헌   Modified  댓글 UI 추가
+ * 2025.08.09  임도헌   Modified  접근 가드(403) 적용
+ * 2025.09.05  임도헌   Modified  dynamic="force-dynamic" 적용 — 언락/팔로우 직후 녹화 페이지 접근 가드의 캐시 오판 방지
+ * 2025.09.10  임도헌   Modified  로그인 가드 제거(미들웨어 신뢰), 변수명/타이핑/동시성 소폭 개선
+ * 2025.09.20  임도헌   Modified  Broadcast/VodAsset 스키마로 전면 전환 (좋아요/댓글을 VodAsset 단위로)
+ * 2025.09.20  임도헌   Modified  라우트 파라미터를 vodId로 고정
+ * 2025.11.26  임도헌   Modified  RecordingTopbar 도입(뒤로가기/유저/카테고리 상단 고정)
+ * 2026.01.03  임도헌   Modified  PRIVATE 언락 체크에서 session 중복 조회 제거(isBroadcastUnlockedFromSession)
+ * 2026.01.03  임도헌   Modified  getVodDetail 2회 호출 제거(조회수 증가는 표시값만 보정)
+ * 2026.01.03  임도헌   Modified  ViewThrottle 기반 3분 쿨다운 결과를 didIncrement로 반영(쿨다운 시 +1 보정 금지)
+ * 2026.01.04  임도헌   Modified  VOD(Recording) 상세는 force-dynamic 유지 — PRIVATE 언락/팔로우 직후 접근 가드의 캐시 오판 방지
+ * 2026.01.04  임도헌   Modified  incrementVodViews wrapper 제거 → lib/views/incrementViews 직접 호출(단일 진입점)
+ * 2026.01.04  임도헌   Modified  getVodDetail은 접근 제어 정확성 우선으로 nextCache 비적용(조회수는 didIncrement 기반 표시값만 보정)
+ */
+export const dynamic = "force-dynamic";
+
+/**
+ * NOTE
+ * - 이 페이지는 접근 가드(팔로우/PRIVATE 언락)에 강하게 의존한다.
+ * - 따라서 cache/ISR로 인해 guard 판단이 stale 되는 것을 막기 위해 force-dynamic을 유지한다.
+ * - getVodDetail은 nextCache로 감싸지 않고(=비캐시) 요청 시점의 최신 상태로 가드를 평가한다.
+ * - 조회수는 ViewThrottle(3분) 기반으로 incrementViews에서 처리하고, didIncrement=true일 때만 화면 표시값을 +1 보정한다.
+ */
+
+import { notFound, redirect } from "next/navigation";
+import getSession from "@/lib/session";
+
+import RecordingTopbar from "@/components/stream/recording/RecordingTopbar";
+import RecordingDetail from "@/components/stream/recording/recordingDetail";
+import RecordingComment from "@/components/stream/recording/recordingComment/RecordingComment";
+import RecordingDeleteButton from "@/components/stream/recording/recordingDetail/RecordingDeleteButton";
+
+import { getRecordingLikeStatus } from "@/app/streams/[id]/recording/actions/likes";
+import { checkBroadcastAccess } from "@/lib/stream/checkBroadcastAccess";
+import { isBroadcastUnlockedFromSession } from "@/lib/stream/privateUnlockSession";
+import { getVodDetail } from "@/lib/stream/getVodDetail";
+import { incrementViews } from "@/lib/views/incrementViews";
+
+export default async function RecordingVodPage({
+  params,
+}: {
+  params: { id: string };
+}) {
+  const vodId = Number(params.id);
+  if (!Number.isFinite(vodId) || vodId <= 0) return notFound();
+
+  const session = await getSession();
+  if (!session?.id) {
+    redirect(
+      `/login?callbackUrl=${encodeURIComponent(`/streams/${vodId}/recording`)}`
+    );
+  }
+  const viewerId = session?.id ?? null;
+
+  // 1) 가드용 1차 조회
+  const base = await getVodDetail(vodId);
+  if (!base) return notFound();
+
+  const broadcastId = base.broadcast.id;
+  const owner = base.broadcast.owner;
+
+  // 2) 접근 가드
+  const isOwner = viewerId === owner.id;
+  if (!isOwner) {
+    const isUnlocked = isBroadcastUnlockedFromSession(session, broadcastId);
+    const guard = await checkBroadcastAccess(
+      { userId: owner.id, visibility: base.broadcast.visibility },
+      viewerId,
+      { isPrivateUnlocked: isUnlocked }
+    );
+    if (!guard.allowed) {
+      const callbackUrl = `/streams/${vodId}/recording`;
+      redirect(
+        `/403?reason=${guard.reason}` +
+          `&username=${encodeURIComponent(owner.username)}` +
+          `&callbackUrl=${encodeURIComponent(callbackUrl)}` +
+          `&sid=${broadcastId}` +
+          `&uid=${owner.id}`
+      );
+    }
+  }
+
+  /**
+   * 3) 조회수 증가(실패 무시)
+   * - getVodDetail 2회 호출을 피하기 위해 base를 그대로 렌더 데이터로 사용한다.
+   * - 증가가 "실제로 발생했을 때"만 화면 표시값을 +1 보정한다.
+   *   (쿨다운으로 막힌 경우 false → 보정 금지)
+   */
+  let didIncrement = false;
+  try {
+    didIncrement = await incrementViews({
+      target: "RECORDING",
+      targetId: vodId,
+      viewerId,
+    });
+  } catch (e) {
+    console.warn("[incrementViews] failed:", e);
+  }
+
+  const vod = {
+    ...base,
+    views: didIncrement ? (base.views ?? 0) + 1 : base.views,
+  };
+
+  // 4) 좋아요 상태
+  const like = await getRecordingLikeStatus(vodId, viewerId);
+
+  // 표시값 정규화: readyAt 우선
+  const created = new Date((vod.readyAt ?? vod.createdAt) as Date);
+  const durationSec = Math.round(vod.durationSec ?? 0);
+
+  const broadcastOwner = vod.broadcast.owner;
+  const category = vod.broadcast.category ?? null;
+
+  return (
+    <div className="flex min-h-screen flex-col overflow-y-auto scrollbar bg-background dark:bg-neutral-950">
+      <RecordingTopbar
+        backHref="/streams"
+        username={broadcastOwner.username}
+        avatar={broadcastOwner.avatar}
+        categoryLabel={category?.kor_name ?? null}
+        categoryIcon={category?.icon ?? null}
+      />
+
+      <main className="flex flex-col items-center gap-6 pb-10">
+        <RecordingDetail
+          broadcast={vod.broadcast}
+          vodId={vodId}
+          uid={vod.uid}
+          duration={durationSec}
+          created={created}
+          isLiked={like.isLiked}
+          likeCount={like.likeCount}
+          commentCount={vod.counts.comments}
+          viewCount={vod.views ?? 0}
+        />
+
+        {isOwner && (
+          <div className="w-full max-w-3xl px-4">
+            <RecordingDeleteButton
+              broadcastId={vod.broadcast.id}
+              liveInputUid={vod.broadcast.stream_id}
+              username={vod.broadcast.owner.username}
+            />
+          </div>
+        )}
+
+        <RecordingComment vodId={vodId} currentUserId={session.id!} />
+      </main>
+    </div>
+  );
+}

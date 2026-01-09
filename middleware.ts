@@ -1,16 +1,16 @@
-import { NextRequest, NextResponse } from "next/server";
-import getSession from "./lib/session";
-
 /**
-File Name : middleware
-Description : 미들웨어
-Author : 임도헌
+ File Name : middleware
+ Description : 미들웨어
+ Author : 임도헌
+ 
+ History
+ Date        Author   Status    Description
+ 2024.10.08  임도헌   Created
+ 2024.10.08  임도헌   Modified  인증 미들웨어 추가
+ 2025.12.23  임도헌   Modified  비로그인 리다이렉트 파라미터 통일(/login?callbackUrl=...)
+ */
 
-History
-Date        Author   Status    Description
-2024.10.08  임도헌   Created
-2024.10.08  임도헌   Modified  인증 미들웨어 추가
-*/
+import { NextRequest, NextResponse } from "next/server";
 
 interface IRoutes {
   [key: string]: boolean;
@@ -23,25 +23,37 @@ const publicOnlyUrls: IRoutes = {
   "/create-account": true,
   "/github/start": true,
   "/github/complete": true,
+  "/manifest.webmanifest": true,
+  "/offline": true,
 };
 
 export async function middleware(request: NextRequest) {
-  const session = await getSession();
-  const exists = publicOnlyUrls[request.nextUrl.pathname];
-  // 로그인 상태가 아니고
-  if (!session.id) {
-    // 허가되지 않은 사이트면 메인으로 리다이렉트한다.
-    if (!exists) {
-      return NextResponse.redirect(new URL("/", request.url));
-    }
-  } else {
-    // 로그인 했다면 제품 페이지로 이동한다.
-    if (exists) {
-      return NextResponse.redirect(new URL("/products", request.url));
-    }
+  // iron-session이 쓰는 쿠키 이름: "user"
+  const isLoggedIn = request.cookies.has("user");
+  const isPublicOnly = !!publicOnlyUrls[request.nextUrl.pathname];
+
+  // 1) 비로그인 + 보호된 페이지 -> /login?callbackUrl=...
+  // - app 라우트 개별 redirect와 동일 파라미터로 통일
+  // - query까지 포함해 복귀 가능하도록 구성
+  if (!isLoggedIn && !isPublicOnly) {
+    const loginUrl = request.nextUrl.clone();
+    loginUrl.pathname = "/login";
+    const next = request.nextUrl.pathname + request.nextUrl.search;
+    loginUrl.searchParams.set("callbackUrl", next);
+    return NextResponse.redirect(loginUrl);
   }
+
+  // 2) 로그인 + publicOnly 페이지 -> 제품 페이지로
+  if (isLoggedIn && isPublicOnly) {
+    return NextResponse.redirect(new URL("/products", request.url));
+  }
+
+  // 3) 나머지는 통과
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    "/((?!api|_next/static|_next/image|favicon.ico|manifest.json|manifest.webmanifest|sw.js|workbox-*.js|pwa-push.js|images).*)",
+  ],
 };

@@ -20,7 +20,6 @@ import CommentDeleteModal from "./CommentDeleteModal";
 import { TrashIcon } from "@heroicons/react/24/solid";
 import { useComment } from "./CommentContext";
 import { toast } from "sonner";
-
 export default function CommentDeleteButton({
   commentId,
 }: {

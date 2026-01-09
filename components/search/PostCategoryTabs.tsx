@@ -51,7 +51,7 @@ export default function PostCategoryTabs({
     params.delete("keyword"); // 검색어 제거
     if (category) {
       params.set("category", category);
-      router.replace(`/posts?${params.toString()}`);
+      router.push(`/posts?${params.toString()}`);
     } else {
       params.delete("category");
       router.replace(`/posts`);

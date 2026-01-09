@@ -1,13 +1,13 @@
 /**
- * File Name : app/api/cron/check-badge/route
- * Description : Vercel Cron – 활동 기반 뱃지(항구 축제/보드게임 탐험가) 주기적 점검
+ * File Name : app/api/cron/check-badges/route
+ * Description : 활동 기반 뱃지(항구 축제/보드게임 탐험가) 주기적 점검 (Rolling Batch)
  * Author : 임도헌
  *
  * History
- * Date        Author   Status    Description
  * 2025.12.03  임도헌   Created   Vercel Cron용 뱃지 점검 엔드포인트
  * 2025.12.06  임도헌   Modified  chunk처리 추가
  * 2026.01.04  임도헌   Modified  Prisma Route Handler runtime=nodejs 명시
+ * 2026.01.08  임도헌   Modified  대량 유저 처리 시 타임아웃 방지를 위해 Rolling Batch(take:50) 전략 적용
  */
 
 import "server-only";
@@ -19,99 +19,94 @@ import {
 } from "@/lib/check-badge-conditions";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic"; // Cron은 항상 동적 실행
 
-// 유저를 일정 개수 단위로 잘라서 처리하기 위한 chunk 헬퍼
-function chunkArray<T>(arr: T[], size: number): T[][] {
-  const chunks: T[][] = [];
-  for (let i = 0; i < arr.length; i += size) {
-    chunks.push(arr.slice(i, i + size));
-  }
-  return chunks;
-}
+/**
+ * [변경 이유: 타임아웃 방지 및 확장성 확보]
+ * 기존 로직은 "활동이 있는 모든 유저"를 한 번에 조회하여 루프를 돌았습니다.
+ * 유저 수가 수천 명 단위로 늘어나면 Vercel Serverless Function의 실행 시간 제한(10초~60초)을
+ * 초과하여 작업이 강제 종료될 위험이 있습니다.
+ *
+ * 따라서 한 번 실행 시 정해진 수(BATCH_SIZE)만큼만 처리하고 종료하는
+ * "Rolling Batch" 전략으로 변경합니다.
+ */
+const BATCH_SIZE = 50;
+
+/**
+ * 재검사 최소 간격 (12시간)
+ * 크론 스케줄이 10분마다 돌더라도, 한 번 체크한 유저는 최소 12시간 동안은
+ * 다시 체크하지 않도록 하여 불필요한 DB 부하를 줄입니다.
+ */
+const RECHECK_INTERVAL_MS = 12 * 60 * 60 * 1000;
 
 export async function GET(req: NextRequest) {
-  // 간단한 보안: Vercel Cron에서 ?secret=... 붙여서 호출하도록 설정
+  // 보안 체크: Vercel Cron 인증
   const cronSecret = process.env.CRON_SECRET_CHECK_BADGE;
   if (cronSecret) {
-    const secretFromQuery = req.nextUrl.searchParams.get("secret");
-    if (secretFromQuery !== cronSecret) {
+    const authHeader = req.headers.get("authorization");
+    // Vercel Cron은 헤더로 인증 정보를 보냄 (Bearer {secret})
+    // 로컬 테스트 등을 위해 쿼리 파라미터도 허용
+    const querySecret = req.nextUrl.searchParams.get("secret");
+
+    const isValidHeader = authHeader === `Bearer ${cronSecret}`;
+    const isValidQuery = querySecret === cronSecret;
+
+    if (!isValidHeader && !isValidQuery) {
       return new NextResponse("Forbidden", { status: 403 });
     }
   }
 
-  const lastMonth = new Date();
-  lastMonth.setMonth(lastMonth.getMonth() - 1);
+  const now = new Date();
+  const recheckThreshold = new Date(now.getTime() - RECHECK_INTERVAL_MS);
 
-  // 최근 30일 동안 "게시글 / 댓글 / 거래" 중 하나라도 있었던 유저만 대상으로 점검
-  const activeUsers = await db.user.findMany({
+  // 1. 대상 유저 조회 (Rolling Batch)
+  // - 아직 한 번도 체크 안 한 유저 (last_badge_check: null)
+  // - 또는 마지막 체크로부터 12시간이 지난 유저
+  // - 가장 오래된 순서(asc)로 BATCH_SIZE 만큼만 가져옴
+  const targetUsers = await db.user.findMany({
     where: {
       OR: [
-        {
-          posts: {
-            some: {
-              created_at: { gte: lastMonth },
-            },
-          },
-        },
-        {
-          comments: {
-            some: {
-              created_at: { gte: lastMonth },
-            },
-          },
-        },
-        {
-          products: {
-            some: {
-              created_at: { gte: lastMonth },
-              purchase_userId: { not: null },
-            },
-          },
-        },
+        { last_badge_check: null },
+        { last_badge_check: { lt: recheckThreshold } },
       ],
     },
+    orderBy: { last_badge_check: "asc" }, // 오래된 유저부터 처리 (Queue 방식)
+    take: BATCH_SIZE,
     select: { id: true },
   });
 
-  if (activeUsers.length === 0) {
-    return NextResponse.json({ ok: true, processedUsers: 0 });
+  if (targetUsers.length === 0) {
+    return NextResponse.json({
+      ok: true,
+      message: "No users to check at this time",
+    });
   }
 
-  // 한 번에 50명씩 처리 (필요하면 20, 100 등으로 조정 가능)
-  const CHUNK_SIZE = 50;
-  const chunks = chunkArray(activeUsers, CHUNK_SIZE);
+  // 2. 뱃지 체크 병렬 실행
+  // - allSettled를 사용하여 일부 실패하더라도 전체 프로세스가 멈추지 않도록 함
+  const results = await Promise.allSettled(
+    targetUsers.map(async (user) => {
+      await checkPortFestivalBadge(user.id);
+      await checkBoardExplorerBadge(user.id);
+    })
+  );
 
-  let processed = 0;
+  // 3. 처리된 유저들의 last_badge_check 갱신
+  // - 뱃지 획득 성공/실패 여부와 관계없이 '체크 시도' 시간을 갱신하여
+  //   다음 크론 실행 시 이 유저들이 다시 선택되지 않도록 함 (Queue 회전)
+  const processedIds = targetUsers.map((u) => u.id);
 
-  for (const chunk of chunks) {
-    // chunk 안에서는 병렬 처리
-    await Promise.all(
-      chunk.map((user) =>
-        Promise.all([
-          checkPortFestivalBadge(user.id),
-          checkBoardExplorerBadge(user.id),
-        ]).catch((error) => {
-          console.error(
-            "[cron/check-badge] userId:",
-            user.id,
-            " badge check error:",
-            error
-          );
-        })
-      )
-    );
+  await db.user.updateMany({
+    where: { id: { in: processedIds } },
+    data: { last_badge_check: now },
+  });
 
-    processed += chunk.length;
-    if (process.env.NODE_ENV !== "production") {
-      console.log(
-        `[cron/check-badge] processed ${processed}/${activeUsers.length} users`
-      );
-    }
-  }
+  const successCount = results.filter((r) => r.status === "fulfilled").length;
 
   return NextResponse.json({
     ok: true,
-    totalUsers: activeUsers.length,
-    processedUsers: processed,
+    processed: processedIds.length,
+    success: successCount,
+    nextBatchAvailable: processedIds.length === BATCH_SIZE, // 꽉 채워 처리했으면 대기열이 더 있을 수 있음
   });
 }

@@ -12,6 +12,8 @@
  * 2025.11.23 임도헌 Modified FOLLOWERS 방송에서 본인 방송은 항상 노출되도록 예외 추가
  * 2025.11.23 임도헌 Modified 팔로잉 탭에서도 본인 방송이 함께 노출되도록 조건 보강
  * 2026.01.03 임도헌 Modified viewer follow-state(select followers) 조회를 옵션화하여 리스트 페이지 DB 부담 감소(기본 OFF)
+ * 2026.01.08 임도헌 Modified 로그인 유저(scope=all)에게 비팔로워 방송도 노출되도록 조건 완화
+ * 2026.01.08 임도헌 Modified 비로그인 분기 제거 (모든 접근은 로그인 상태 전제)
  */
 
 import "server-only";
@@ -49,8 +51,8 @@ export async function getStreams(params: {
     includeViewerFollowState = false,
   } = params;
 
-  // 비로그인 + following 탭 → 빈 결과 (팔로잉 탭은 로그인 필요)
-  if (scope === "following" && !viewerId) return [];
+  // 안전 장치: viewerId가 없으면(비로그인) 빈 배열 반환 (미들웨어에서 막히겠지만 방어 코드)
+  if (!viewerId) return [];
 
   // 기본: 방송 중만
   const whereBase = {
@@ -104,10 +106,10 @@ export async function getStreams(params: {
         liveInput: {
           user: {
             OR: [
-              { id: viewerId! }, // 내 방송
+              { id: viewerId }, // 내 방송
               {
                 followers: {
-                  some: { followerId: viewerId! }, // 내가 팔로우하는 유저
+                  some: { followerId: viewerId }, // 내가 팔로우하는 유저
                 },
               },
             ],
@@ -121,101 +123,44 @@ export async function getStreams(params: {
       },
     ];
 
-    // 커서 조건(id < cursor) — cursor가 있을 때만 추가
-    if (cursor) {
-      conditions.push({ id: { lt: cursor } });
-    }
-
-    if (categoryCondition) {
-      conditions.push(categoryCondition);
-    }
+    if (cursor) conditions.push({ id: { lt: cursor } });
+    if (categoryCondition) conditions.push(categoryCondition);
 
     where = {
       AND: conditions.filter((c) => Object.keys(c).length > 0),
     };
   } else {
-    // scope === "all"
-    if (viewerId) {
-      // 로그인 상태
-      const conditions: any[] = [
-        whereBase,
-        keywordFilter,
-        {
-          OR: [
-            // 1) 누구에게나 노출되는 공개 방송
-            { visibility: "PUBLIC" },
+    // scope === "all" (로그인 유저 기준 전체 보기)
+    const conditions: any[] = [
+      whereBase,
+      keywordFilter,
+      {
+        OR: [
+          // 1) 공개 방송
+          { visibility: "PUBLIC" },
 
-            // 2) 팔로워 전용 방송
-            //    - 내가 그 유저를 팔로우하고 있거나
-            //    - 내가 방송 주인인 경우(본인 방송은 항상 보이도록)
-            {
-              AND: [
-                { visibility: "FOLLOWERS" },
-                {
-                  liveInput: {
-                    user: {
-                      OR: [
-                        { id: viewerId }, // 내가 방송 주인인 경우
-                        {
-                          followers: {
-                            some: { followerId: viewerId }, // 내가 팔로워인 경우
-                          },
-                        },
-                      ],
-                    },
-                  },
-                },
-              ],
-            },
+          // 2) 팔로워 전용 방송 (모두 노출 -> 잠금 여부는 serialize에서 처리)
+          { visibility: "FOLLOWERS" },
 
-            // 3) 비밀 방송 (비밀번호 모달로 보호, 노출 정책은 기존 그대로 유지)
-            { visibility: "PRIVATE" },
-          ],
-        },
-      ];
+          // 3) 비밀 방송 (모두 노출 -> 비밀번호 모달)
+          { visibility: "PRIVATE" },
+        ],
+      },
+    ];
 
-      if (cursor) {
-        conditions.push({ id: { lt: cursor } });
-      }
+    if (cursor) conditions.push({ id: { lt: cursor } });
+    if (categoryCondition) conditions.push(categoryCondition);
 
-      if (categoryCondition) {
-        conditions.push(categoryCondition);
-      }
-
-      where = {
-        AND: conditions.filter((c) => Object.keys(c).length > 0),
-      };
-    } else {
-      // 비로그인
-      const conditions: any[] = [
-        whereBase,
-        keywordFilter,
-        {
-          OR: [{ visibility: "PUBLIC" }, { visibility: "PRIVATE" }],
-        },
-      ];
-
-      if (cursor) {
-        conditions.push({ id: { lt: cursor } });
-      }
-
-      if (categoryCondition) {
-        conditions.push(categoryCondition);
-      }
-
-      where = {
-        AND: conditions.filter((c) => Object.keys(c).length > 0),
-      };
-    }
+    where = {
+      AND: conditions.filter((c) => Object.keys(c).length > 0),
+    };
   }
 
   /**
    * select 최적화
    * - includeViewerFollowState=false(기본)일 때는 row별 followers 조인을 제거한다.
-   * - 리스트 페이지에서 FOLLOWERS 잠금 여부는 where 조건으로 이미 보장되는 케이스가 많아
-   *   (예: all 로그인, following 탭) 불필요한 조인을 줄이는 것이 핵심이다.
    */
-  const shouldJoinFollowers = !!viewerId && includeViewerFollowState === true;
+  const shouldJoinFollowers = includeViewerFollowState === true;
 
   const rows = await db.broadcast.findMany({
     where,
@@ -241,7 +186,7 @@ export async function getStreams(params: {
               ...(shouldJoinFollowers
                 ? {
                     followers: {
-                      where: { followerId: viewerId! },
+                      where: { followerId: viewerId },
                       select: { id: true },
                       take: 1,
                     },
@@ -261,20 +206,20 @@ export async function getStreams(params: {
   });
 
   const mapped: BroadcastSummary[] = rows.map((b) => {
-    const isMine = !!viewerId && b.liveInput.userId === viewerId;
+    const isMine = b.liveInput.userId === viewerId;
 
     /**
-     * isFollowing 계산(옵션화)
-     * - includeViewerFollowState=true: followers 조인 결과로 정확 계산
-     * - false(기본):
-     *   - FOLLOWERS 방송이 결과로 포함되는 경우(로그인 all / following 탭)는 where 조건상
-     *     “접근 가능한 방송만” 노출되는 구성이므로 잠금 플래그가 켜지지 않도록 true 처리한다.
-     *   - PUBLIC/PRIVATE는 잠금 계산에 isFollowing이 관여하지 않으므로 false로 둔다.
+     * isFollowing 계산
+     * - includeViewerFollowState=true: DB 조인 결과 사용
+     * - includeViewerFollowState=false:
+     *   - 리스트에서는 "잠금 표시"를 위해 팔로우 여부가 필요함.
+     *   - false일 경우 정확한 잠금 표시가 불가능하므로, 호출부(page.tsx)에서 true로 설정해야 함.
+     *   - 여기서는 fallback으로 false 처리 (잠금 상태로 표시됨 -> CTA 유도)
      */
     const isFollowing = shouldJoinFollowers
       ? Array.isArray((b.liveInput.user as any).followers) &&
         (b.liveInput.user as any).followers.length > 0
-      : (b.visibility as any) === "FOLLOWERS";
+      : false;
 
     return serializeStream(
       {

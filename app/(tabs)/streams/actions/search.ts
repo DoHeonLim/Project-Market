@@ -8,6 +8,7 @@
  * 2025.09.02  임도팀   Modified  TAKE 상수 STREAMS_PAGE_TAKE로 변경
  * 2025.09.10  임도헌   Modified  TAKE+1 페이지네이션/입력 정규화 적용
  * 2026.01.03  임도헌   Modified  getStreams 팔로우 상태 조인 옵션화(includeViewerFollowState) 반영
+ * 2026.01.08  임도헌   Modified  리스트에서 잠금 UI 표시를 위해 includeViewerFollowState: true로 변경
  */
 
 "use server";
@@ -42,7 +43,7 @@ export async function searchStreams(params: {
     viewerId: params.viewerId,
     cursor: null,
     take: TAKE + 1,
-    includeViewerFollowState: false,
+    includeViewerFollowState: true,
   });
 
   const hasMore = list.length > TAKE;

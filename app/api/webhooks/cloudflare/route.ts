@@ -11,6 +11,7 @@
  *                                WebCrypto 기반 HMAC 검증 도입
  * 2025.09.17  임도헌   Modified  방송 시작시 썸네일 자동 업데이트 기능 추가
  * 2025.11.22  임도헌   Modified  broadcast-list 캐시 태그 제거, 상세/user-streams-id 태그만 유지
+ * 2026.01.08  임도헌   Modified  방송 재접속(CONNECTED) 시 ended_at 초기화(null) 추가
  */
 
 import "server-only";
@@ -397,13 +398,19 @@ async function onConnected(liveInputUid: string) {
   if (!li || li.broadcasts.length === 0) return;
 
   const b = li.broadcasts[0];
+
+  // 이미 CONNECTED가 아닐 때만 업데이트
   if (b.status !== "CONNECTED") {
     const now = new Date();
 
-    // 상태 업데이트 + started_at 기본값 세팅
+    // 상태 업데이트 + started_at 기본값 세팅 + ended_at 초기화
     const updated = await db.broadcast.update({
       where: { id: b.id },
-      data: { status: "CONNECTED", started_at: b.started_at ?? now },
+      data: {
+        status: "CONNECTED",
+        started_at: b.started_at ?? now,
+        ended_at: null, // 재접속 시 종료 시간 제거
+      },
       select: { id: true, title: true, thumbnail: true },
     });
 

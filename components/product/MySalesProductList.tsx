@@ -13,6 +13,7 @@
  * 2025.10.17  임도헌   Modified  탭별 지연 로드 + useProductPagination(profile) 도입
  * 2025.10.19  임도헌   Modified  하이브리드 낙관적 이동 + 실패시 롤백/리프레시
  * 2025.11.04  임도헌   Modified  getInitialUserProducts(서버) 직접 호출 제거 → fetchInitialUserProductsClient(API 경유)로 교체
+ * 2026.01.08  임도헌   Modified  탭 전환 시 fetch 에러(세션만료 등) 크래시 방지(try/catch) 추가
  */
 
 "use client";
@@ -100,14 +101,31 @@ export default function MySalesProductList({
 
   // 탭 전환 시, 아직 초기화 안 된 탭이면 최초 1회 로드
   useEffect(() => {
-    (async () => {
-      if (activeTab === "reserved" && !reservedLoaded) {
-        await refreshTab("reserved");
+    let mounted = true;
+
+    const loadTab = async () => {
+      try {
+        if (activeTab === "reserved" && !reservedLoaded) {
+          await refreshTab("reserved");
+        }
+        if (activeTab === "sold" && !soldLoaded) {
+          await refreshTab("sold");
+        }
+      } catch (e) {
+        // 세션 만료 등으로 로드 실패 시 조용히 무시하거나 로그만 남김 (크래시 방지)
+        // 필요하다면 여기서 toast.error("정보를 불러오지 못했습니다") 등을 호출 가능
+        console.warn(
+          `[MySalesProductList] Failed to load ${activeTab} tab:`,
+          e
+        );
       }
-      if (activeTab === "sold" && !soldLoaded) {
-        await refreshTab("sold");
-      }
-    })();
+    };
+
+    if (mounted) loadTab();
+
+    return () => {
+      mounted = false;
+    };
   }, [activeTab, reservedLoaded, soldLoaded, refreshTab]);
 
   // 하이브리드 낙관적 이동: from→to 로컬 리스트를 즉시 이동시키고 롤백 함수 반환

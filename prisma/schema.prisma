@@ -42,7 +42,8 @@
 // 2025.09.15  임도헌   Modified   라이브 스트리밍 관련 모델 전면 재구성
 // 2025.10.29  임도헌   Modified   Follow 키셋 페이지네이션 최적화용 복합 인덱스 추가([followerId,id], [followingId,id])
 // 2025.11.28  임도헌   Modified   Prisma 7로 업그레이드
-// 2026.01.03  암도헌   Modified   조회수 쿨다운을 위해서 ViewThrottle 모델 추가
+// 2026.01.03  임도헌   Modified   조회수 쿨다운을 위해서 ViewThrottle 모델 추가
+// 2026.01.09  임도헌   Modified   성능 최적화: Product/Broadcast 모델에 커서 페이징용 복합 인덱스 추가
 
 generator client {
   provider = "prisma-client"
@@ -215,6 +216,11 @@ model Product {
   @@index([created_at]) // 최신순 정렬용
   @@index([price]) // 가격 필터링용
   @@index([categoryId]) // 카테고리 필터링용
+  // [성능 최적화] 커서 기반 페이지네이션용 복합 인덱스
+  // 1. 판매 내역: 특정 유저의 상품을 최신순(id desc)으로 조회
+  @@index([userId, id])
+  // 2. 구매 내역: 특정 유저가 구매한 상품을 최신순(id desc)으로 조회
+  @@index([purchase_userId, id])
 }
 
 // 카테고리 모델
@@ -559,8 +565,11 @@ model Broadcast {
   // 이 세션에서 생성된 다시보기(녹화본) 목록
   vodAssets VodAsset[]
 
-  @@index([liveInputId])
-  @@index([status])
+  // [성능 최적화] 커서 기반 페이지네이션용 복합 인덱스
+  // 1. 유저 채널 방송 목록: 특정 채널의 방송을 최신순(id desc)으로 조회
+  @@index([liveInputId, id])
+  // 2. 메인 스트리밍 목록: 상태별(CONNECTED 등) 방송을 최신순(id desc)으로 조회
+  @@index([status, id])
   @@index([started_at])
   @@index([streamCategoryId])
 }

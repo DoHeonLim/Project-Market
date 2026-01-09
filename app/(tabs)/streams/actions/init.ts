@@ -9,6 +9,7 @@
  * 2025.09.10  임도헌   Modified  TAKE+1 페이지네이션(정확한 next 유무 판단) 적용, 주석 보강
  * 2025.09.17  임도헌   Modified  keyword/category 입력 정규화(trim) 적용
  * 2026.01.03  임도헌   Modified  getStreams 팔로우 상태 조인 옵션화(includeViewerFollowState) 반영
+ * 2026.01.08  임도헌   Modified  리스트에서 잠금 UI 표시를 위해 includeViewerFollowState: true로 변경
  */
 
 "use server";
@@ -49,7 +50,7 @@ export async function getInitialStreams(params: {
     viewerId: params.viewerId,
     cursor: null,
     take: TAKE + 1,
-    includeViewerFollowState: false,
+    includeViewerFollowState: true, // ✨ 변경됨
   });
 
   const hasMore = list.length > TAKE;
@@ -76,7 +77,7 @@ export async function getMoreStreams(
     viewerId,
     cursor,
     take: TAKE + 1,
-    includeViewerFollowState: false,
+    includeViewerFollowState: true,
   });
 
   const hasMore = list.length > TAKE;

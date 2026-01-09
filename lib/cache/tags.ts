@@ -22,6 +22,7 @@
  * 2026.01.01  임도헌   Created   전 도메인 태그 통합 파일 도입(프로필/제품/게시글/스트림/채팅)
  * 2026.01.03  임도헌   Modified  Posts 목록 즉시 최신화를 위한 POST_LIST 태그 추가
  * 2026.01.04  임도헌   Modified  조회수 태그 통일: POST_VIEWS/RECORDING_VIEWS 추가(제품/게시글/녹화 공통 패턴 정렬)
+ * 2026.01.08  임도헌   Modified  제품 목록 캐싱을 위한 PRODUCT_LIST 태그 추가
  */
 
 import "server-only";
@@ -66,6 +67,9 @@ export const USER_PRODUCTS_SCOPE_ID = (
 
 export const USER_PRODUCTS_COUNTS_ID = (userId: number | string) =>
   `user-products-counts-id-${userId}`;
+
+/** 제품 목록(탭 페이지) - 전체 목록 캐싱용 */
+export const PRODUCT_LIST = () => "product-list";
 
 /** 제품 상세(프로필/리뷰/상태변경 등 여러 도메인에서 무효화됨) */
 export const PRODUCT_DETAIL_ID = (productId: number | string) =>

@@ -8,16 +8,18 @@ Date        Author   Status    Description
 2024.12.11  임도헌   Created
 2024.12.11  임도헌   Modified  제품 좋아요 버튼 컴포넌트 추가
 2025.06.08  임도헌   Modified  서버 데이터 props 기반으로 분리
+2026.01.08  임도헌   Modified  useOptimistic 적용하여 반응성 개선 (PostLikeButton과 UX 통일)
 */
 "use client";
 
-import { useTransition } from "react";
+import { useOptimistic, useTransition } from "react";
 import {
   dislikeProduct,
   likeProduct,
 } from "@/app/products/view/[id]/actions/like";
 import { HeartIcon as OutlineHeartIcon } from "@heroicons/react/24/outline";
 import { HeartIcon } from "@heroicons/react/24/solid";
+import { toast } from "sonner";
 
 interface IProductLikeButtonProps {
   isLiked: boolean;
@@ -30,33 +32,35 @@ export default function ProductLikeButton({
   likeCount,
   productId,
 }: IProductLikeButtonProps) {
-  // const [state, reducerFn] = useOptimistic(
-  //   { isLiked, likeCount },
-  //   (previousState) => ({
-  //     isLiked: !previousState.isLiked,
-  //     likeCount: previousState.isLiked
-  //       ? previousState.likeCount - 1
-  //       : previousState.likeCount + 1,
-  //   })
-  // );
-
-  // const handleClick = async () => {
-  //   reducerFn(undefined);
-  //   if (isLiked) {
-  //     await dislikeProduct(productId);
-  //   } else {
-  //     await likeProduct(productId);
-  //   }
-  // };
+  // 낙관적 상태 관리: 클릭 즉시 UI 반영
+  const [optimisticState, setOptimisticState] = useOptimistic(
+    { isLiked, likeCount },
+    (state, newIsLiked: boolean) => ({
+      isLiked: newIsLiked,
+      likeCount: newIsLiked ? state.likeCount + 1 : state.likeCount - 1,
+    })
+  );
 
   const [isPending, startTransition] = useTransition();
 
   const handleClick = () => {
+    const nextIsLiked = !optimisticState.isLiked;
+
     startTransition(async () => {
-      if (isLiked) {
-        await dislikeProduct(productId);
-      } else {
-        await likeProduct(productId);
+      // 1. 낙관적 업데이트 트리거
+      setOptimisticState(nextIsLiked);
+
+      try {
+        // 2. 서버 액션 호출
+        if (nextIsLiked) {
+          await likeProduct(productId);
+        } else {
+          await dislikeProduct(productId);
+        }
+      } catch (error) {
+        // 3. 실패 시 에러 메시지 (UI는 transition 종료 시 props 기준으로 자동 롤백됨)
+        console.error(error);
+        toast.error("좋아요 처리에 실패했습니다.");
       }
     });
   };
@@ -65,15 +69,21 @@ export default function ProductLikeButton({
     <button
       onClick={handleClick}
       className={`flex items-center gap-1 p-2 transition-colors
-        ${isLiked ? "text-rose-500" : "text-neutral-400 hover:text-rose-500"}`}
+        ${
+          optimisticState.isLiked
+            ? "text-rose-500"
+            : "text-neutral-400 hover:text-rose-500"
+        }`}
       disabled={isPending}
+      aria-label={optimisticState.isLiked ? "좋아요 취소" : "좋아요"}
+      aria-pressed={optimisticState.isLiked}
     >
-      {isLiked ? (
-        <HeartIcon aria-label="heart" className="size-10" />
+      {optimisticState.isLiked ? (
+        <HeartIcon aria-hidden className="size-10" />
       ) : (
-        <OutlineHeartIcon aria-label="heart_outline" className="size-10" />
+        <OutlineHeartIcon aria-hidden className="size-10" />
       )}
-      <span>{likeCount}</span>
+      <span>{optimisticState.likeCount}</span>
     </button>
   );
 }

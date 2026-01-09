@@ -1,27 +1,28 @@
 /**
-File Name : app/(tabs)/products/page
-Description : 제품 페이지
-Author : 임도헌
-
-History
-Date        Author   Status    Description
-2024.10.14  임도헌   Created
-2024.10.14  임도헌   Modified  제품 페이지 추가
-2024.10.17  임도헌   Modified  무한 스크롤 기능 추가
-2024.10.26  임도헌   Modified  데이터베이스 캐싱 기능 추가
-2024.11.06  임도헌   Modified  캐싱기능 주석 처리
-2024.12.05  임도헌   Modified  제품 초기화 기능 actions로 옮김
-2024.12.12  임도헌   Modified  제품 추가 링크 변경
-2024.12.16  임도헌   Modified  카테고리 얻기 기능 추가
-2024.12.16  임도헌   Modified  최근 검색 기록 얻기 기능 추가
-2024.12.16  임도헌   Modified  인기 검색 기록 얻기 기능 추가
-2024.12.27  임도헌   Modified  제품 페이지 다크모드 추가
-2025.04.29  임도헌   Modified  검색 기능 search/products에서 products로 통합
-2025.05.30  임도헌   Modified  add-product 페이지 products/add로 이동
-2025.06.07  임도헌   Modified  검색 결과 요약, 제품 목록, 제품 추가 버튼을 컴포넌트로 분리, 구조 개선
-2025.06.18  임도헌   Modified  ProductList에 쿼리 문자열을 기준으로 key를 부여해서 제품 재렌더링
-2025.07.30  임도헌   Modified  fetchProductCategories로 이름 변경
-*/
+ * File Name : app/(tabs)/products/page
+ * Description : 제품 페이지
+ * Author : 임도헌
+ *
+ * History
+ * Date        Author   Status    Description
+ * 2024.10.14  임도헌   Created
+ * 2024.10.14  임도헌   Modified  제품 페이지 추가
+ * 2024.10.17  임도헌   Modified  무한 스크롤 기능 추가
+ * 2024.10.26  임도헌   Modified  데이터베이스 캐싱 기능 추가
+ * 2024.11.06  임도헌   Modified  캐싱기능 주석 처리
+ * 2024.12.05  임도헌   Modified  제품 초기화 기능 actions로 옮김
+ * 2024.12.12  임도헌   Modified  제품 추가 링크 변경
+ * 2024.12.16  임도헌   Modified  카테고리 얻기 기능 추가
+ * 2024.12.16  임도헌   Modified  최근 검색 기록 얻기 기능 추가
+ * 2024.12.16  임도헌   Modified  인기 검색 기록 얻기 기능 추가
+ * 2024.12.27  임도헌   Modified  제품 페이지 다크모드 추가
+ * 2025.04.29  임도헌   Modified  검색 기능 search/products에서 products로 통합
+ * 2025.05.30  임도헌   Modified  add-product 페이지 products/add로 이동
+ * 2025.06.07  임도헌   Modified  검색 결과 요약, 제품 목록, 제품 추가 버튼을 컴포넌트로 분리, 구조 개선
+ * 2025.06.18  임도헌   Modified  ProductList에 쿼리 문자열을 기준으로 key를 부여해서 제품 재렌더링
+ * 2025.07.30  임도헌   Modified  fetchProductCategories로 이름 변경
+ * 2026.01.08  임도헌   Modified  URL 쿼리 파싱 시 NaN 방어 로직 추가 (minPrice, maxPrice)
+ */
 
 import ProductList from "@/components/product/ProductList";
 import SearchResultSummary from "@/components/product/SearchResultSummary";
@@ -50,8 +51,18 @@ interface ProductsPageProps {
   };
 }
 
+function parseNumberParam(val: string | undefined): number | undefined {
+  if (!val) return undefined;
+  const num = Number(val);
+  return Number.isNaN(num) ? undefined : num;
+}
+
 export default async function Products({ searchParams }: ProductsPageProps) {
   const hasSearchParams = Object.keys(searchParams).length > 0;
+
+  // 안전한 숫자 파싱
+  const minPrice = parseNumberParam(searchParams.minPrice);
+  const maxPrice = parseNumberParam(searchParams.maxPrice);
 
   const [initialProducts, categories, searchHistory, popularSearches] =
     await Promise.all([
@@ -59,12 +70,8 @@ export default async function Products({ searchParams }: ProductsPageProps) {
         ? searchProducts({
             keyword: searchParams.keyword,
             category: searchParams.category,
-            minPrice: searchParams.minPrice
-              ? Number(searchParams.minPrice)
-              : undefined,
-            maxPrice: searchParams.maxPrice
-              ? Number(searchParams.maxPrice)
-              : undefined,
+            minPrice,
+            maxPrice,
             game_type: searchParams.game_type,
             condition: searchParams.condition,
           })

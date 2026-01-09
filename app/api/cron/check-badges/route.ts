@@ -8,6 +8,7 @@
  * 2025.12.06  임도헌   Modified  chunk처리 추가
  * 2026.01.04  임도헌   Modified  Prisma Route Handler runtime=nodejs 명시
  * 2026.01.08  임도헌   Modified  대량 유저 처리 시 타임아웃 방지를 위해 Rolling Batch(take:50) 전략 적용
+ * 2026.01.09  임도헌   Modified  Vercel Hobby 플랜 제한(1일 1회) 대응: BATCH_SIZE 50 -> 100 상향
  */
 
 import "server-only";
@@ -30,7 +31,15 @@ export const dynamic = "force-dynamic"; // Cron은 항상 동적 실행
  * 따라서 한 번 실행 시 정해진 수(BATCH_SIZE)만큼만 처리하고 종료하는
  * "Rolling Batch" 전략으로 변경합니다.
  */
-const BATCH_SIZE = 50;
+/**
+ * [변경 이유: Vercel Hobby 플랜 제약 대응]
+ * Hobby 플랜은 Cron Job을 "하루 1회"만 실행할 수 있습니다.
+ * 실행 빈도가 줄어든 만큼, 한 번에 처리하는 유저 수를 늘려야 전체 순환이 원활합니다.
+ *
+ * 단, Hobby 플랜의 Serverless Function Timeout은 10초(기본)이므로,
+ * 너무 크게 늘리면 타임아웃이 발생할 수 있어 100명으로 설정합니다.
+ */
+const BATCH_SIZE = 100;
 
 /**
  * 재검사 최소 간격 (12시간)

@@ -16,10 +16,11 @@ Date        Author   Status    Description
 "use client";
 
 import { useState } from "react";
-import CommentDeleteModal from "./CommentDeleteModal";
-import { TrashIcon } from "@heroicons/react/24/solid";
 import { useComment } from "./CommentContext";
+import CommentDeleteModal from "@/components/post/comment/CommentDeleteModal";
 import { toast } from "sonner";
+import { TrashIcon } from "@heroicons/react/24/solid";
+
 export default function CommentDeleteButton({
   commentId,
 }: {

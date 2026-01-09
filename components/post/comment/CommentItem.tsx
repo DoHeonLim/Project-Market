@@ -11,10 +11,10 @@
 "use client";
 
 import { motion } from "framer-motion";
-import CommentDeleteButton from "./CommentDeleteButton";
+import { PostComment } from "@/types/post";
 import UserAvatar from "@/components/common/UserAvatar";
 import TimeAgo from "@/components/common/TimeAgo";
-import { PostComment } from "@/types/post";
+import CommentDeleteButton from "@/components/post/comment/CommentDeleteButton";
 
 interface CommentItemProps {
   comment: PostComment;
